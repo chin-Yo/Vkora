@@ -26,7 +26,6 @@ void HierarchyPanel::CreateTree()
     vkb::sg::Scene& scene = GRuntimeGlobalContext.renderSystem->GetScene();
     if (!ImGui::Begin("HierarchyPanel", &Enabled))
     {
-        ImGui::End();
         return;
     }
     if (ImGui::BeginChild("##tree", ImVec2(300, 0),

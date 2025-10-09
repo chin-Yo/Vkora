@@ -9,7 +9,7 @@ RuntimeGlobalContext GRuntimeGlobalContext;
 void RuntimeGlobalContext::StartSystems(const std::string& config_file_path)
 {
     vkb::Window::Properties window_properties;
-    window_properties.title = "CyREngine";
+    window_properties.title = "VkoraEngine";
     windowSystem = std::make_shared<WindowSystem>(window_properties);
     renderSystem = std::make_shared<RenderSystem>();
 }
