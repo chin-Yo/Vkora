@@ -16,9 +16,13 @@ public:
 
     static std::string GetAssetPath();
 
-    static std::string GetAssetFullPath(const std::string &relativePath);
+    static std::string GetAssetFullPath(const std::string& relativePath);
 
     static std::string GetShaderPath();
 
     static std::string GetShaderFullPath(const std::string& relativePath);
+
+    static std::string GetEngineRootPath();
+
+    static std::string GetContentPath();
 };

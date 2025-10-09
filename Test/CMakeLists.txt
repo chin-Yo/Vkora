@@ -3,7 +3,7 @@ set(TARGET_NAME Refl_Test)
 
 add_executable(${TARGET_NAME} Refl_Test.cpp)
 
-target_include_directories(${TARGET_NAME} PUBLIC ${CYRENGINE_ROOT_DIR}/Engine/Source/Runtime/Core/Include)
+target_include_directories(${TARGET_NAME} PUBLIC ${VKORAENGINE_ROOT_DIR}/Engine/Source/Runtime/Core/Include)
 
 set_property(TARGET ${TARGET_NAME} PROPERTY VS_GLOBAL_DisableExternalDependencies true)
 

@@ -1,6 +1,6 @@
 #include "Misc/Paths.hpp"
 #if defined(_WIN32)
-    #include <windows.h>  // For GetModuleFileName
+#include <windows.h>  // For GetModuleFileName
 #elif defined(__linux__)
     #include <unistd.h>   // For readlink
     #include <limits.h>   // For PATH_MAX
@@ -67,7 +67,7 @@ std::string Paths::GetAssetPath()
     return assetPath.string();
 }
 
-std::string Paths::GetAssetFullPath(const std::string &relativePath)
+std::string Paths::GetAssetFullPath(const std::string& relativePath)
 {
     return GetAssetPath() + "/" + relativePath;
 }
@@ -105,4 +105,39 @@ std::string Paths::GetShaderPath()
 std::string Paths::GetShaderFullPath(const std::string& relativePath)
 {
     return GetShaderPath() + "/" + relativePath;
+}
+
+std::string Paths::GetEngineRootPath()
+{
+    fs::path exePath = fs::canonical(GetCurrentExecutablePath());
+    fs::path binDir = exePath.parent_path();
+
+    fs::path projectRoot = binDir;
+    for (int i = 0; i < 8; ++i)
+    {
+        if (fs::exists(projectRoot / "CMakeLists.txt"))
+        {
+            break;
+        }
+        projectRoot = projectRoot.parent_path();
+    }
+
+    if (!fs::exists(projectRoot / "CMakeLists.txt"))
+    {
+        throw std::runtime_error("Could not find project root directory.");
+    }
+
+    fs::path assetPath = projectRoot;
+
+    if (!fs::exists(assetPath))
+    {
+        throw std::runtime_error("Asset directory not found: " + assetPath.string());
+    }
+
+    return assetPath.string();
+}
+
+std::string Paths::GetContentPath()
+{
+    return GetEngineRootPath() + "/Engine/Content";
 }

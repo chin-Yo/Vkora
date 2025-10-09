@@ -126,7 +126,7 @@ bool Engine::TickOneFrame(float DeltaTime)
 
     GRuntimeGlobalContext.windowSystem->ProcessEvents();
     GRuntimeGlobalContext.windowSystem->SetTitle(
-        std::string("CyREngine - " + std::to_string(GetFPS()) + " FPS").c_str());
+        std::string("VkoraEngine - " + std::to_string(GetFPS()) + " FPS").c_str());
     const bool should_window_close = GRuntimeGlobalContext.windowSystem->ShouldClose();
     if (should_window_close)
     {
