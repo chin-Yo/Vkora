@@ -34,12 +34,6 @@ private:
     vkb::VulkanDevice& device;
     std::vector<std::shared_ptr<Panel>> EditorPanels;
 
-
-    std::vector<VkDescriptorSet> ViewportDescriptorSets;
-    eventpp::CallbackList<void(const ImVec2& PortSize)> OnViewportChange;
-    ImVec2 ViewportSize{0, 0};
-    bool ViewportResized = false;
     VkDescriptorPool descriptorPool;
-    vkb::Sampler* OffScreenSampler = nullptr;
-    VkRenderPass render_pass{VK_NULL_HANDLE};
+    VkRenderPass render_pass;
 };

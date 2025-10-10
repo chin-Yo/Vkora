@@ -2,14 +2,13 @@
 
 struct EditorGlobalContextInitInfo
 {
-    /*class WindowSystem* window_system;
-    class RenderSystem* render_system;
-    class PiccoloEngine* engine_runtime;*/
+    class EditorUIManager* editorUIManager;
 };
 
 class EditorGlobalContext
 {
 public:
+    class EditorUIManager* editorUIManager;
     //class EditorSceneManager* m_scene_manager{nullptr};
     //class EditorInputManager* m_input_manager{nullptr};
     //class RenderSystem* m_render_system{nullptr};

@@ -36,7 +36,7 @@ RenderSystem::~RenderSystem()
     instance.reset();
 }
 
-bool RenderSystem::Prepare(const ApplicationOptions &options)
+bool RenderSystem::Prepare(const ApplicationOptions& options)
 {
     LOG_INFO("Initializing vulkan render system!")
     assert(options.window != nullptr && "Window is invalid");
@@ -50,7 +50,7 @@ bool RenderSystem::Prepare(const ApplicationOptions &options)
     VK_CHECK_RESULT(volkInitialize());
 
     // Creating the vulkan instance
-    for (const char *extension_name : window->GetRequiredSurfaceExtensions())
+    for (const char* extension_name : window->GetRequiredSurfaceExtensions())
     {
         AddInstanceExtension(extension_name);
     }
@@ -64,7 +64,7 @@ bool RenderSystem::Prepare(const ApplicationOptions &options)
                                                available_instance_extensions.data());
         auto debugExtensionIt =
             std::find_if(available_instance_extensions.begin(), available_instance_extensions.end(),
-                         [](VkExtensionProperties const &ep)
+                         [](VkExtensionProperties const& ep)
                          {
                              return strcmp(ep.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0;
                          });
@@ -86,7 +86,7 @@ bool RenderSystem::Prepare(const ApplicationOptions &options)
         throw std::runtime_error("Failed to create window surface.");
     }
 
-    auto &gpu = instance->get_suitable_gpu(surface, headless);
+    auto& gpu = instance->get_suitable_gpu(surface, headless);
     gpu.set_high_priority_graphics_queue_enable(high_priority_graphics_queue);
 
     if (gpu.get_features().textureCompressionASTC_LDR)
@@ -123,7 +123,7 @@ bool RenderSystem::Prepare(const ApplicationOptions &options)
         auto debugExtensionIt =
             std::find_if(available_device_extensions.begin(),
                          available_device_extensions.end(),
-                         [](const VkExtensionProperties &ep)
+                         [](const VkExtensionProperties& ep)
                          {
                              return strcmp(ep.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0;
                          });
@@ -160,8 +160,8 @@ bool RenderSystem::Prepare(const ApplicationOptions &options)
     vkb::GLTFLoader loader(*device);
     scene = loader.read_scene_from_file("Models/retroufo.gltf");
 
-    auto &camera_node = vkb::add_free_camera(GetScene(), "main_camera", {512, 512});
-    camera = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
+    auto& camera_node = vkb::add_free_camera(GetScene(), "main_camera", {512, 512});
+    camera = dynamic_cast<vkb::sg::PerspectiveCamera*>(&camera_node.get_component<vkb::sg::Camera>());
 
     render_pipeline = CreateOneRenderpassTwoSubpasses();
     /*ViewportRTs.resize(GetRenderContext().get_render_frames().size());
@@ -182,7 +182,7 @@ bool RenderSystem::Prepare(const ApplicationOptions &options)
     return true;
 }
 
-void RenderSystem::RequestGpuFeatures(vkb::PhysicalDevice &gpu)
+void RenderSystem::RequestGpuFeatures(vkb::PhysicalDevice& gpu)
 {
     // To be overridden by sample
 }
@@ -193,14 +193,14 @@ std::unique_ptr<vkb::Instance> RenderSystem::CreateInstance()
                                            GetLayerSettings(), api_version);
 }
 
-std::unique_ptr<vkb::VulkanDevice> RenderSystem::CreateDevice(vkb::PhysicalDevice &gpu)
+std::unique_ptr<vkb::VulkanDevice> RenderSystem::CreateDevice(vkb::PhysicalDevice& gpu)
 {
     return std::make_unique<vkb::VulkanDevice>(gpu, surface, std::move(debug_utils), GetDeviceExtensions());
 }
 
-void RenderSystem::Draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void RenderSystem::Draw(vkb::CommandBuffer& command_buffer, vkb::RenderTarget& render_target)
 {
-    auto &views = render_target.get_views();
+    auto& views = render_target.get_views();
 
     {
         // Image 0 is the swapchain
@@ -232,7 +232,7 @@ void RenderSystem::Draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &r
     }
 }
 
-void RenderSystem::Render(vkb::CommandBuffer &command_buffer)
+void RenderSystem::Render(vkb::CommandBuffer& command_buffer)
 {
     if (render_pipeline)
     {
@@ -240,12 +240,12 @@ void RenderSystem::Render(vkb::CommandBuffer &command_buffer)
     }
 }
 
-void RenderSystem::DrawRenderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void RenderSystem::DrawRenderpass(vkb::CommandBuffer& command_buffer, vkb::RenderTarget& render_target)
 {
     if (OffScreenResourcesReady)
     {
-        auto &RT = *ViewportRTs[GetRenderContext().get_active_frame_index()];
-        auto &views = RT.get_views();
+        auto& RT = *ViewportRTs[GetRenderContext().get_active_frame_index()];
+        auto& views = RT.get_views();
         {
             // Image 0 is the swapchain
             vkb::ImageMemoryBarrier memory_barrier{};
@@ -273,10 +273,10 @@ void RenderSystem::DrawRenderpass(vkb::CommandBuffer &command_buffer, vkb::Rende
             memory_barrier.new_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
             memory_barrier.src_access_mask = {};
             memory_barrier.dst_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
-                                             VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+                VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
             memory_barrier.src_stage_mask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
             memory_barrier.dst_stage_mask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT |
-                                            VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+                VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 
             command_buffer.image_memory_barrier(views[1], memory_barrier);
             RT.set_layout(1, memory_barrier.new_layout);
@@ -309,7 +309,7 @@ void RenderSystem::DrawRenderpass(vkb::CommandBuffer &command_buffer, vkb::Rende
     renderPassBeginInfo.renderArea.extent.height = render_target.get_extent().height;
     renderPassBeginInfo.clearValueCount = 1;
     renderPassBeginInfo.pClearValues = clearValues;
-    auto &framebuffer = device->get_resource_cache().request_framebuffer(render_target, *EditorUIRenderpass);
+    auto& framebuffer = device->get_resource_cache().request_framebuffer(render_target, *EditorUIRenderpass);
     renderPassBeginInfo.framebuffer = framebuffer.get_handle();
     vkCmdBeginRenderPass(command_buffer.GetHandle(), &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), command_buffer.GetHandle());
@@ -404,7 +404,7 @@ void RenderSystem::Finish()
     }
 }
 
-void RenderSystem::SetViewportAndScissor(vkb::CommandBuffer const &command_buffer, VkExtent2D const &extent)
+void RenderSystem::SetViewportAndScissor(vkb::CommandBuffer const& command_buffer, VkExtent2D const& extent)
 {
     VkViewport viewport;
     viewport.x = 0.0f;
@@ -426,13 +426,14 @@ void RenderSystem::CreateRenderContext()
     CreateRenderContext_Impl(surface_priority_list);
 }
 
-void RenderSystem::CreateRenderContext_Impl(const std::vector<VkSurfaceFormatKHR> &surface_priority_list)
+void RenderSystem::CreateRenderContext_Impl(const std::vector<VkSurfaceFormatKHR>& surface_priority_list)
 {
     VkPresentModeKHR present_mode = (window->GetProperties().vsync == vkb::Window::Vsync::ON)
                                         ? VK_PRESENT_MODE_FIFO_KHR
                                         : VK_PRESENT_MODE_MAILBOX_KHR;
     std::vector<VkPresentModeKHR> present_mode_priority_list{
-        VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_IMMEDIATE_KHR, VK_PRESENT_MODE_FIFO_KHR};
+        VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_IMMEDIATE_KHR, VK_PRESENT_MODE_FIFO_KHR
+    };
     render_context =
         std::make_unique<vkb::RenderContext>(*device, surface, *window, present_mode,
                                              present_mode_priority_list, surface_priority_list);
@@ -477,37 +478,37 @@ void RenderSystem::SetApiVersion(uint32_t requested_api_version)
     api_version = requested_api_version;
 }
 
-void RenderSystem::SetRenderContext(std::unique_ptr<vkb::RenderContext> &&rc)
+void RenderSystem::SetRenderContext(std::unique_ptr<vkb::RenderContext>&& rc)
 {
     render_context.reset(rc.release());
 }
 
-void RenderSystem::SetRenderPipeline(std::unique_ptr<vkb::RenderPipeline> &&rp)
+void RenderSystem::SetRenderPipeline(std::unique_ptr<vkb::RenderPipeline>&& rp)
 {
     render_pipeline.reset(rp.release());
 }
 
-void RenderSystem::AddDeviceExtension(const char *extension, bool optional)
+void RenderSystem::AddDeviceExtension(const char* extension, bool optional)
 {
     device_extensions[extension] = optional;
 }
 
-void RenderSystem::AddInstanceExtension(const char *extension, bool optional)
+void RenderSystem::AddInstanceExtension(const char* extension, bool optional)
 {
     instance_extensions[extension] = optional;
 }
 
-void RenderSystem::AddInstanceLayer(const char *layer, bool optional)
+void RenderSystem::AddInstanceLayer(const char* layer, bool optional)
 {
     instance_layers[layer] = optional;
 }
 
-void RenderSystem::AddLayerSetting(VkLayerSettingEXT const &layerSetting)
+void RenderSystem::AddLayerSetting(VkLayerSettingEXT const& layerSetting)
 {
     layer_settings.push_back(layerSetting);
 }
 
-void RenderSystem::InitializeUIRenderBackend(EditorUIInterface *UIManager)
+void RenderSystem::InitializeUIRenderBackend(EditorUIInterface* UIManager)
 {
     this->UIManager = UIManager;
     // TODO
@@ -517,23 +518,25 @@ void RenderSystem::InitializeUIRenderBackend(EditorUIInterface *UIManager)
     });*/
 
     auto pRenderPass = vks::RenderPassBuilder(device->GetHandle())
-                           .addAttachment(
-                               render_context->get_format(), VK_SAMPLE_COUNT_1_BIT,
-                               VK_ATTACHMENT_LOAD_OP_CLEAR,
-                               VK_ATTACHMENT_STORE_OP_STORE,
-                               VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                               VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) // Type conversions are all explicit.
-                           .addSubpass(VK_PIPELINE_BIND_POINT_GRAPHICS, {0})
-                           .addDependency(VK_SUBPASS_EXTERNAL, 0,
-                                          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                                          VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                                          VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-                                          VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-                           .buildRaw();
+                       .addAttachment(
+                           render_context->get_format(), VK_SAMPLE_COUNT_1_BIT,
+                           VK_ATTACHMENT_LOAD_OP_CLEAR,
+                           VK_ATTACHMENT_STORE_OP_STORE,
+                           VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                           VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) // Type conversions are all explicit.
+                       .addSubpass(VK_PIPELINE_BIND_POINT_GRAPHICS, {0})
+                       .addDependency(VK_SUBPASS_EXTERNAL, 0,
+                                      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                                      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+                                      VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                                      VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+                       .buildRaw();
 
     EditorUIRenderpass = std::make_unique<vkb::RenderPass>(*device, pRenderPass);
 
-    this->UIManager->Prepare(EditorUIRenderpass->GetHandle(), device->get_suitable_graphics_queue().get_handle(), render_context->get_swapchain().get_images().size(), render_context->get_swapchain().get_images().size());
+    this->UIManager->Prepare(EditorUIRenderpass->GetHandle(), device->get_suitable_graphics_queue().get_handle(),
+                             render_context->get_swapchain().get_images().size(),
+                             render_context->get_swapchain().get_images().size());
 }
 
 std::unique_ptr<vkb::RenderPipeline> RenderSystem::CreateOneRenderpassTwoSubpasses()
@@ -584,28 +587,32 @@ std::unique_ptr<vkb::RenderTarget> RenderSystem::CreateRenderTarget(ImVec2 size)
         extent,
         VK_FORMAT_R8G8B8A8_UNORM,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-        VMA_MEMORY_USAGE_GPU_ONLY};
+        VMA_MEMORY_USAGE_GPU_ONLY
+    };
 
     vkb::Image depth_image{
         GetDevice(),
         extent,
         vkb::get_suitable_depth_format(GetDevice().get_gpu().get_handle()),
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | rt_usage_flags,
-        VMA_MEMORY_USAGE_GPU_ONLY};
+        VMA_MEMORY_USAGE_GPU_ONLY
+    };
 
     vkb::Image albedo_image{
         GetDevice(),
         extent,
         albedo_format,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | rt_usage_flags,
-        VMA_MEMORY_USAGE_GPU_ONLY};
+        VMA_MEMORY_USAGE_GPU_ONLY
+    };
 
     vkb::Image normal_image{
         GetDevice(),
         extent,
         normal_format,
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | rt_usage_flags,
-        VMA_MEMORY_USAGE_GPU_ONLY};
+        VMA_MEMORY_USAGE_GPU_ONLY
+    };
 
     std::vector<vkb::Image> images;
 
@@ -624,7 +631,8 @@ std::unique_ptr<vkb::RenderTarget> RenderSystem::CreateRenderTarget(ImVec2 size)
     return std::make_unique<vkb::RenderTarget>(std::move(images));
 }
 
-/*void RenderSystem::ViewportResize(ImVec2 size)
+void RenderSystem::ResetViewportRTs(ImVec2& size, vkb::Sampler* sampler,
+                                    std::vector<VkDescriptorSet>& ViewportDescriptorSets)
 {
     if (size.x < 256 && size.y < 256)
     {
@@ -640,22 +648,24 @@ std::unique_ptr<vkb::RenderTarget> RenderSystem::CreateRenderTarget(ImVec2 size)
         ViewportRTs[i] = CreateRenderTarget(size);
     }
 
-    for (uint32_t i = 0; i < EditorUI->ViewportDescriptorSets.size(); i++)
+    for (uint32_t i = 0; i < ViewportDescriptorSets.size(); i++)
     {
-        ImGui_ImplVulkan_RemoveTexture(EditorUI->ViewportDescriptorSets[i]);
-        EditorUI->ViewportDescriptorSets[i]
-            = ImGui_ImplVulkan_AddTexture(EditorUI->OffScreenSampler->GetHandle(),
+        if (ViewportDescriptorSets[i])
+            ImGui_ImplVulkan_RemoveTexture(ViewportDescriptorSets[i]);
+
+        ViewportDescriptorSets[i]
+            = ImGui_ImplVulkan_AddTexture(sampler->GetHandle(),
                                           ViewportRTs[i]->get_views()[0].GetHandle(),
                                           VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     }
     camera->set_aspect_ratio(size.x / size.y);
     OffScreenResourcesReady = true;
-}*/
+}
 
-void RenderSystem::DrawPipeline(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target,
-                                vkb::RenderPipeline &render_pipeline)
+void RenderSystem::DrawPipeline(vkb::CommandBuffer& command_buffer, vkb::RenderTarget& render_target,
+                                vkb::RenderPipeline& render_pipeline)
 {
-    auto &extent = render_target.get_extent();
+    auto& extent = render_target.get_extent();
 
     VkViewport viewport{};
     viewport.width = static_cast<float>(extent.width);
@@ -673,32 +683,32 @@ void RenderSystem::DrawPipeline(vkb::CommandBuffer &command_buffer, vkb::RenderT
     command_buffer.end_render_pass();
 }
 
-std::unordered_map<const char *, bool> const &RenderSystem::GetDeviceExtensions() const
+std::unordered_map<const char*, bool> const& RenderSystem::GetDeviceExtensions() const
 {
     return device_extensions;
 }
 
-std::unordered_map<const char *, bool> const &RenderSystem::GetInstanceExtensions() const
+std::unordered_map<const char*, bool> const& RenderSystem::GetInstanceExtensions() const
 {
     return instance_extensions;
 }
 
-std::unordered_map<const char *, bool> const &RenderSystem::GetInstanceLayers() const
+std::unordered_map<const char*, bool> const& RenderSystem::GetInstanceLayers() const
 {
     return instance_layers;
 }
 
-std::vector<VkLayerSettingEXT> const &RenderSystem::GetLayerSettings() const
+std::vector<VkLayerSettingEXT> const& RenderSystem::GetLayerSettings() const
 {
     return layer_settings;
 }
 
-std::vector<VkSurfaceFormatKHR> const &RenderSystem::GetSurfacePriorityList() const
+std::vector<VkSurfaceFormatKHR> const& RenderSystem::GetSurfacePriorityList() const
 {
     return surface_priority_list;
 }
 
-std::vector<VkSurfaceFormatKHR> &RenderSystem::GetSurfacePriorityList()
+std::vector<VkSurfaceFormatKHR>& RenderSystem::GetSurfacePriorityList()
 {
     return surface_priority_list;
 }
