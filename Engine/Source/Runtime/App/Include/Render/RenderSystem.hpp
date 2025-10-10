@@ -11,6 +11,11 @@
 #include "Framework/Rendering/RenderPipeline.hpp"
 
 
+namespace vkb
+{
+    class Sampler;
+}
+
 namespace vkb::sg
 {
     class Scene;
@@ -95,6 +100,7 @@ public:
     bool OffScreenResourcesReady = false;
     std::unique_ptr<vkb::RenderTarget> CreateRenderTarget(ImVec2 size);
 
+    void ResetViewportRTs(ImVec2& size, vkb::Sampler* sampler, std::vector<VkDescriptorSet>& ViewportDescriptorSets);
     std::vector<std::unique_ptr<vkb::RenderTarget>> ViewportRTs;
 
     vkb::sg::PerspectiveCamera* camera{};

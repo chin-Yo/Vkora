@@ -9,14 +9,13 @@
 #include "Panel/FileBrowser.hpp"
 #include "Panel/HierarchyPanel.hpp"
 #include "Panel/MenuBar.hpp"
+#include "Panel/Viewport.hpp"
 #include "Render/RenderSystem.hpp"
 
 EditorUIManager::EditorUIManager(vkb::VulkanDevice& device)
     : device(device)
 
 {
-    OffScreenSampler = new vkb::Sampler({device, vks::initializers::samplerCreateInfo()});
-    ViewportDescriptorSets.resize(3);
     descriptorPool = vks::DescriptorPoolBuilder(device.GetHandle())
                      .setMaxSets(10)
                      .addPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, 1000)
@@ -43,6 +42,7 @@ void EditorUIManager::Initialize()
     EditorPanels.push_back(std::make_shared<MenuBar>());
     EditorPanels.push_back(std::make_shared<HierarchyPanel>());
     EditorPanels.push_back(std::make_shared<FileBrowser>());
+    EditorPanels.push_back(std::make_shared<ViewportPanel>());
 
     GRuntimeGlobalContext.renderSystem->InitializeUIRenderBackend(this);
 }
@@ -97,12 +97,7 @@ void EditorUIManager::Prepare(VkRenderPass renderPass, VkQueue queue, uint32_t M
 
 void EditorUIManager::Shutdown()
 {
-    delete OffScreenSampler;
-    for (uint32_t i = 0; i < ViewportDescriptorSets.size(); i++)
-    {
-        if (ViewportDescriptorSets[i])
-            ImGui_ImplVulkan_RemoveTexture(ViewportDescriptorSets[i]);
-    }
+    EditorPanels.clear();
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();

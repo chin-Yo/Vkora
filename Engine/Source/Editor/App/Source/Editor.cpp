@@ -3,6 +3,7 @@
 #include "Engine.hpp"
 #include "GlobalContext.hpp"
 #include "Render/RenderSystem.hpp"
+#include "UIManage/EditorGlobalContext.hpp"
 
 Editor::Editor()
 {
@@ -19,6 +20,7 @@ void Editor::Initialize(Engine* RuntimeEngine)
 
     EditorManager = std::make_unique<EditorUIManager>(GRuntimeGlobalContext.renderSystem->GetDevice());
     EditorManager->Initialize();
+    GEditorGlobalContext.Initialize({EditorManager.get()});
 }
 
 void Editor::Clear()
