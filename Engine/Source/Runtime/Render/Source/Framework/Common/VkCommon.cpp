@@ -7,14 +7,14 @@ namespace vkb
     bool is_depth_only_format(VkFormat format)
     {
         return format == VK_FORMAT_D16_UNORM ||
-               format == VK_FORMAT_D32_SFLOAT;
+            format == VK_FORMAT_D32_SFLOAT;
     }
 
     bool is_depth_stencil_format(VkFormat format)
     {
         return format == VK_FORMAT_D16_UNORM_S8_UINT ||
-               format == VK_FORMAT_D24_UNORM_S8_UINT ||
-               format == VK_FORMAT_D32_SFLOAT_S8_UINT;
+            format == VK_FORMAT_D24_UNORM_S8_UINT ||
+            format == VK_FORMAT_D32_SFLOAT_S8_UINT;
     }
 
     bool is_depth_format(VkFormat format)
@@ -23,11 +23,11 @@ namespace vkb
     }
 
     VkFormat get_suitable_depth_format(VkPhysicalDevice physical_device, bool depth_only,
-                                       const std::vector<VkFormat> &depth_format_priority_list)
+                                       const std::vector<VkFormat>& depth_format_priority_list)
     {
         VkFormat depth_format{VK_FORMAT_UNDEFINED};
 
-        for (auto &format : depth_format_priority_list)
+        for (auto& format : depth_format_priority_list)
         {
             if (depth_only && !is_depth_only_format(format))
             {
@@ -55,9 +55,9 @@ namespace vkb
     }
 
     VkFormat choose_blendable_format(VkPhysicalDevice physical_device,
-                                     const std::vector<VkFormat> &format_priority_list)
+                                     const std::vector<VkFormat>& format_priority_list)
     {
-        for (const auto &format : format_priority_list)
+        for (const auto& format : format_priority_list)
         {
             VkFormatProperties properties;
             vkGetPhysicalDeviceFormatProperties(physical_device, format, &properties);
@@ -70,8 +70,8 @@ namespace vkb
         throw std::runtime_error("No suitable blendable format could be determined");
     }
 
-    void make_filters_valid(VkPhysicalDevice physical_device, VkFormat format, VkFilter *filter,
-                            VkSamplerMipmapMode *mipmapMode)
+    void make_filters_valid(VkPhysicalDevice physical_device, VkFormat format, VkFilter* filter,
+                            VkSamplerMipmapMode* mipmapMode)
     {
         // Not all formats support linear filtering, so we need to adjust them if they don't
         if (*filter == VK_FILTER_NEAREST && (mipmapMode == nullptr || *mipmapMode == VK_SAMPLER_MIPMAP_MODE_NEAREST))
@@ -95,14 +95,14 @@ namespace vkb
     bool is_dynamic_buffer_descriptor_type(VkDescriptorType descriptor_type)
     {
         return descriptor_type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC ||
-               descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+            descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
     }
 
     bool is_buffer_descriptor_type(VkDescriptorType descriptor_type)
     {
         return descriptor_type == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER ||
-               descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER ||
-               is_dynamic_buffer_descriptor_type(descriptor_type);
+            descriptor_type == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER ||
+            is_dynamic_buffer_descriptor_type(descriptor_type);
     }
 
     int32_t get_bits_per_pixel(VkFormat format)
@@ -288,7 +288,8 @@ namespace vkb
             VK_IMAGE_COMPRESSION_FIXED_RATE_17BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_18BPC_BIT_EXT,
             VK_IMAGE_COMPRESSION_FIXED_RATE_19BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_20BPC_BIT_EXT,
             VK_IMAGE_COMPRESSION_FIXED_RATE_21BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_22BPC_BIT_EXT,
-            VK_IMAGE_COMPRESSION_FIXED_RATE_23BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_24BPC_BIT_EXT};
+            VK_IMAGE_COMPRESSION_FIXED_RATE_23BPC_BIT_EXT, VK_IMAGE_COMPRESSION_FIXED_RATE_24BPC_BIT_EXT
+        };
 
         std::vector<VkImageCompressionFixedRateFlagBitsEXT> flags_vector;
 
@@ -304,10 +305,11 @@ namespace vkb
     }
 
     VkImageCompressionPropertiesEXT query_supported_fixed_rate_compression(
-        VkPhysicalDevice gpu, const VkImageCreateInfo &create_info)
+        VkPhysicalDevice gpu, const VkImageCreateInfo& create_info)
     {
         VkImageCompressionPropertiesEXT supported_compression_properties{
-            VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT};
+            VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT
+        };
 
         VkImageCompressionControlEXT compression_control{VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_CONTROL_EXT};
         compression_control.flags = VK_IMAGE_COMPRESSION_FIXED_RATE_DEFAULT_EXT;
@@ -418,7 +420,7 @@ namespace vkb
                                  VkAccessFlags dst_access_mask,
                                  VkImageLayout old_layout,
                                  VkImageLayout new_layout,
-                                 VkImageSubresourceRange const &subresource_range)
+                                 VkImageSubresourceRange const& subresource_range)
     {
         // Create an image barrier object
         VkImageMemoryBarrier image_memory_barrier{};
@@ -441,7 +443,7 @@ namespace vkb
                                  VkImage image,
                                  VkImageLayout old_layout,
                                  VkImageLayout new_layout,
-                                 VkImageSubresourceRange const &subresource_range)
+                                 VkImageSubresourceRange const& subresource_range)
     {
         VkPipelineStageFlags src_stage_mask = getPipelineStageFlags(old_layout);
         VkPipelineStageFlags dst_stage_mask = getPipelineStageFlags(new_layout);
@@ -468,7 +470,7 @@ namespace vkb
     }
 
     void image_layout_transition(VkCommandBuffer command_buffer,
-                                 std::vector<std::pair<VkImage, VkImageSubresourceRange>> const &imagesAndRanges,
+                                 std::vector<std::pair<VkImage, VkImageSubresourceRange>> const& imagesAndRanges,
                                  VkImageLayout old_layout,
                                  VkImageLayout new_layout)
     {
@@ -492,7 +494,8 @@ namespace vkb
                 VK_QUEUE_FAMILY_IGNORED,
                 VK_QUEUE_FAMILY_IGNORED,
                 imagesAndRanges[i].first,
-                imagesAndRanges[i].second});
+                imagesAndRanges[i].second
+            });
         }
 
         // Put barriers inside setup command buffer
@@ -586,10 +589,10 @@ namespace vkb
         {
             // Clear values TODO
             std::vector<VkClearValue> clear_value{4};
-            clear_value[0].color = {{1.0f, 0.0f, 0.0f, 1.0f}};
-            clear_value[1].depthStencil = {1.0f, ~0U};
-            clear_value[2].color = {{1.0f, 0.0f, 0.0f, 1.0f}};
-            clear_value[3].color = {{1.0f, 0.0f, 0.0f, 1.0f}};
+            clear_value[0].color = {{0.2f, 0.2f, 0.2f, 1.0f}};
+            clear_value[1].depthStencil = {0.0f, ~0U};
+            clear_value[2].color = {{0.2f, 0.2f, 0.2f, 1.0f}};
+            clear_value[3].color = {{0.2f, 0.2f, 0.2f, 1.0f}};
 
             return clear_value;
         }
