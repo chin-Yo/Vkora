@@ -45,7 +45,7 @@ void main(void)
     // Transform normals from [-1, 1] to [0, 1]
     o_normal = vec4(0.5 * normal + 0.5, 1.0);
 
-    vec4 base_color = vec4(1.0, 0.0, 0.0, 1.0);
+    vec4 base_color = vec4(0.3, 0.3, 0.3, 1.0);
 
     //base_color = texture(base_color_texture, in_uv);
 

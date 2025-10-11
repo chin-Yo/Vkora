@@ -37,107 +37,79 @@ std::string Paths::GetCurrentExecutablePath()
     return std::string(path);
 }
 
+
+fs::path FindProjectRoot()
+{
+    static const fs::path root = []()
+    {
+        fs::path exePath = fs::canonical(Paths::GetCurrentExecutablePath());
+        fs::path current = exePath.parent_path();
+
+        for (int i = 0; i < 8; ++i)
+        {
+            if (fs::exists(current / "CMakeLists.txt"))
+            {
+                return current;
+            }
+            current = current.parent_path();
+        }
+
+        throw std::runtime_error("Could not find project root directory (CMakeLists.txt not found).");
+    }();
+    return root;
+}
+
+
 std::string Paths::GetAssetPath()
 {
-    fs::path exePath = fs::canonical(GetCurrentExecutablePath());
-    fs::path binDir = exePath.parent_path();
-
-    fs::path projectRoot = binDir;
-    for (int i = 0; i < 8; ++i)
+    static const std::string path = []()
     {
-        if (fs::exists(projectRoot / "CMakeLists.txt"))
+        fs::path p = FindProjectRoot() / "Assets";
+        if (!fs::exists(p))
         {
-            break;
+            throw std::runtime_error("Asset directory not found: " + p.string());
         }
-        projectRoot = projectRoot.parent_path();
-    }
-
-    if (!fs::exists(projectRoot / "CMakeLists.txt"))
-    {
-        throw std::runtime_error("Could not find project root directory.");
-    }
-
-    fs::path assetPath = projectRoot / "Assets";
-
-    if (!fs::exists(assetPath))
-    {
-        throw std::runtime_error("Asset directory not found: " + assetPath.string());
-    }
-
-    return assetPath.string();
+        return p.string();
+    }();
+    return path;
 }
 
 std::string Paths::GetAssetFullPath(const std::string& relativePath)
 {
-    return GetAssetPath() + "/" + relativePath;
+    return (fs::path(GetAssetPath()) / relativePath).string();
 }
 
 std::string Paths::GetShaderPath()
 {
-    fs::path exePath = fs::canonical(GetCurrentExecutablePath());
-    fs::path binDir = exePath.parent_path();
-
-    fs::path projectRoot = binDir;
-    for (int i = 0; i < 8; ++i)
+    static const std::string path = []()
     {
-        if (fs::exists(projectRoot / "CMakeLists.txt"))
+        fs::path p = FindProjectRoot() / "Engine" / "Shaders";
+        if (!fs::exists(p))
         {
-            break;
+            throw std::runtime_error("Shaders directory not found: " + p.string());
         }
-        projectRoot = projectRoot.parent_path();
-    }
-
-    if (!fs::exists(projectRoot / "CMakeLists.txt"))
-    {
-        throw std::runtime_error("Could not find project root directory.");
-    }
-
-    fs::path assetPath = projectRoot / "Engine/Shaders";
-
-    if (!fs::exists(assetPath))
-    {
-        throw std::runtime_error("Shaders/spv directory not found: " + assetPath.string());
-    }
-
-    return assetPath.string();
+        return p.string();
+    }();
+    return path;
 }
 
 std::string Paths::GetShaderFullPath(const std::string& relativePath)
 {
-    return GetShaderPath() + "/" + relativePath;
+    return (fs::path(GetShaderPath()) / relativePath).string();
 }
 
 std::string Paths::GetEngineRootPath()
 {
-    fs::path exePath = fs::canonical(GetCurrentExecutablePath());
-    fs::path binDir = exePath.parent_path();
-
-    fs::path projectRoot = binDir;
-    for (int i = 0; i < 8; ++i)
-    {
-        if (fs::exists(projectRoot / "CMakeLists.txt"))
-        {
-            break;
-        }
-        projectRoot = projectRoot.parent_path();
-    }
-
-    if (!fs::exists(projectRoot / "CMakeLists.txt"))
-    {
-        throw std::runtime_error("Could not find project root directory.");
-    }
-
-    fs::path assetPath = projectRoot;
-
-    if (!fs::exists(assetPath))
-    {
-        throw std::runtime_error("Asset directory not found: " + assetPath.string());
-    }
-
-    return assetPath.string();
+    static const std::string path = FindProjectRoot().string();
+    return path;
 }
 
 std::string Paths::GetContentPath()
 {
-    return GetEngineRootPath() + "/Engine/Content";
+    static const std::string path = []()
+    {
+        fs::path p = FindProjectRoot() / "Engine" / "Content";
+        return p.string();
+    }();
+    return path;
 }

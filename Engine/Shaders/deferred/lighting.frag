@@ -106,6 +106,5 @@ void main()
 	}
 	vec3 ambient_color = vec3(0.2) * albedo.xyz;
 	
-	//o_color = vec4(ambient_color + L * albedo.xyz, 1.0);
-	o_color = vec4(1.0,0.4,0.7,1.0);
+	o_color = vec4(ambient_color + L * albedo.xyz, 1.0);
 }

@@ -38,7 +38,7 @@ namespace vkb
         }
         else
         {
-            // TODO LOGE("Ignore buffer allocation update");
+            LOGE("Ignore buffer allocation update");
         }
     }
 
@@ -136,7 +136,7 @@ namespace vkb
                                      });
         if (it == buffer_blocks.end())
         {
-            // TODO LOGD("Building #{} buffer block ({})", buffer_blocks.size(), vk::to_string(usage));
+            LOGD("Building #{} buffer block ({})", buffer_blocks.size(), vk::to_string(usage));
 
             VkDeviceSize new_block_size = minimal ? minimum_size : std::max(block_size, minimum_size);
 
