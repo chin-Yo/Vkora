@@ -47,7 +47,19 @@ void HierarchyPanel::CreateTree()
             ImGui::EndTable();
         }
     }
+    if (ImGui::BeginPopupContextWindow("HierarchyContext"))
+    {
+        if (ImGui::MenuItem("CreateNode"))
+        {
+        }
+        ImGui::Separator();
+        if (ImGui::MenuItem("Refresh"))
+        {
+        }
+        ImGui::EndPopup();
+    }
     ImGui::EndChild();
+    
     ImGui::End();
 }
 

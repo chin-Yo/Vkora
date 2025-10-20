@@ -4,6 +4,7 @@
 #include <string>
 #include "WindowSystem.hpp"
 
+class WorldManager;
 class RenderSystem;
 class WindowSystem;
 
@@ -21,6 +22,7 @@ public:
 public:
     std::shared_ptr<WindowSystem> windowSystem;
     std::shared_ptr<RenderSystem> renderSystem;
+    std::shared_ptr<WorldManager> worldManager;
 };
 
 extern RuntimeGlobalContext GRuntimeGlobalContext;

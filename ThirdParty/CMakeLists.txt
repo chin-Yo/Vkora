@@ -246,3 +246,7 @@ add_library(ctpl INTERFACE)
 set(CTPL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/CTPL)
 #target_sources(ctpl INTERFACE ${CTPL_DIR}/ctpl_stl.h)
 target_include_directories(ctpl SYSTEM INTERFACE ${CTPL_DIR})
+
+# rttr rttr_core_lib
+add_subdirectory(rttr)
+set_target_properties(rttr_core_lib PROPERTIES FOLDER ${third_party_folder}/rttr)

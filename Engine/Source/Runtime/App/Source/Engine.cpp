@@ -7,10 +7,13 @@
 #include "Render/RenderSystem.hpp"
 #include <algorithm>
 
+#include "World/WorldManager.hpp"
+
 const float Engine::FPSAlpha = 1.f / 100;
 
 void Engine::LogicalTick(float DeltaTime)
 {
+    GRuntimeGlobalContext.worldManager->UpdateActiveWorld(DeltaTime);
 }
 
 bool Engine::RendererTick(float DeltaTime)
