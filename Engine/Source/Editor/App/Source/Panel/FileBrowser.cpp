@@ -15,9 +15,8 @@ void FileBrowser::OnUIRender()
                           ImGuiChildFlags_ResizeX | ImGuiChildFlags_Borders | ImGuiChildFlags_NavFlattened))
     {
         RenderDirectoryTreeWithSelection(fs::path(Paths::GetContentPath()));
+        ImGui::EndChild();
     }
-    ImGui::EndChild();
-
     ImGui::End();
 }
 

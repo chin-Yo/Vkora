@@ -4,6 +4,7 @@
 #include "GlobalContext.hpp"
 #include "Render/RenderSystem.hpp"
 #include "UIManage/EditorGlobalContext.hpp"
+#include "World/WorldManager.hpp"
 
 Editor::Editor()
 {

@@ -23,20 +23,18 @@
 #include <volk.h>
 
 #include "Framework/Rendering/RenderContext.hpp"
-#include "SceneGraph/Components/Light.h"
+#include "Engine/SceneGraph/Components/Light.hpp"
+
+namespace scene
+{
+    class Node;
+    class Light;
+    class Scene;
+}
 
 namespace vkb
 {
     struct LightingState;
-
-    namespace sg
-    {
-        class Node;
-        struct LightProperties;
-        class Light;
-        class Scene;
-    }
-
     /**
      * @brief Extracts the extension from an uri
      * @param uri An uniform Resource Identifier
@@ -67,9 +65,9 @@ namespace vkb
      * @param parent_node The parent node for the line, defaults to root
      * @return The newly created light component
      */
-    sg::Light& add_light(sg::Scene& scene, sg::LightType type, const glm::vec3& position,
-                         const glm::quat& rotation = {}, const sg::LightProperties& props = {},
-                         sg::Node* parent_node = nullptr);
+    scene::Light& add_light(scene::Scene& scene, scene::LightType type, const glm::vec3& position,
+                            const glm::quat& rotation = {}, const scene::LightProperties& props = {},
+                            scene::Node* parent_node = nullptr);
 
     /**
      * @brief Adds a point light to the scene with the specified parameters
@@ -79,8 +77,9 @@ namespace vkb
      * @param parent_node The parent node for the line, defaults to root
      * @return The newly created light component
      */
-    sg::Light& add_point_light(sg::Scene& scene, const glm::vec3& position, const sg::LightProperties& props = {},
-                               sg::Node* parent_node = nullptr);
+    scene::Light& add_point_light(scene::Scene& scene, const glm::vec3& position,
+                                  const scene::LightProperties& props = {},
+                                  scene::Node* parent_node = nullptr);
 
     /**
      * @brief Adds a directional light to the scene with the specified parameters
@@ -90,8 +89,9 @@ namespace vkb
      * @param parent_node The parent node for the line, defaults to root
      * @return The newly created light component
      */
-    sg::Light& add_directional_light(sg::Scene& scene, const glm::quat& rotation, const sg::LightProperties& props = {},
-                                     sg::Node* parent_node = nullptr);
+    scene::Light& add_directional_light(scene::Scene& scene, const glm::quat& rotation,
+                                        const scene::LightProperties& props = {},
+                                        scene::Node* parent_node = nullptr);
 
     /**
      * @brief Adds a spot light to the scene with the specified parameters
@@ -102,8 +102,8 @@ namespace vkb
      * @param parent_node The parent node for the line, defaults to root
      * @return The newly created light component
      */
-    sg::Light& add_spot_light(sg::Scene& scene, const glm::vec3& position, const glm::quat& rotation,
-                              const sg::LightProperties& props = {}, sg::Node* parent_node = nullptr);
+    scene::Light& add_spot_light(scene::Scene& scene, const glm::vec3& position, const glm::quat& rotation,
+                                 const scene::LightProperties& props = {}, scene::Node* parent_node = nullptr);
 
     /**
      * @brief Add free camera script to a node with a camera object.
@@ -113,9 +113,9 @@ namespace vkb
      * @param extent The initial resolution of the camera
      * @return Node where the script was attached as component
      */
-    sg::Node& add_free_camera(sg::Scene& scene, const std::string& node_name, VkExtent2D extent);
+    scene::Node& add_free_camera(scene::Scene& scene, const std::string& node_name, VkExtent2D extent);
 
 
-    void allocate_lightState(const std::vector<sg::Light*>& scene_lights,
+    void allocate_lightState(std::vector<scene::Light>& scene_lights,
                              size_t max_lights_per_type, vkb::LightingState& lighting_state);
 } // namespace vkb

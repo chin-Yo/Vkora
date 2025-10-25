@@ -1,4 +1,5 @@
 #pragma once
+#include "Engine/SceneGraph/Node.hpp"
 
 struct EditorGlobalContextInitInfo
 {
@@ -13,6 +14,7 @@ public:
     //class EditorInputManager* m_input_manager{nullptr};
     //class RenderSystem* m_render_system{nullptr};
     //class WindowSystem* m_window_system{nullptr};
+    scene::Node* selectedNode{nullptr};
 
 public:
     void Initialize(const EditorGlobalContextInitInfo& init_info);

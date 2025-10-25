@@ -7,10 +7,13 @@
 #include "Render/RenderSystem.hpp"
 #include <algorithm>
 
+#include "World/WorldManager.hpp"
+
 const float Engine::FPSAlpha = 1.f / 100;
 
 void Engine::LogicalTick(float DeltaTime)
 {
+    GRuntimeGlobalContext.worldManager->UpdateActiveWorld(DeltaTime);
 }
 
 bool Engine::RendererTick(float DeltaTime)
@@ -99,6 +102,10 @@ void Engine::Initialize()
                 this->SetIsIconify(bIsIconify);
         }
     );
+    if (!GRuntimeGlobalContext.worldManager->GetActiveWorld())
+    {
+        GRuntimeGlobalContext.worldManager->CreateWorld("DefaultWorld");
+    }
     if (!GRuntimeGlobalContext.renderSystem->Prepare(app_options))
     {
         LOG_CRITICAL("Prepare failed !!!")

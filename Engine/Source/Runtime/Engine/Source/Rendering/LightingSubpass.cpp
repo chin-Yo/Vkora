@@ -18,16 +18,18 @@
 
 #include "Rendering/LightingSubpass.hpp"
 
+#include "Engine/SceneGraph/ComponentPool.hpp"
 #include "Framework/Core/CommandBuffer.hpp"
 #include "Framework/Core/VulkanDevice.hpp"
-#include "SceneGraph/Scene.h"
-#include "SceneGraph/Components/Camera.h"
+#include "Engine/SceneGraph/Scene.hpp"
+#include "Engine/SceneGraph/Components/Camera.hpp"
+#include "Engine/SceneGraph/Components/Light.hpp"
 #include "Tools/Utils.hpp"
 
 namespace vkb
 {
     LightingSubpass::LightingSubpass(RenderContext& render_context, ShaderSource&& vertex_shader,
-                                     ShaderSource&& fragment_shader, sg::Camera& cam, sg::Scene& scene_,
+                                     ShaderSource&& fragment_shader, scene::Camera& cam, scene::Scene& scene_,
                                      std::vector<std::unique_ptr<vkb::RenderTarget>>& viewport_render_targets) :
         Subpass{render_context, std::move(vertex_shader), std::move(fragment_shader)},
         camera{cam},
@@ -46,7 +48,8 @@ namespace vkb
     void LightingSubpass::draw(vkb::CommandBuffer& command_buffer)
     {
         vkb::LightingState lighting_state;
-        vkb::allocate_lightState(scene.get_components<sg::Light>(), MAX_DEFERRED_LIGHT_COUNT, lighting_state);
+        vkb::allocate_lightState(scene.GetComponentManager()->GetComponentsByClass<scene::Light>(),
+                                 MAX_DEFERRED_LIGHT_COUNT, lighting_state);
 
         allocate_lights<DeferredLights>(lighting_state);
         command_buffer.bind_lighting(get_lighting_state(), 0, 4);
@@ -97,7 +100,7 @@ namespace vkb
 
         // Inverse view projection
         light_uniform.inv_view_proj = glm::inverse(
-            vkb::vulkan_style_projection(camera.get_projection()) * camera.get_view());
+            vkb::vulkan_style_projection(camera.GetProjection()) * camera.GetView());
 
         // Allocate a buffer using the buffer pool from the active frame to store uniform values and bind it
         auto& render_frame = get_render_context().get_active_frame();
