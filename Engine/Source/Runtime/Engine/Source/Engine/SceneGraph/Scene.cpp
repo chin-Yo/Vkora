@@ -26,6 +26,7 @@ namespace scene
     Scene::Scene(const std::string& name) :
         name{name}
     {
+        componentManager = std::make_unique<ComponentManager>();
     }
 
     void Scene::SetName(const std::string& new_name)
@@ -42,6 +43,11 @@ namespace scene
     {
         assert(nodes.empty() && "Scene nodes were already set");
         nodes = std::move(n);
+    }
+
+    const std::vector<std::unique_ptr<Node>>& Scene::GetNodes() const
+    {
+        return nodes;
     }
 
     void Scene::AddNode(std::unique_ptr<Node> n)

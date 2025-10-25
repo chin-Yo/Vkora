@@ -20,17 +20,18 @@
 #include <queue>
 #include <stdexcept>
 
+#include "Engine/SceneGraph/ComponentPool.hpp"
 #include "Framework/Core/Buffer.hpp"
 #include "Framework/Core/CommandBuffer.hpp"
 #include "Framework/Core/Queue.hpp"
 #include "Framework/Core/VulkanDevice.hpp"
 #include "Framework/Rendering/RenderFrame.hpp"
 #include "Rendering/LightingSubpass.hpp"
-#include "SceneGraph/Node.h"
-#include "SceneGraph/Scene.h"
-#include "SceneGraph/Components/Camera.h"
-#include "SceneGraph/Components/Light.h"
-#include "SceneGraph/Scripts/FreeCamera.h"
+#include "Engine/SceneGraph/Node.hpp"
+#include "Engine/SceneGraph/Scene.hpp"
+#include "Engine/SceneGraph/Components/Camera.hpp"
+#include "Engine/SceneGraph/Components/Light.hpp"
+#include "Engine/SceneGraph/Components/PerspectiveCamera.hpp"
 
 namespace vkb
 {
@@ -217,57 +218,56 @@ namespace vkb
         return result.str();
     }
 
-    sg::Light& add_light(sg::Scene& scene, sg::LightType type, const glm::vec3& position, const glm::quat& rotation,
-                         const sg::LightProperties& props, sg::Node* parent_node)
+    scene::Light& add_light(scene::Scene& scene, scene::LightType type, const glm::vec3& position,
+                            const glm::quat& rotation,
+                            const scene::LightProperties& props, scene::Node* parent_node)
     {
-        auto light_ptr = std::make_unique<sg::Light>("light");
-        auto node = std::make_unique<sg::Node>(-1, "light node");
+        auto light_ptr = std::make_unique<scene::Light>("light");
+        auto node = std::make_unique<scene::Node>(&scene, "light node");
 
         if (parent_node)
         {
-            node->set_parent(*parent_node);
+            node->SetParent(*parent_node);
         }
 
         light_ptr->set_node(*node);
         light_ptr->set_light_type(type);
         light_ptr->set_properties(props);
 
-        auto& t = node->get_transform();
-        t.set_translation(position);
-        t.set_rotation(rotation);
+        auto& t = node->GetTransform();
+        t.SetTranslation(position);
+        t.SetRotation(rotation);
 
         // Storing the light component because the unique_ptr will be moved to the scene
         auto& light = *light_ptr;
 
-        node->set_component(light);
-        scene.add_child(*node);
-        scene.add_component(std::move(light_ptr));
-        scene.add_node(std::move(node));
-
+        scene.GetComponentManager()->AddComponent<scene::Light>(node.get());
+        scene.AddNode(std::move(node));
         return light;
     }
 
-    sg::Light& add_point_light(sg::Scene& scene, const glm::vec3& position, const sg::LightProperties& props,
-                               sg::Node* parent_node)
+    scene::Light& add_point_light(scene::Scene& scene, const glm::vec3& position, const scene::LightProperties& props,
+                                  scene::Node* parent_node)
     {
-        return add_light(scene, sg::LightType::Point, position, {}, props, parent_node);
+        return add_light(scene, scene::LightType::Point, position, {}, props, parent_node);
     }
 
-    sg::Light& add_directional_light(sg::Scene& scene, const glm::quat& rotation, const sg::LightProperties& props,
-                                     sg::Node* parent_node)
+    scene::Light& add_directional_light(scene::Scene& scene, const glm::quat& rotation,
+                                        const scene::LightProperties& props,
+                                        scene::Node* parent_node)
     {
-        return add_light(scene, sg::LightType::Directional, {}, rotation, props, parent_node);
+        return add_light(scene, scene::LightType::Directional, {}, rotation, props, parent_node);
     }
 
-    sg::Light& add_spot_light(sg::Scene& scene, const glm::vec3& position, const glm::quat& rotation,
-                              const sg::LightProperties& props, sg::Node* parent_node)
+    scene::Light& add_spot_light(scene::Scene& scene, const glm::vec3& position, const glm::quat& rotation,
+                                 const scene::LightProperties& props, scene::Node* parent_node)
     {
-        return add_light(scene, sg::LightType::Spot, position, rotation, props, parent_node);
+        return add_light(scene, scene::LightType::Spot, position, rotation, props, parent_node);
     }
 
-    sg::Node& add_free_camera(sg::Scene& scene, const std::string& node_name, VkExtent2D extent)
+    scene::Node& add_free_camera(scene::Scene& scene, const std::string& node_name, VkExtent2D extent)
     {
-        auto camera_node = scene.find_node(node_name);
+        /*auto camera_node = scene.find_node(node_name);
 
         if (!camera_node)
         {
@@ -281,38 +281,41 @@ namespace vkb
             throw std::runtime_error("Camera node with name `" + node_name + "` not found.");
         }
 
-        if (!camera_node->has_component<sg::Camera>())
+        if (!camera_node->has_component<scene::Camera>())
         {
             throw std::runtime_error("No camera component found for `" + node_name + "` node.");
         }
 
-        auto free_camera_script = std::make_unique<sg::FreeCamera>(*camera_node);
+        auto free_camera_script = std::make_unique<scene::FreeCamera>(*camera_node);
 
         free_camera_script->resize(extent.width, extent.height);
 
         scene.add_component(std::move(free_camera_script), *camera_node);
 
-        return *camera_node;
+        return *camera_node;*/
+        auto cameraNode = std::make_unique<scene::Node>(&scene, node_name);
+        scene.GetComponentManager()->AddComponent<scene::PerspectiveCamera>(cameraNode.get());
+        return *cameraNode;
     }
 
-    void allocate_lightState(const std::vector<sg::Light*>& scene_lights, size_t max_lights_per_type,
+    void allocate_lightState(std::vector<scene::Light>& scene_lights, size_t max_lights_per_type,
                              LightingState& lighting_state)
     {
         for (auto& scene_light : scene_lights)
         {
-            const auto& properties = scene_light->get_properties();
-            auto& transform = scene_light->get_node()->get_transform();
+            const auto& properties = scene_light.get_properties();
+            auto& transform = scene_light.get_node()->GetTransform();
 
-            Light light{
-                {transform.get_translation(), static_cast<float>(scene_light->get_light_type())},
+            vkb::Light light{
+                {transform.GetTranslation(), static_cast<float>(scene_light.get_light_type())},
                 {properties.color, properties.intensity},
-                {transform.get_rotation() * properties.direction, properties.range},
+                {transform.GetRotation() * properties.direction, properties.range},
                 {properties.inner_cone_angle, properties.outer_cone_angle}
             };
 
-            switch (scene_light->get_light_type())
+            switch (scene_light.get_light_type())
             {
-            case sg::LightType::Directional:
+            case scene::LightType::Directional:
                 {
                     if (lighting_state.directional_lights.size() < max_lights_per_type)
                     {
@@ -325,7 +328,7 @@ namespace vkb
                     }
                     break;
                 }
-            case sg::LightType::Point:
+            case scene::LightType::Point:
                 {
                     if (lighting_state.point_lights.size() < max_lights_per_type)
                     {
@@ -338,7 +341,7 @@ namespace vkb
                     }
                     break;
                 }
-            case sg::LightType::Spot:
+            case scene::LightType::Spot:
                 {
                     if (lighting_state.spot_lights.size() < max_lights_per_type)
                     {
@@ -353,7 +356,7 @@ namespace vkb
                 }
             default:
                 LOGE("Subpass::allocate_lights: encountered unknown light type {}",
-                     to_string(scene_light->get_light_type()));
+                     to_string(scene_light.get_light_type()));
                 break;
             }
         }

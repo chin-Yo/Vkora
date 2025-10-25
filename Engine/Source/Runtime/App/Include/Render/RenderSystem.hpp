@@ -11,6 +11,12 @@
 #include "Framework/Rendering/RenderPipeline.hpp"
 
 
+namespace scene
+{
+    class Camera;
+    class Scene;
+}
+
 namespace vkb
 {
     class Sampler;
@@ -18,7 +24,6 @@ namespace vkb
 
 namespace vkb::sg
 {
-    class Scene;
     class PerspectiveCamera;
 }
 
@@ -48,7 +53,6 @@ public:
     // pivotal
     void DrawRenderpass(vkb::CommandBuffer& command_buffer, vkb::RenderTarget& render_target);
     void Update(float delta_time);
-    void UpdateScene(float delta_time);
     void UpdateDebugWindow();
     void Finish();
 
@@ -93,7 +97,7 @@ public:
     void InitializeUIRenderBackend(EditorUIInterface* UIManager);
 
 
-    std::unique_ptr<vkb::RenderPipeline> CreateOneRenderpassTwoSubpasses();
+    std::unique_ptr<vkb::RenderPipeline> CreateOneRenderpassTwoSubpasses(scene::Scene& scene, scene::Camera& camera);
     VkFormat albedo_format{VK_FORMAT_R8G8B8A8_UNORM};
     VkFormat normal_format{VK_FORMAT_A2B10G10R10_UNORM_PACK32};
     VkImageUsageFlags rt_usage_flags{VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT};
@@ -103,7 +107,6 @@ public:
     void ResetViewportRTs(ImVec2& size, vkb::Sampler* sampler, std::vector<VkDescriptorSet>& ViewportDescriptorSets);
     std::vector<std::unique_ptr<vkb::RenderTarget>> ViewportRTs;
 
-    vkb::sg::PerspectiveCamera* camera{};
     //void ViewportResize(ImVec2 size);
 
     void DrawPipeline(vkb::CommandBuffer& command_buffer,
@@ -132,11 +135,6 @@ private: // -----------------Member
      * @brief Pipeline used for rendering, it should be set up by the concrete sample
      */
     std::unique_ptr<vkb::RenderPipeline> render_pipeline;
-
-    /**
-     * @brief Holds all scene information
-     */
-    std::unique_ptr<vkb::sg::Scene> scene;
 
     //std::unique_ptr<EditorUIManager> EditorUI;
     std::unique_ptr<vkb::RenderPass> EditorUIRenderpass;
@@ -192,8 +190,6 @@ public:
     vkb::RenderContext& GetRenderContext() { return *render_context; }
     vkb::RenderPipeline const& GetRenderPipeline() const { return *render_pipeline; }
     vkb::RenderPipeline& GetRenderPipeline() { return *render_pipeline; }
-    vkb::sg::Scene const& GetScene() const { return *scene; }
-    vkb::sg::Scene& GetScene() { return *scene; }
     std::unordered_map<const char*, bool> const& GetDeviceExtensions() const;
     std::unordered_map<const char*, bool> const& GetInstanceExtensions() const;
     std::unordered_map<const char*, bool> const& GetInstanceLayers() const;

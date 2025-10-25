@@ -55,8 +55,6 @@ namespace scene
 
         virtual ~Material() = default;
 
-        virtual std::type_index get_type() override;
-
         std::unordered_map<std::string, Texture*> textures;
 
         /// Emissive color of the material

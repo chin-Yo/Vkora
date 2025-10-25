@@ -40,6 +40,11 @@ namespace scene
         return name;
     }
 
+    void Node::SetName(const std::string& name)
+    {
+        this->name = name;
+    }
+
     void Node::SetParent(Node& p)
     {
         parent = &p;
@@ -58,6 +63,11 @@ namespace scene
         Node* ptr = child.get();
         children.push_back(std::move(child));
         return ptr;
+    }
+
+    const std::vector<std::unique_ptr<Node>>& Node::GetChildren() const
+    {
+        return children;
     }
 
     void Node::Destroy()

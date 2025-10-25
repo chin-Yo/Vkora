@@ -16,21 +16,13 @@
  */
 
 
-#include "SceneGraph/Components/Sampler.h"
+#include "Engine/SceneGraph/Components/Sampler.hpp"
 
-namespace vkb
+namespace scene
 {
-    namespace sg
+    Sampler::Sampler(const std::string& name, vkb::Sampler&& vk_sampler) :
+        Component{name},
+        vk_sampler{std::move(vk_sampler)}
     {
-        Sampler::Sampler(const std::string& name, vkb::Sampler&& vk_sampler) :
-            Component{name},
-            vk_sampler{std::move(vk_sampler)}
-        {
-        }
-
-        std::type_index Sampler::get_type()
-        {
-            return typeid(Sampler);
-        }
-    } // namespace sg
-} // namespace vkb
+    }
+}

@@ -17,13 +17,13 @@ namespace scene
     public:
         size_t AddComponent(Node* owner)
         {
-            T newComponent;
-            newComponent.owner = owner;
-
             size_t newIndex = components.size();
-            components.push_back(newComponent);
-            ownerNodeMap[owner->GetID()] = newIndex;
-            indexToNodeMap[newIndex] = owner->GetID();
+            components.emplace_back();
+            components.back().owner = owner;
+
+            NodeID id = owner->GetID();
+            ownerNodeMap[id] = newIndex;
+            indexToNodeMap[newIndex] = id;
 
             return newIndex;
         }
@@ -72,17 +72,25 @@ namespace scene
         {
             auto pool = GetOrCreatePool<T>();
             size_t index = pool->AddComponent(owner);
-            owner->RegisterComponent({rttr::type::get<T>, index});
+            rttr::type t = rttr::type::get<T>();
+            owner->RegisterComponent({t, index});
             return &pool->GetData()[index];
         }
 
         template <typename T>
-        T* GetComponent(NodeID nodeID)
+        T* GetComponentFormNode(NodeID nodeID)
         {
             auto* pool = GetPool<T>();
             if (pool)
                 return pool->GetComponent(nodeID);
             return nullptr;
+        }
+
+        template <typename T>
+        std::vector<T>& GetComponentsByClass()
+        {
+            auto* pool = GetOrCreatePool<T>();
+            return pool->GetData();
         }
 
         void DestroyComponentsOfNode(Node* node)

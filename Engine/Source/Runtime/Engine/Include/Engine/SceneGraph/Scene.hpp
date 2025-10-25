@@ -29,6 +29,8 @@ namespace scene
         const std::string& GetName() const;
 
         void SetNodes(std::vector<std::unique_ptr<Node>>&& nodes);
+        
+        const std::vector<std::unique_ptr<Node>>& GetNodes() const;
 
         void AddNode(std::unique_ptr<Node> node);
 

@@ -2,7 +2,7 @@
 #include <memory>
 #include <volk.h>
 
-#include "SceneGraph/Components/Image.h"
+#include "Engine/SceneGraph/Components/Image.hpp"
 
 namespace ps
 {
@@ -11,8 +11,8 @@ namespace ps
      */
     struct Texture
     {
-        std::unique_ptr<vkb::sg::Image> image;
-        VkSampler                       sampler;
+        std::unique_ptr<scene::Image> image;
+        VkSampler sampler;
     };
 
     /**
@@ -20,5 +20,5 @@ namespace ps
      * @param file The filename of the texture to load
      * @param content_type The type of content in the image file
      */
-    Texture load_texture(vkb::VulkanDevice &device, const std::string &file, vkb::sg::Image::ContentType content_type);
+    Texture load_texture(vkb::VulkanDevice& device, const std::string& file, scene::Image::ContentType content_type);
 }

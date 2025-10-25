@@ -16,50 +16,63 @@
  */
 
 
-#include "SceneGraph/Components/Light.h"
+#include "Engine/SceneGraph/Components/Light.hpp"
 
-namespace vkb
-{
-namespace sg
-{
-Light::Light(const std::string &name) :
-    Component{name}
-{}
 
-std::type_index Light::get_type()
+namespace scene
 {
-	return typeid(Light);
+    Light::Light()
+        : Component{"Light"}
+    {
+    }
+
+    Light::Light(const std::string& name) :
+        Component{name}
+    {
+    }
+
+    Light::Light(Light&& other) noexcept
+    {
+        node = other.node;
+        light_type = other.light_type;
+        properties = other.properties;
+    }
+
+    Light& Light::operator=(Light&& other) noexcept
+    {
+        node = other.node;
+        light_type = other.light_type;
+        properties = other.properties;
+        return *this;
+    }
+
+    void Light::set_node(Node& n)
+    {
+        node = &n;
+    }
+
+    Node* Light::get_node()
+    {
+        return node;
+    }
+
+    void Light::set_light_type(const LightType& type)
+    {
+        this->light_type = type;
+    }
+
+    const LightType& Light::get_light_type()
+    {
+        return light_type;
+    }
+
+    void Light::set_properties(const LightProperties& properties)
+    {
+        this->properties = properties;
+    }
+
+    const LightProperties& Light::get_properties() const
+    {
+        return properties;
+    }
 }
-
-void Light::set_node(Node &n)
-{
-	node = &n;
-}
-
-Node *Light::get_node()
-{
-	return node;
-}
-
-void Light::set_light_type(const LightType &type)
-{
-	this->light_type = type;
-}
-
-const LightType &Light::get_light_type()
-{
-	return light_type;
-}
-
-void Light::set_properties(const LightProperties &properties)
-{
-	this->properties = properties;
-}
-
-const LightProperties &Light::get_properties()
-{
-	return properties;
-}
-
-}        // namespace sg
-}        // namespace vkb

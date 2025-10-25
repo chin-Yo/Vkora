@@ -23,18 +23,18 @@
 
 #include "Framework/Rendering/Subpass.hpp"
 
+namespace scene
+{
+    class SubMesh;
+    class Node;
+    class Camera;
+    class Mesh;
+    class Scene;
+}
+
 namespace vkb
 {
     class CommandBuffer;
-
-    namespace sg
-    {
-        class Scene;
-        class Node;
-        class Mesh;
-        class SubMesh;
-        class Camera;
-    } // namespace sg
 
     /**
      * @brief Global uniform structure for base shader
@@ -81,7 +81,7 @@ namespace vkb
          * @param camera Camera used to look at the scene
          */
         GeometrySubpass(RenderContext& render_context, ShaderSource&& vertex_shader, ShaderSource&& fragment_shader,
-                        sg::Scene& scene, sg::Camera& camera);
+                        scene::Scene& scene, scene::Camera& camera);
 
         virtual ~GeometrySubpass() = default;
 
@@ -98,9 +98,9 @@ namespace vkb
         void set_thread_index(uint32_t index);
 
     protected:
-        virtual void update_uniform(vkb::CommandBuffer& command_buffer, sg::Node& node, size_t thread_index);
+        virtual void update_uniform(vkb::CommandBuffer& command_buffer, scene::Node& node, size_t thread_index);
 
-        void draw_submesh(vkb::CommandBuffer& command_buffer, sg::SubMesh& sub_mesh,
+        void draw_submesh(vkb::CommandBuffer& command_buffer, scene::SubMesh& sub_mesh,
                           VkFrontFace front_face = VK_FRONT_FACE_COUNTER_CLOCKWISE);
 
         virtual void prepare_pipeline_state(vkb::CommandBuffer& command_buffer, VkFrontFace front_face,
@@ -109,22 +109,22 @@ namespace vkb
         virtual PipelineLayout& prepare_pipeline_layout(vkb::CommandBuffer& command_buffer,
                                                         const std::vector<ShaderModule*>& shader_modules);
 
-        virtual void prepare_push_constants(vkb::CommandBuffer& command_buffer, sg::SubMesh& sub_mesh);
+        virtual void prepare_push_constants(vkb::CommandBuffer& command_buffer, scene::SubMesh& sub_mesh);
 
-        virtual void draw_submesh_command(vkb::CommandBuffer& command_buffer, sg::SubMesh& sub_mesh);
+        virtual void draw_submesh_command(vkb::CommandBuffer& command_buffer, scene::SubMesh& sub_mesh);
 
         /**
          * @brief Sorts objects based on distance from camera and classifies them
          *        into opaque and transparent in the arrays provided
          */
-        void get_sorted_nodes(std::multimap<float, std::pair<sg::Node*, sg::SubMesh*>>& opaque_nodes,
-                              std::multimap<float, std::pair<sg::Node*, sg::SubMesh*>>& transparent_nodes);
+        void get_sorted_nodes(std::multimap<float, std::pair<scene::Node*, scene::SubMesh*>>& opaque_nodes,
+                              std::multimap<float, std::pair<scene::Node*, scene::SubMesh*>>& transparent_nodes);
 
-        sg::Camera& camera;
+        scene::Camera& camera;
 
-        std::vector<sg::Mesh*> meshes;
+        std::vector<scene::Mesh>& meshes;
 
-        sg::Scene& scene;
+        scene::Scene& scene;
 
         uint32_t thread_index{0};
 

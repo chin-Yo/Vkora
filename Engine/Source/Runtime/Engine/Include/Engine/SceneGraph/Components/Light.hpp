@@ -59,9 +59,11 @@ namespace scene
     class Light : public Component
     {
     public:
+        Light();
         Light(const std::string& name);
 
-        Light(Light&& other) = default;
+        Light(Light&& other) noexcept;
+        Light& operator=(Light&& other) noexcept;
 
         virtual ~Light() = default;
 
@@ -75,7 +77,7 @@ namespace scene
 
         void set_properties(const LightProperties& properties);
 
-        const LightProperties& get_properties();
+        const LightProperties& get_properties() const;
 
     private:
         Node* node{nullptr};

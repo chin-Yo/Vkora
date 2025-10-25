@@ -62,6 +62,9 @@ namespace scene
          */
         void InvalidateWorldMatrix();
 
+        static glm::vec3 QuatToEulerDegrees(const glm::quat& q);
+        static glm::quat EulerDegreesToQuat(const glm::vec3& eulerDegrees);
+
     private:
         Node& node;
 

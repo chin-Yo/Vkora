@@ -250,3 +250,10 @@ target_include_directories(ctpl SYSTEM INTERFACE ${CTPL_DIR})
 # rttr rttr_core_lib
 add_subdirectory(rttr)
 set_target_properties(rttr_core_lib PROPERTIES FOLDER ${third_party_folder}/rttr)
+
+# tinyobj
+add_library(tinyobj INTERFACE)
+
+target_include_directories(tinyobj INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}/loader/tinyobj/
+)

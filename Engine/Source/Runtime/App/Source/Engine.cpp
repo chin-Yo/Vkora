@@ -102,6 +102,10 @@ void Engine::Initialize()
                 this->SetIsIconify(bIsIconify);
         }
     );
+    if (!GRuntimeGlobalContext.worldManager->GetActiveWorld())
+    {
+        GRuntimeGlobalContext.worldManager->CreateWorld("DefaultWorld");
+    }
     if (!GRuntimeGlobalContext.renderSystem->Prepare(app_options))
     {
         LOG_CRITICAL("Prepare failed !!!")

@@ -17,26 +17,28 @@
 
 #include "Rendering/GeometrySubpass.hpp"
 
+#include "Engine/SceneGraph/ComponentPool.hpp"
 #include "Framework/Core/CommandBuffer.hpp"
 #include "Framework/Core/VulkanDevice.hpp"
-#include "SceneGraph/Node.h"
-#include "SceneGraph/Scene.h"
-#include "SceneGraph/Components/Camera.h"
-#include "SceneGraph/Components/Image.h"
-#include "SceneGraph/Components/Material.h"
-#include "SceneGraph/Components/Mesh.h"
-#include "SceneGraph/Components/Pbr_Material.h"
+#include "Engine/SceneGraph/Node.hpp"
+#include "Engine/SceneGraph/Scene.hpp"
+#include "Engine/SceneGraph/Components/Camera.hpp"
+#include "Engine/SceneGraph/Components/Image.hpp"
+#include "Engine/SceneGraph/Components/Material.hpp"
+#include "Engine/SceneGraph/Components/Mesh.hpp"
+#include "Engine/SceneGraph/Components/Pbr_Material.hpp"
+#include "Engine/SceneGraph/Components/SubMesh.hpp"
+#include "Engine/SceneGraph/Components/Texture.hpp"
 
 namespace vkb
 {
     GeometrySubpass::GeometrySubpass(RenderContext& render_context, ShaderSource&& vertex_source,
-                                     ShaderSource&& fragment_source, sg::Scene& scene_, sg::Camera& camera)
+                                     ShaderSource&& fragment_source, scene::Scene& scene_, scene::Camera& camera)
         : Subpass{render_context, std::move(vertex_source), std::move(fragment_source)},
-          meshes{scene_.get_components<sg::Mesh>()},
+          meshes{scene_.GetComponentManager()->GetComponentsByClass<scene::Mesh>()},
           camera{camera},
           scene{scene_}
     {
-        
     }
 
     void GeometrySubpass::prepare()
@@ -45,7 +47,7 @@ namespace vkb
         auto& device = get_render_context().get_device();
         for (auto& mesh : meshes)
         {
-            for (auto& sub_mesh : mesh->get_submeshes())
+            for (auto& sub_mesh : mesh.GetSubmeshes())
             {
                 auto& variant = sub_mesh->get_shader_variant();
                 auto& vert_module = device.get_resource_cache().request_shader_module(
@@ -56,34 +58,24 @@ namespace vkb
         }
     }
 
-    void GeometrySubpass::get_sorted_nodes(std::multimap<float, std::pair<sg::Node*, sg::SubMesh*>>& opaque_nodes,
-                                           std::multimap<float, std::pair<sg::Node*, sg::SubMesh*>>& transparent_nodes)
+    void GeometrySubpass::get_sorted_nodes(std::multimap<float, std::pair<scene::Node*, scene::SubMesh*>>& opaque_nodes,
+                                           std::multimap<float, std::pair<scene::Node*, scene::SubMesh*>>&
+                                           transparent_nodes)
     {
-        auto camera_transform = camera.get_node()->get_transform().get_world_matrix();
+        // TODO opaque_nodes
+        auto camera_transform = camera.GetOwner()->GetTransform().GetWorldMatrix();
 
         for (auto& mesh : meshes)
         {
-            for (auto& node : mesh->get_nodes())
+            for (auto& sub_mesh : mesh.GetSubmeshes())
             {
-                auto node_transform = node->get_transform().get_world_matrix();
-
-                const sg::AABB& mesh_bounds = mesh->get_bounds();
-
-                sg::AABB world_bounds{mesh_bounds.get_min(), mesh_bounds.get_max()};
-                world_bounds.transform(node_transform);
-
-                float distance = glm::length(glm::vec3(camera_transform[3]) - world_bounds.get_center());
-
-                for (auto& sub_mesh : mesh->get_submeshes())
+                if (sub_mesh->get_material()->alpha_mode == scene::AlphaMode::Blend)
                 {
-                    if (sub_mesh->get_material()->alpha_mode == sg::AlphaMode::Blend)
-                    {
-                        transparent_nodes.emplace(distance, std::make_pair(node, sub_mesh));
-                    }
-                    else
-                    {
-                        opaque_nodes.emplace(distance, std::make_pair(node, sub_mesh));
-                    }
+                    transparent_nodes.emplace(0, std::make_pair(sub_mesh->GetOwner(), sub_mesh));
+                }
+                else
+                {
+                    opaque_nodes.emplace(0, std::make_pair(sub_mesh->GetOwner(), sub_mesh));
                 }
             }
         }
@@ -91,8 +83,8 @@ namespace vkb
 
     void GeometrySubpass::draw(vkb::CommandBuffer& command_buffer)
     {
-        std::multimap<float, std::pair<sg::Node*, sg::SubMesh*>> opaque_nodes;
-        std::multimap<float, std::pair<sg::Node*, sg::SubMesh*>> transparent_nodes;
+        std::multimap<float, std::pair<scene::Node*, scene::SubMesh*>> opaque_nodes;
+        std::multimap<float, std::pair<scene::Node*, scene::SubMesh*>> transparent_nodes;
 
         get_sorted_nodes(opaque_nodes, transparent_nodes);
 
@@ -105,7 +97,7 @@ namespace vkb
                 update_uniform(command_buffer, *node_it->second.first, thread_index);
 
                 // Invert the front face if the mesh was flipped
-                const auto& scale = node_it->second.first->get_transform().get_scale();
+                const auto& scale = node_it->second.first->GetTransform().GetScale();
                 bool flipped = scale.x * scale.y * scale.z < 0;
                 VkFrontFace front_face = flipped ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
@@ -143,35 +135,35 @@ namespace vkb
         }
     }
 
-    void GeometrySubpass::update_uniform(vkb::CommandBuffer& command_buffer, sg::Node& node, size_t thread_index)
+    void GeometrySubpass::update_uniform(vkb::CommandBuffer& command_buffer, scene::Node& node, size_t thread_index)
     {
         GlobalUniform global_uniform;
 
-        global_uniform.camera_view_proj = camera.get_pre_rotation() * vkb::vulkan_style_projection(
-            camera.get_projection()) * camera.get_view();
+        global_uniform.camera_view_proj = camera.GetPreRotation() * vkb::vulkan_style_projection(
+            camera.GetProjection()) * camera.GetView();
 
         auto& render_frame = get_render_context().get_active_frame();
 
-        auto& transform = node.get_transform();
+        auto& transform = node.GetTransform();
 
         auto allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GlobalUniform),
                                                        thread_index);
 
-        global_uniform.model = transform.get_world_matrix();
+        global_uniform.model = transform.GetWorldMatrix();
 
-        global_uniform.camera_position = glm::vec3(glm::inverse(camera.get_view())[3]);
+        global_uniform.camera_position = glm::vec3(glm::inverse(camera.GetView())[3]);
 
         allocation.update(global_uniform);
 
         command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 1, 0);
     }
 
-    void GeometrySubpass::draw_submesh(vkb::CommandBuffer& command_buffer, sg::SubMesh& sub_mesh,
+    void GeometrySubpass::draw_submesh(vkb::CommandBuffer& command_buffer, scene::SubMesh& sub_mesh,
                                        VkFrontFace front_face)
     {
         auto& device = command_buffer.GetDevice();
 
-        ScopedDebugLabel submesh_debug_label{command_buffer, sub_mesh.get_name().c_str()};
+        ScopedDebugLabel submesh_debug_label{command_buffer, sub_mesh.GetName().c_str()};
 
         prepare_pipeline_state(command_buffer, front_face, sub_mesh.get_material()->double_sided);
 
@@ -214,7 +206,7 @@ namespace vkb
 
         for (auto& input_resource : vertex_input_resources)
         {
-            sg::VertexAttribute attribute;
+            scene::VertexAttribute attribute;
 
             if (!sub_mesh.get_attribute(input_resource.name, attribute))
             {
@@ -290,9 +282,9 @@ namespace vkb
         return command_buffer.GetDevice().get_resource_cache().request_pipeline_layout(shader_modules);
     }
 
-    void GeometrySubpass::prepare_push_constants(vkb::CommandBuffer& command_buffer, sg::SubMesh& sub_mesh)
+    void GeometrySubpass::prepare_push_constants(vkb::CommandBuffer& command_buffer, scene::SubMesh& sub_mesh)
     {
-        auto pbr_material = dynamic_cast<const sg::PBRMaterial*>(sub_mesh.get_material());
+        auto pbr_material = dynamic_cast<const scene::PBRMaterial*>(sub_mesh.get_material());
 
         PBRMaterialUniform pbr_material_uniform{};
         pbr_material_uniform.base_color_factor = pbr_material->base_color_factor;
@@ -307,16 +299,16 @@ namespace vkb
         }
     }
 
-    void GeometrySubpass::draw_submesh_command(vkb::CommandBuffer& command_buffer, sg::SubMesh& sub_mesh)
+    void GeometrySubpass::draw_submesh_command(vkb::CommandBuffer& command_buffer, scene::SubMesh& sub_mesh)
     {
         // Draw submesh indexed if indices exists
-        if (sub_mesh.vertex_indices != 0)
+        if (sub_mesh.index_count != 0)
         {
             // Bind index buffer of submesh
-            command_buffer.bind_index_buffer(*sub_mesh.index_buffer, sub_mesh.index_offset, sub_mesh.index_type);
+            command_buffer.bind_index_buffer(*sub_mesh.index_buffer, sub_mesh.index_buffer_offset, sub_mesh.index_type);
 
             // Draw submesh using indexed data
-            command_buffer.draw_indexed(sub_mesh.vertex_indices, 1, 0, 0, 0);
+            command_buffer.draw_indexed(sub_mesh.index_count, 1, 0, 0, 0);
         }
         else
         {

@@ -26,6 +26,23 @@ namespace scene
     {
     }
 
+    Mesh::Mesh(Mesh&& other) noexcept
+        : Component(std::move(other))
+          , submeshes(std::move(other.submeshes))
+    {
+        SetName(other.GetName());
+    }
+
+    Mesh& Mesh::operator=(Mesh&& other) noexcept
+    {
+        if (this != &other)
+        {
+            SetName(other.GetName());
+            submeshes = std::move(other.submeshes);
+        }
+        return *this;
+    }
+
     void Mesh::AddSubmesh(SubMesh& submesh)
     {
         submeshes.push_back(&submesh);

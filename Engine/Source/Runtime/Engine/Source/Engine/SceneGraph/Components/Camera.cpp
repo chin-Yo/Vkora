@@ -29,23 +29,13 @@ namespace scene
 
     glm::mat4 Camera::GetView()
     {
-        if (!node)
+        if (!owner)
         {
             LOG_ERROR("Camera component {} is not attached to a node", GetName());
         }
 
-        auto& transform = node->GetTransform();
+        auto& transform = owner->GetTransform();
         return glm::inverse(transform.GetWorldMatrix());
-    }
-
-    void Camera::SetNode(Node& n)
-    {
-        node = &n;
-    }
-
-    Node* Camera::GetNode()
-    {
-        return node;
     }
 
     const glm::mat4 Camera::GetPreRotation()

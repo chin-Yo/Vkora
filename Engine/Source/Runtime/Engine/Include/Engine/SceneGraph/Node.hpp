@@ -42,6 +42,8 @@ namespace scene
 
         const std::string& GetName() const;
 
+        void SetName(const std::string& name);
+
         Transform& GetTransform()
         {
             return transform;
@@ -52,6 +54,8 @@ namespace scene
         Node* GetParent() const;
 
         Node* CreateChild(const std::string& childName);
+
+        const std::vector<std::unique_ptr<Node>>& GetChildren() const;
 
         void Destroy();
 

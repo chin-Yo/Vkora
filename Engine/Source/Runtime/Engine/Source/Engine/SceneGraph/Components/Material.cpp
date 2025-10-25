@@ -16,20 +16,13 @@
  */
 
 
-#include "SceneGraph/Components/Material.h"
+#include "Engine/SceneGraph/Components/Material.hpp"
 
-namespace vkb
-{
-namespace sg
-{
-Material::Material(const std::string &name) :
-    Component{name}
-{}
 
-std::type_index Material::get_type()
+namespace scene
 {
-	return typeid(Material);
+    Material::Material(const std::string& name) :
+        Component{name}
+    {
+    }
 }
-
-}        // namespace sg
-}        // namespace vkb

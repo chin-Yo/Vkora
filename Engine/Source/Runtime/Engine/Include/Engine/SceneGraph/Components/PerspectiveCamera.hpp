@@ -30,7 +30,14 @@ namespace scene
     class PerspectiveCamera : public Camera
     {
     public:
+        PerspectiveCamera();
         PerspectiveCamera(const std::string& name);
+
+        PerspectiveCamera(const PerspectiveCamera&) = delete;
+        PerspectiveCamera& operator=(const PerspectiveCamera&) = delete;
+
+        PerspectiveCamera(PerspectiveCamera&& other) noexcept;
+        PerspectiveCamera& operator=(PerspectiveCamera&& other) noexcept;
 
         virtual ~PerspectiveCamera() = default;
 

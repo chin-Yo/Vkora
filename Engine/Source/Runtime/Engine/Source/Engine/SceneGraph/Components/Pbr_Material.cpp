@@ -16,19 +16,13 @@
  */
 
 
-#include "SceneGraph/Components/Pbr_Material.h"
+#include "Engine/SceneGraph/Components/Pbr_Material.hpp"
 
-namespace vkb
-{
-namespace sg
-{
-PBRMaterial::PBRMaterial(const std::string &name) :
-    Material{name}
-{}
 
-std::type_index PBRMaterial::get_type()
+namespace scene
 {
-	return typeid(PBRMaterial);
+    PBRMaterial::PBRMaterial(const std::string& name) :
+        Material{name}
+    {
+    }
 }
-}        // namespace sg
-}        // namespace vkb

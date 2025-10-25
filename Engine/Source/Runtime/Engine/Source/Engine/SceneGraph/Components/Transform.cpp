@@ -98,6 +98,20 @@ namespace scene
         update_world_matrix = true;
     }
 
+    // Helper: quat -> euler (degrees)
+    glm::vec3 Transform::QuatToEulerDegrees(const glm::quat& q)
+    {
+        glm::vec3 eulerAngles = glm::eulerAngles(q); // returns radians
+        return glm::degrees(eulerAngles);
+    }
+
+    // Helper: euler (degrees) -> quat
+    glm::quat Transform::EulerDegreesToQuat(const glm::vec3& eulerDegrees)
+    {
+        glm::vec3 radians = glm::radians(eulerDegrees);
+        return glm::quat(glm::vec3(radians.x, radians.y, radians.z));
+    }
+
     void Transform::UpdateWorldTransform()
     {
         if (!update_world_matrix)

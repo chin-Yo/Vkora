@@ -1,27 +1,24 @@
 #include "Render/RenderSystem.hpp"
 
+#include "GlobalContext.hpp"
 #include "backends/imgui_impl_vulkan.h"
+#include "Engine/SceneGraph/Components/PerspectiveCamera.hpp"
 #include "Framework/Core/CommandBuffer.hpp"
 #include "Framework/Core/Queue.hpp"
+#include "Framework/Core/Sampler.hpp"
 #include "Framework/Platform/Window.hpp"
 #include "Framework/Rendering/RenderFrame.hpp"
 #include "Framework/Rendering/Subpass.hpp"
-#include "Import/GLTFLoader.hpp"
 #include "Misc/Paths.hpp"
 #include "Render/EditorUI.hpp"
 #include "Rendering/GeometrySubpass.hpp"
 #include "Rendering/LightingSubpass.hpp"
-#include "SceneGraph/Components/PerspectiveCamera.h"
-#include "SceneGraph/Scene.h"
-#include "SceneGraph/Node.h"
-#include "SceneGraph/Script.h"
-#include "SceneGraph/Scripts/Animation.h"
 #include "Tools/Utils.hpp"
+#include "World/WorldManager.hpp"
 
 RenderSystem::~RenderSystem()
 {
     Finish();
-    scene.reset();
     EditorUIRenderpass.reset();
     ViewportRTs.clear();
     UIManager->Shutdown();
@@ -157,28 +154,8 @@ bool RenderSystem::Prepare(const ApplicationOptions& options)
     std::set<VkImageUsageFlagBits> usage = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT};
     GetRenderContext().update_swapchain(usage);
 
-    vkb::GLTFLoader loader(*device);
-    scene = loader.read_scene_from_file("Models/retroufo.gltf");
-
-    auto& camera_node = vkb::add_free_camera(GetScene(), "main_camera", {512, 512});
-    camera = dynamic_cast<vkb::sg::PerspectiveCamera*>(&camera_node.get_component<vkb::sg::Camera>());
-
-    render_pipeline = CreateOneRenderpassTwoSubpasses();
-    /*ViewportRTs.resize(GetRenderContext().get_render_frames().size());
-    for (uint32_t i = 0; i < ViewportRTs.size(); i++)
-    {
-        ViewportRTs[i] = CreateRenderTarget({512, 512});
-    }
-
-    for (uint32_t i = 0; i < EditorUI->ViewportDescriptorSets.size(); i++)
-    {
-        EditorUI->ViewportDescriptorSets[i]
-            = ImGui_ImplVulkan_AddTexture(EditorUI->OffScreenSampler->GetHandle(),
-                                          ViewportRTs[i]->get_views()[0].GetHandle(),
-                                          VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    }
-    OffScreenResourcesReady = true;*/
-
+    render_pipeline = CreateOneRenderpassTwoSubpasses(*GRuntimeGlobalContext.worldManager->GetActiveWorld()
+                                                      , *GRuntimeGlobalContext.worldManager->GetViewportCamera());
     return true;
 }
 
@@ -318,8 +295,6 @@ void RenderSystem::DrawRenderpass(vkb::CommandBuffer& command_buffer, vkb::Rende
 
 void RenderSystem::Update(float delta_time)
 {
-    UpdateScene(delta_time);
-
     // update_gui(delta_time);
     auto command_buffer = render_context->begin();
     UIManager->BeginFrame();
@@ -337,34 +312,6 @@ void RenderSystem::Update(float delta_time)
     command_buffer->end();
 
     render_context->submit(command_buffer);
-}
-
-void RenderSystem::UpdateScene(float delta_time)
-{
-    if (scene)
-    {
-        // Update scripts
-        if (scene->has_component<vkb::sg::Script>())
-        {
-            auto scripts = scene->get_components<vkb::sg::Script>();
-
-            for (auto script : scripts)
-            {
-                script->update(delta_time);
-            }
-        }
-
-        // Update animations
-        if (scene->has_component<vkb::sg::Animation>())
-        {
-            auto animations = scene->get_components<vkb::sg::Animation>();
-
-            for (auto animation : animations)
-            {
-                animation->update(delta_time);
-            }
-        }
-    }
 }
 
 void RenderSystem::UpdateDebugWindow()
@@ -539,13 +486,14 @@ void RenderSystem::InitializeUIRenderBackend(EditorUIInterface* UIManager)
                              render_context->get_swapchain().get_images().size());
 }
 
-std::unique_ptr<vkb::RenderPipeline> RenderSystem::CreateOneRenderpassTwoSubpasses()
+std::unique_ptr<vkb::RenderPipeline> RenderSystem::CreateOneRenderpassTwoSubpasses(
+    scene::Scene& scene, scene::Camera& camera)
 {
     // Geometry subpass
     auto geometry_vs = vkb::ShaderSource{Paths::GetShaderFullPath("deferred/geometry.vert.spv")};
     auto geometry_fs = vkb::ShaderSource{Paths::GetShaderFullPath("deferred/geometry.frag.spv")};
     auto scene_subpass = std::make_unique<vkb::GeometrySubpass>(GetRenderContext(), std::move(geometry_vs),
-                                                                std::move(geometry_fs), GetScene(), *camera);
+                                                                std::move(geometry_fs), scene, camera);
 
     // Outputs are depth, albedo, and normal
     scene_subpass->set_output_attachments({1, 2, 3});
@@ -554,7 +502,7 @@ std::unique_ptr<vkb::RenderPipeline> RenderSystem::CreateOneRenderpassTwoSubpass
     auto lighting_vs = vkb::ShaderSource{Paths::GetShaderFullPath("deferred/lighting.vert.spv")};
     auto lighting_fs = vkb::ShaderSource{Paths::GetShaderFullPath("deferred/lighting.frag.spv")};
     auto lighting_subpass = std::make_unique<vkb::LightingSubpass>(GetRenderContext(), std::move(lighting_vs),
-                                                                   std::move(lighting_fs), *camera, GetScene(),
+                                                                   std::move(lighting_fs), camera, scene,
                                                                    ViewportRTs);
 
     // Inputs are depth, albedo, and normal from the geometry subpass
@@ -658,7 +606,8 @@ void RenderSystem::ResetViewportRTs(ImVec2& size, vkb::Sampler* sampler,
                                           ViewportRTs[i]->get_views()[0].GetHandle(),
                                           VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     }
-    camera->set_aspect_ratio(size.x / size.y);
+    auto* camera = GRuntimeGlobalContext.worldManager->GetViewportCamera();
+    camera->SetAspectRatio(size.x / size.y);
     OffScreenResourcesReady = true;
 }
 

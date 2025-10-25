@@ -38,17 +38,11 @@ namespace scene
 
         glm::mat4 GetView();
 
-        void SetNode(Node& node);
-
-        Node* GetNode();
-
         const glm::mat4 GetPreRotation();
 
         void SetPreRotation(const glm::mat4& pre_rotation);
 
     private:
-        Node* node{nullptr};
-
         glm::mat4 preRotation{1.0f};
     };
 }

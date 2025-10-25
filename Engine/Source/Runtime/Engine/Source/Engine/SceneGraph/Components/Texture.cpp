@@ -16,40 +16,34 @@
  */
 
 
-#include "SceneGraph/Components/Texture.h"
+#include "Engine/SceneGraph/Components/Texture.hpp"
 
-namespace vkb
-{
-namespace sg
-{
-Texture::Texture(const std::string &name) :
-    Component{name}
-{}
 
-std::type_index Texture::get_type()
+namespace scene
 {
-	return typeid(Texture);
+    Texture::Texture(const std::string& name) :
+        Component{name}
+    {
+    }
+
+    void Texture::set_image(Image& i)
+    {
+        image = &i;
+    }
+
+    Image* Texture::get_image()
+    {
+        return image;
+    }
+
+    void Texture::set_sampler(Sampler& s)
+    {
+        sampler = &s;
+    }
+
+    Sampler* Texture::get_sampler()
+    {
+        assert(sampler && "Texture has no sampler");
+        return sampler;
+    }
 }
-
-void Texture::set_image(Image &i)
-{
-	image = &i;
-}
-
-Image *Texture::get_image()
-{
-	return image;
-}
-
-void Texture::set_sampler(Sampler &s)
-{
-	sampler = &s;
-}
-
-Sampler *Texture::get_sampler()
-{
-	assert(sampler && "Texture has no sampler");
-	return sampler;
-}
-}        // namespace sg
-}        // namespace vkb

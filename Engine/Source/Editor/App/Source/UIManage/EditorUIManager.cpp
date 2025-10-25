@@ -6,6 +6,7 @@
 #include "Framework/Core/DescriptorPool.hpp"
 #include "Framework/Core/Sampler.hpp"
 #include "Framework/Core/VulkanDevice.hpp"
+#include "Panel/DetailsPanel.hpp"
 #include "Panel/FileBrowser.hpp"
 #include "Panel/HierarchyPanel.hpp"
 #include "Panel/MenuBar.hpp"
@@ -43,7 +44,7 @@ void EditorUIManager::Initialize()
     EditorPanels.push_back(std::make_shared<HierarchyPanel>());
     EditorPanels.push_back(std::make_shared<FileBrowser>());
     EditorPanels.push_back(std::make_shared<ViewportPanel>());
-
+    EditorPanels.push_back(std::make_shared<DetailsPanel>());
     GRuntimeGlobalContext.renderSystem->InitializeUIRenderBackend(this);
 }
 

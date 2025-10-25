@@ -22,7 +22,7 @@
 #include <typeinfo>
 #include <vector>
 
-#include "SceneGraph/Component.h"
+#include "Engine/SceneGraph/Component.hpp"
 #include "Engine/SceneGraph/Components/Sampler.hpp"
 
 namespace scene

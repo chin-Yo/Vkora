@@ -66,7 +66,8 @@ namespace scene
     {
     public:
         Mesh(const std::string& name);
-
+        Mesh(Mesh&& other) noexcept;
+        Mesh& operator=(Mesh&& other) noexcept;
         virtual ~Mesh() = default;
 
         void AddSubmesh(SubMesh& submesh);

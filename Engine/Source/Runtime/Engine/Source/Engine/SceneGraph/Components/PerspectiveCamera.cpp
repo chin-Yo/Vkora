@@ -23,9 +23,32 @@
 
 namespace scene
 {
+    PerspectiveCamera::PerspectiveCamera()
+        : Camera{"Perspective Camera"}
+    {
+    }
+
     PerspectiveCamera::PerspectiveCamera(const std::string& name) :
         Camera{name}
     {
+    }
+
+    PerspectiveCamera::PerspectiveCamera(PerspectiveCamera&& other) noexcept
+        : Camera{other.GetName()}
+    {
+        aspect_ratio = other.aspect_ratio;
+        fov = other.fov;
+        far_plane = other.far_plane;
+        near_plane = other.near_plane;
+    }
+
+    PerspectiveCamera& PerspectiveCamera::operator=(PerspectiveCamera&& other) noexcept
+    {
+        aspect_ratio = other.aspect_ratio;
+        fov = other.fov;
+        far_plane = other.far_plane;
+        near_plane = other.near_plane;
+        return *this;
     }
 
     void PerspectiveCamera::SetFieldOfView(float new_fov)

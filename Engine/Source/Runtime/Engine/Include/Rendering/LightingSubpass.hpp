@@ -23,15 +23,14 @@
 // This value is per type of light that we feed into the shader
 #define MAX_DEFERRED_LIGHT_COUNT 48
 
+namespace scene
+{
+    class Scene;
+    class Camera;
+}
+
 namespace vkb
 {
-    namespace sg
-    {
-        class Camera;
-        class Light;
-        class Scene;
-    } // namespace sg
-
     /**
      * @brief Light uniform structure for lighting shader
      * Inverse view projection matrix and inverse resolution vector are used
@@ -57,7 +56,7 @@ namespace vkb
     {
     public:
         LightingSubpass(RenderContext& render_context, ShaderSource&& vertex_shader, ShaderSource&& fragment_shader,
-                        sg::Camera& camera, sg::Scene& scene,
+                        scene::Camera& camera, scene::Scene& scene,
                         std::vector<std::unique_ptr<vkb::RenderTarget>>& viewport_render_targets);
 
         virtual void prepare() override;
@@ -65,9 +64,9 @@ namespace vkb
         void draw(vkb::CommandBuffer& command_buffer) override;
 
     private:
-        sg::Camera& camera;
+        scene::Camera& camera;
 
-        sg::Scene& scene;
+        scene::Scene& scene;
 
         ShaderVariant lighting_variant;
 
