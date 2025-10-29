@@ -42,7 +42,7 @@ namespace scene
 RTTR_REGISTRATION
 {
     using namespace rttr;
-    registration::class_<scene::Component>("NodeComponent")
+    registration::class_<scene::Component>("scene::Component")
         .constructor<const std::string&>()
         .property("name", &scene::Component::GetName, &scene::Component::SetName);
 }

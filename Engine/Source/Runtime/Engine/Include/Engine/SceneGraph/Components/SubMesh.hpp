@@ -50,6 +50,15 @@ namespace scene
 
         virtual ~SubMesh() = default;
 
+        SubMesh(SubMesh&& other) noexcept;
+
+        SubMesh& operator=(SubMesh&& other) noexcept;
+
+        RTTR_ENABLE(Component)
+    public:
+        std::string ModelPath;
+        bool bHasMeshData = false;
+
         VkIndexType index_type{};
 
         std::uint32_t index_buffer_offset = 0;

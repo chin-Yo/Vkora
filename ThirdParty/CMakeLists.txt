@@ -257,3 +257,10 @@ add_library(tinyobj INTERFACE)
 target_include_directories(tinyobj INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/loader/tinyobj/
 )
+
+# nlohmann-json
+add_library(nlohmann-json INTERFACE)
+
+target_include_directories(nlohmann-json INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}/nlohmann-json/include/
+)
