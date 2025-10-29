@@ -2,6 +2,9 @@
 
 #include <imgui.h>
 
+#include "Engine/Asset/AssetRegistry.hpp"
+#include "Engine/SceneGraph/ComponentPool.hpp"
+#include "Engine/SceneGraph/Components/SubMesh.hpp"
 #include "UIManage/EditorGlobalContext.hpp"
 
 
@@ -23,11 +26,7 @@ void DetailsPanel::OnUIRender()
     if (auto* node = GEditorGlobalContext.selectedNode)
     {
         DisplaySelectedNode(node);
-        float center = ImGui::GetWindowSize().x * 0.5f;
-        ImGui::SetCursorPosX(center - 60);
-        if (ImGui::Button("AddComponent", ImVec2(120, 0)))
-        {
-        }
+        DrawComponentSelector(node);
     }
     ImGui::End();
 }
@@ -36,10 +35,91 @@ void DetailsPanel::DisplaySelectedNode(scene::Node* node)
 {
     auto& transform = node->GetTransform();
     DrawTransformInspector(transform);
+
+    auto* scene = node->GetScene();
+    auto& handles = node->GetComponentHandles();
+    for (auto handle : handles)
+    {
+        if (handle.type == rttr::type::get<scene::SubMesh>())
+        {
+            auto* subMesh = scene->GetComponentManager()->GetComponentFormNode<scene::SubMesh>(node->GetID());
+            if (ImGui::CollapsingHeader("SubMesh", ImGuiTreeNodeFlags_DefaultOpen))
+            {
+                static int currentSelection = -1; // -1 表示“无选择”
+                auto options = AssetRegistry::Get().GetAllAssetsOfType(AssetType::Mesh);
+
+                const char* previewValue = "Select...";
+                if (currentSelection == -1)
+                {
+                    previewValue = "(None)";
+                }
+                else if (currentSelection >= 0 && currentSelection < (int)options.size())
+                {
+                    previewValue = options[currentSelection]->name.c_str();
+                }
+
+                if (ImGui::BeginCombo("MeshAsset", previewValue))
+                {
+                    if (ImGui::Selectable("(None)", currentSelection == -1))
+                    {
+                        currentSelection = -1;
+                    }
+                    for (int i = 0; i < (int)options.size(); ++i)
+                    {
+                        bool isSelected = (currentSelection == i);
+                        if (ImGui::Selectable(options[i]->name.c_str(), isSelected))
+                        {
+                            currentSelection = i;
+                        }
+                        if (isSelected)
+                        {
+                            ImGui::SetItemDefaultFocus();
+                        }
+                    }
+
+                    ImGui::EndCombo();
+                }
+            }
+            if (subMesh->bHasMeshData)
+            {
+            }
+        }
+    }
 }
 
-void DetailsPanel::DrawComponentSelector()
+void DetailsPanel::DrawComponentSelector(scene::Node* node)
 {
+    auto* scene = node->GetScene();
+    float center = ImGui::GetWindowSize().x * 0.5f;
+    ImGui::SetCursorPosX(center - 60);
+    if (ImGui::Button("AddComponent", ImVec2(120, 0)))
+    {
+        ImGui::OpenPopup("AddComponentPopup");
+    }
+    if (ImGui::BeginPopup("AddComponentPopup"))
+    {
+        if (ImGui::MenuItem("SubMesh"))
+        {
+            scene->GetComponentManager()->AddComponent<::scene::SubMesh>(node);
+        }
+        if (ImGui::MenuItem("Camera"))
+        {
+        }
+        if (ImGui::BeginMenu("Lights"))
+        {
+            if (ImGui::MenuItem("Point Light"))
+            {
+            }
+            if (ImGui::MenuItem("Directional Light"))
+            {
+            }
+            if (ImGui::MenuItem("Spot Light"))
+            {
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndPopup();
+    }
 }
 
 

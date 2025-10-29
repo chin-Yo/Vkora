@@ -43,7 +43,7 @@ namespace scene
         return *this;
     }
 
-    void Mesh::AddSubmesh(SubMesh& submesh)
+    void Mesh::SetSubmesh(SubMesh& submesh)
     {
         submeshes.push_back(&submesh);
     }

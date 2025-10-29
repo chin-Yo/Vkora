@@ -7,6 +7,9 @@
 #include "Render/RenderSystem.hpp"
 #include <algorithm>
 
+#include "Engine/Asset/AssetImporter.hpp"
+#include "Engine/Asset/AssetRegistry.hpp"
+#include "Misc/Paths.hpp"
 #include "World/WorldManager.hpp"
 
 const float Engine::FPSAlpha = 1.f / 100;
@@ -111,6 +114,12 @@ void Engine::Initialize()
         LOG_CRITICAL("Prepare failed !!!")
         std::abort();
     }
+
+    AssetImporter importer;
+    importer.ScanAndImport(Paths::GetAssetPath());
+
+    auto& assetRegistry = AssetRegistry::Get();
+    assetRegistry.ScanDirectory(Paths::GetContentPath());
 }
 
 void Engine::Clear()
