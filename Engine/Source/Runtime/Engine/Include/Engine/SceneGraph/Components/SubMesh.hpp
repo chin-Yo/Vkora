@@ -43,6 +43,37 @@ namespace scene
         std::uint32_t offset = 0;
     };
 
+    struct MeshData
+    {
+        struct VertexBufferBinding
+        {
+            vkb::Buffer* buffer = nullptr;
+            std::uint32_t stride = 0;
+            VkVertexInputRate input_rate = VK_VERTEX_INPUT_RATE_VERTEX;
+        };
+
+        struct VertexAttribute
+        {
+            VkFormat format = VK_FORMAT_UNDEFINED;
+            std::uint32_t offset = 0;
+            std::string binding_name;
+        };
+
+        std::uint32_t vertices_count = 0;
+        std::uint32_t index_count = 0;
+        VkIndexType index_type = VK_INDEX_TYPE_UINT32;
+
+        std::unordered_map<std::string, vkb::Buffer> vertex_buffers;
+
+        std::unique_ptr<vkb::Buffer> index_buffer;
+        std::uint32_t index_buffer_offset = 0;
+
+        std::unordered_map<std::string, MeshData::VertexBufferBinding> vertex_buffer_bindings;
+
+        // "Position" : 
+        std::unordered_map<std::string, MeshData::VertexAttribute> vertex_attributes;
+    };
+
     class SubMesh : public Component
     {
     public:
@@ -56,6 +87,7 @@ namespace scene
 
         RTTR_ENABLE(Component)
     public:
+        MeshData* meshData = nullptr;
         std::string ModelPath;
         bool bHasMeshData = false;
 

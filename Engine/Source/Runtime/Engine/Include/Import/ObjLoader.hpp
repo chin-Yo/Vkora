@@ -7,6 +7,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/hash.hpp>
 
+#include "Engine/SceneGraph/Components/SubMesh.hpp"
+
 struct Vertex
 {
     glm::vec3 pos;
@@ -85,6 +87,10 @@ namespace asset
         std::unique_ptr<scene::SubMesh> ReadModelFromFile(const std::string& file_name, uint32_t index,
                                                           bool storage_buffer = false,
                                                           VkBufferUsageFlags additional_buffer_usage_flags = 0);
+
+        void ReadMeshDataFromFile(scene::MeshData& mesh_data,const std::string& file_name, uint32_t index,
+                                                  bool storage_buffer = false,
+                                                  VkBufferUsageFlags additional_buffer_usage_flags = 0);
 
     private:
         std::vector<Vertex> vertices;
