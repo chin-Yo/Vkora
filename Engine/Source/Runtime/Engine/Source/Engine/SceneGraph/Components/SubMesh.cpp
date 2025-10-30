@@ -21,6 +21,41 @@
 
 namespace scene
 {
+    SubMesh::SubMesh(SubMesh&& other) noexcept
+        : Component(std::move(other)),
+          ModelPath(std::move(other.ModelPath)),
+          bHasMeshData(other.bHasMeshData),
+          index_type(other.index_type),
+          index_buffer_offset(other.index_buffer_offset),
+          vertices_count(other.vertices_count),
+          index_count(other.index_count),
+          vertex_buffers(std::move(other.vertex_buffers)),
+          index_buffer(std::move(other.index_buffer)),
+          vertex_attributes(std::move(other.vertex_attributes)),
+          material(other.material),
+          shader_variant(std::move(other.shader_variant))
+    {
+    }
+
+    SubMesh& SubMesh::operator=(SubMesh&& other) noexcept
+    {
+        if (this == &other)
+            return *this;
+        Component::operator =(std::move(other));
+        ModelPath = std::move(other.ModelPath);
+        bHasMeshData = other.bHasMeshData;
+        index_type = other.index_type;
+        index_buffer_offset = other.index_buffer_offset;
+        vertices_count = other.vertices_count;
+        index_count = other.index_count;
+        vertex_buffers = std::move(other.vertex_buffers);
+        index_buffer = std::move(other.index_buffer);
+        vertex_attributes = std::move(other.vertex_attributes);
+        material = other.material;
+        shader_variant = std::move(other.shader_variant);
+        return *this;
+    }
+
     SubMesh::SubMesh(const std::string& name) :
         Component{name}
     {
@@ -64,4 +99,11 @@ namespace scene
     {
         return shader_variant;
     }
+}
+
+RTTR_REGISTRATION
+{
+    using namespace rttr;
+    registration::class_<scene::SubMesh>("scene::SubMesh")
+        .constructor<const std::string&>();
 }

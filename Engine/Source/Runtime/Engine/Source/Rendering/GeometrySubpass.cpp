@@ -69,7 +69,7 @@ namespace vkb
         {
             for (auto& sub_mesh : mesh.GetSubmeshes())
             {
-                if (sub_mesh->get_material()->alpha_mode == scene::AlphaMode::Blend)
+                if (sub_mesh->bHasMeshData && sub_mesh->get_material()->alpha_mode == scene::AlphaMode::Blend)
                 {
                     transparent_nodes.emplace(0, std::make_pair(sub_mesh->GetOwner(), sub_mesh));
                 }

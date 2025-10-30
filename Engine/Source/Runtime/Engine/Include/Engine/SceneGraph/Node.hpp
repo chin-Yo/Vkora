@@ -49,6 +49,11 @@ namespace scene
             return transform;
         }
 
+        scene::Scene* GetScene()
+        {
+            return scene;
+        }
+
         void SetParent(Node& parent);
 
         Node* GetParent() const;

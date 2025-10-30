@@ -18,6 +18,6 @@ public:
 
 private:
     void DisplaySelectedNode(scene::Node* node);
-    void DrawComponentSelector();
+    void DrawComponentSelector(scene::Node* node);
     void DrawTransformInspector(scene::Transform& transform);
 };

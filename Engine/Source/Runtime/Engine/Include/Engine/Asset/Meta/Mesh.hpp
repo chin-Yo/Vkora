@@ -1,17 +1,7 @@
 #pragma once
-#include <ctime>
-#include <string>
+#include "Meta.hpp"
 
-namespace asset
+struct MeshAssetMetadata : public AssetMetadata
 {
-    namespace meta
-    {
-        struct MeshAsset
-        {
-            std::string name; // File name (without extension), for example "suzanne"
-            std::string fullPath; // Absolute path, such as "assets/models/suzanne.obj"
-            std::string extension; // ".obj", ".glb"
-            time_t lastModified; // Used for determining hot updates
-        };
-    }
-}
+    MeshAssetMetadata() { type = AssetType::Mesh; }
+};

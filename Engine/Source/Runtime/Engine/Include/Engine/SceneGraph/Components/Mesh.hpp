@@ -70,7 +70,7 @@ namespace scene
         Mesh& operator=(Mesh&& other) noexcept;
         virtual ~Mesh() = default;
 
-        void AddSubmesh(SubMesh& submesh);
+        void SetSubmesh(SubMesh& submesh);
 
         const std::vector<SubMesh*>& GetSubmeshes() const;
 
