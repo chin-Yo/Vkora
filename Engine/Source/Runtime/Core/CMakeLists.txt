@@ -3,7 +3,7 @@ set(TARGET_NAME Core)
 Include(${CMAKE_DIR}/LibBase.cmake)
 
 
-target_link_libraries(${TARGET_NAME} PUBLIC spdlog::spdlog rttr_core_lib)
+target_link_libraries(${TARGET_NAME} PUBLIC spdlog::spdlog rttr_core_lib ctpl)
 
 set_property(TARGET ${TARGET_NAME} PROPERTY VS_GLOBAL_DisableExternalDependencies true)
 

@@ -224,12 +224,6 @@ set_target_properties(spirv-cross-msl PROPERTIES FOLDER ${third_party_folder}/sp
 set_target_properties(spirv-cross-reflect PROPERTIES FOLDER ${third_party_folder}/spirv-cross POSITION_INDEPENDENT_CODE ON)
 set_target_properties(spirv-cross-util PROPERTIES FOLDER ${third_party_folder}/spirv-cross POSITION_INDEPENDENT_CODE ON)
 
-# rttr
-# set(BUILD_STATIC ON CACHE BOOL "Build RTTR as static library")
-# set(BUILD_RTTR_DYNAMIC OFF CACHE BOOL "Disable dynamic library build")
-# add_subdirectory(rttr)
-# set_target_properties(rttr_core_lib PROPERTIES FOLDER ${third_party_folder}/rttr)
-
 # vma
 add_library(vma INTERFACE)
 set(VMA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vma/include)
@@ -244,8 +238,9 @@ add_subdirectory(eventpp)
 # ctpl
 add_library(ctpl INTERFACE)
 set(CTPL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/CTPL)
-#target_sources(ctpl INTERFACE ${CTPL_DIR}/ctpl_stl.h)
 target_include_directories(ctpl SYSTEM INTERFACE ${CTPL_DIR})
+set_target_properties(ctpl PROPERTIES FOLDER ${third_party_folder}/ctpl)
+
 
 # rttr rttr_core_lib
 add_subdirectory(rttr)
