@@ -88,9 +88,8 @@ namespace asset
                                                           bool storage_buffer = false,
                                                           VkBufferUsageFlags additional_buffer_usage_flags = 0);
 
-        void ReadMeshDataFromFile(scene::MeshData& mesh_data,const std::string& file_name, uint32_t index,
-                                                  bool storage_buffer = false,
-                                                  VkBufferUsageFlags additional_buffer_usage_flags = 0);
+        void ReadMeshDataFromFile(scene::MeshData& mesh_data, const std::string& file_name,
+                                  VkBufferUsageFlags additional_buffer_usage_flags = 0);
 
     private:
         std::vector<Vertex> vertices;
