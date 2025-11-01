@@ -114,7 +114,7 @@ namespace asset
         return std::move(sub_mesh);
     }
 
-    void ObjLoader::ReadMeshDataFromFile(
+    bool ObjLoader::ReadMeshDataFromFile(
         scene::MeshData& mesh_data,
         const std::string& file_name,
         VkBufferUsageFlags additional_buffer_usage_flags)
@@ -129,7 +129,7 @@ namespace asset
         if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, file_name.c_str()))
         {
             LOG_ERROR("Failed to load OBJ file '%s': %s", file_name.c_str(), err.c_str());
-            return;
+            return false;
         }
 
         if (!warn.empty())
@@ -193,7 +193,7 @@ namespace asset
         if (vertices.empty() || indices.empty())
         {
             LOG_ERROR("Loaded mesh has no vertices or indices");
-            return;
+            return false;
         }
 
         auto& queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
@@ -245,19 +245,19 @@ namespace asset
         mesh_data.index_buffer_offset = 0; // Usually 0, unless you perform buffer offset drawing
 
         // === 4. Set vertex attribute description (strided layout) ===
-        mesh_data.vertex_attributes["Position"] = scene::MeshData::VertexAttribute{
+        mesh_data.vertex_attributes["position"] = scene::MeshData::VertexAttribute{
             VK_FORMAT_R32G32B32_SFLOAT,
             offsetof(Vertex, pos),
             "Vertex"
         };
 
-        mesh_data.vertex_attributes["TexCoord"] = scene::MeshData::VertexAttribute{
+        mesh_data.vertex_attributes["texcoord_0"] = scene::MeshData::VertexAttribute{
             VK_FORMAT_R32G32_SFLOAT,
             offsetof(Vertex, texCoord),
             "Vertex"
         };
 
-        mesh_data.vertex_attributes["Color"] = scene::MeshData::VertexAttribute{
+        mesh_data.vertex_attributes["normal"] = scene::MeshData::VertexAttribute{
             VK_FORMAT_R32G32B32_SFLOAT,
             offsetof(Vertex, color),
             "Vertex"
@@ -276,5 +276,6 @@ namespace asset
         device.get_fence_pool().wait();
         device.get_fence_pool().reset();
         device.get_command_pool().reset_pool();
+        return true;
     }
 }

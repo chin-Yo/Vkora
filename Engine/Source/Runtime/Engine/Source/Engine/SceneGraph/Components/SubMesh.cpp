@@ -56,6 +56,22 @@ namespace scene
         return *this;
     }
 
+    bool SubMesh::GetAttribute(const std::string& attributeName, MeshData::VertexAttribute& attribute) const
+    {
+        if (!meshData) return false;
+
+        auto attrib_it = meshData->vertex_attributes.find(attributeName);
+
+        if (attrib_it == meshData->vertex_attributes.end())
+        {
+            return false;
+        }
+
+        attribute = attrib_it->second;
+
+        return true;
+    }
+
     SubMesh::SubMesh(const std::string& name) :
         Component{name}
     {

@@ -2,9 +2,13 @@
 
 #include <imgui.h>
 
+#include "GlobalContext.hpp"
 #include "Engine/Asset/AssetRegistry.hpp"
 #include "Engine/SceneGraph/ComponentPool.hpp"
 #include "Engine/SceneGraph/Components/SubMesh.hpp"
+#include "Import/ObjLoader.hpp"
+#include "Misc/Paths.hpp"
+#include "Render/RenderSystem.hpp"
 #include "UIManage/EditorGlobalContext.hpp"
 
 
@@ -69,7 +73,22 @@ void DetailsPanel::DisplaySelectedNode(scene::Node* node)
                         bool isSelected = (currentSelection == i);
                         if (ImGui::Selectable(options[i]->name.c_str(), isSelected))
                         {
+                            // Execute once when selected, within one frame
                             currentSelection = i;
+                            subMesh->bHasMeshData = false;
+                            delete subMesh->meshData;
+
+                            asset::ObjLoader loader(GRuntimeGlobalContext.renderSystem->GetDevice());
+                            subMesh->meshData = new scene::MeshData();
+                            auto success = loader.ReadMeshDataFromFile(*subMesh->meshData,
+                                                        Paths::GetAssetFullPath((options[i]->relativePath)));
+                            if (success)
+                            {
+                                subMesh->bHasMeshData = true;
+                            }else
+                            {
+                                delete subMesh->meshData;
+                            }
                         }
                         if (isSelected)
                         {
