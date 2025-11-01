@@ -30,7 +30,6 @@ namespace asset
 
         command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-
         tinyobj::attrib_t attrib;
         std::vector<tinyobj::shape_t> shapes;
         std::vector<tinyobj::material_t> materials;
@@ -93,7 +92,6 @@ namespace asset
             auto pair = std::make_pair("vertex_buffer", std::move(buffer));
             sub_mesh->vertex_buffers.insert(std::move(pair));
         }
-
 
         vkb::Buffer stage_buffer = vkb::Buffer::create_staging_buffer(device, indices);
 
@@ -198,12 +196,11 @@ namespace asset
             return;
         }
 
-        // --- 开始 Vulkan 资源上传 ---
         auto& queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
         auto command_buffer = device.request_command_buffer();
         command_buffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-        // === 1. 顶点缓冲区 ===
+        // === 1. vertex buffer ===
         VkDeviceSize vertexBufferSize = vertices.size() * sizeof(Vertex);
         vkb::Buffer stagingVertexBuffer = vkb::Buffer::create_staging_buffer(device, vertices);
 
@@ -221,10 +218,10 @@ namespace asset
 
         command_buffer->copy_buffer(stagingVertexBuffer, vertexBuffer, vertexBufferSize);
 
-        // 插入到 vertex_buffers（使用 "Vertex" 作为 key，便于后续绑定）
+        // Insert into vertex_buffers (using "Vertex" as the key for easy subsequent binding)
         mesh_data.vertex_buffers["Vertex"] = std::move(vertexBuffer);
 
-        // === 2. 索引缓冲区 ===
+        // === 2. Index buffer ===
         VkDeviceSize indexBufferSize = indices.size() * sizeof(uint32_t);
         vkb::Buffer stagingIndexBuffer = vkb::Buffer::create_staging_buffer(device, indices);
 
@@ -237,41 +234,40 @@ namespace asset
             device,
             indexBufferSize,
             indexBufferUsage,
-            VMA_MEMORY_USAGE_GPU_ONLY
-        );
+            VMA_MEMORY_USAGE_GPU_ONLY);
 
         command_buffer->copy_buffer(stagingIndexBuffer, *mesh_data.index_buffer, indexBufferSize);
 
-        // === 3. 填充 MeshData 元数据 ===
+        // === 3. Populate the MeshData metadata ===
         mesh_data.vertices_count = static_cast<uint32_t>(vertices.size());
         mesh_data.index_count = static_cast<uint32_t>(indices.size());
         mesh_data.index_type = VK_INDEX_TYPE_UINT32;
-        mesh_data.index_buffer_offset = 0; // 通常为 0，除非你做 buffer offset 绘制
+        mesh_data.index_buffer_offset = 0; // Usually 0, unless you perform buffer offset drawing
 
-        // === 4. 设置顶点属性描述（交错布局）===
+        // === 4. Set vertex attribute description (strided layout) ===
         mesh_data.vertex_attributes["Position"] = scene::MeshData::VertexAttribute{
-            .format = VK_FORMAT_R32G32B32_SFLOAT,
-            .offset = offsetof(Vertex, pos),
-            .binding_name = "Vertex"
+            VK_FORMAT_R32G32B32_SFLOAT,
+            offsetof(Vertex, pos),
+            "Vertex"
         };
 
         mesh_data.vertex_attributes["TexCoord"] = scene::MeshData::VertexAttribute{
-            .format = VK_FORMAT_R32G32_SFLOAT,
-            .offset = offsetof(Vertex, texCoord),
-            .binding_name = "Vertex"
+            VK_FORMAT_R32G32_SFLOAT,
+            offsetof(Vertex, texCoord),
+            "Vertex"
         };
 
         mesh_data.vertex_attributes["Color"] = scene::MeshData::VertexAttribute{
-            .format = VK_FORMAT_R32G32B32_SFLOAT,
-            .offset = offsetof(Vertex, color),
-            .binding_name = "Vertex"
+            VK_FORMAT_R32G32B32_SFLOAT,
+            offsetof(Vertex, color),
+            "Vertex"
         };
 
-        // === 5. 设置顶点绑定描述 ===
+        // === 5. Set vertex binding description ===
         mesh_data.vertex_buffer_bindings["Vertex"] = scene::MeshData::VertexBufferBinding{
-            .buffer = &mesh_data.vertex_buffers.at("Vertex"),
-            .stride = sizeof(Vertex),
-            .input_rate = VK_VERTEX_INPUT_RATE_VERTEX
+            &mesh_data.vertex_buffers.at("Vertex"),
+            sizeof(Vertex),
+            VK_VERTEX_INPUT_RATE_VERTEX
         };
 
         command_buffer->end();
