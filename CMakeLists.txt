@@ -35,7 +35,8 @@ endif()
 # ---- Paths ----
 set(VKORAENGINE_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(CMAKE_INSTALL_PREFIX "${VKORAENGINE_ROOT_DIR}/bin")
-set(BINARY_ROOT_DIR "${CMAKE_INSTALL_PREFIX}/")
+set(BINARY_ROOT_DIR "${CMAKE_INSTALL_PREFIX}")
+set(SHADERS_ROOT_DIR "${VKORAENGINE_ROOT_DIR}/Engine/Shaders")
 
 # ---- Global path ----
 set(THIRD_PARTY_DIR "${CMAKE_SOURCE_DIR}/ThirdParty" CACHE PATH "Third-party library root directory")
@@ -72,3 +73,17 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 add_subdirectory(ThirdParty)
 add_subdirectory(Engine/Source)
 add_subdirectory(Test)
+
+# ---- Shaders ----
+file(GLOB_RECURSE SHADER_FILES
+    ${SHADERS_ROOT_DIR}/*.vert
+    ${SHADERS_ROOT_DIR}/*.frag
+    ${SHADERS_ROOT_DIR}/*.geom
+    ${SHADERS_ROOT_DIR}/*.comp
+    ${SHADERS_ROOT_DIR}/*.tesc
+    ${SHADERS_ROOT_DIR}/*.tese
+    ${SHADERS_ROOT_DIR}/*.glsl
+)
+
+add_custom_target(Shaders SOURCES ${SHADER_FILES})
+source_group(TREE ${SHADERS_ROOT_DIR} PREFIX "" FILES ${SHADER_FILES})

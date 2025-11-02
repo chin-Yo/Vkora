@@ -91,6 +91,8 @@ namespace scene
         std::string ModelPath;
         bool bHasMeshData = false;
 
+        bool GetAttribute(const std::string& name, MeshData::VertexAttribute& attribute) const;
+
         VkIndexType index_type{};
 
         std::uint32_t index_buffer_offset = 0;

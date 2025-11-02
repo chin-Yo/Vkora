@@ -206,44 +206,33 @@ namespace vkb
 
         for (auto& input_resource : vertex_input_resources)
         {
-            scene::VertexAttribute attribute;
+            scene::MeshData::VertexAttribute attribute;
 
-            if (!sub_mesh.get_attribute(input_resource.name, attribute))
+            if (!sub_mesh.GetAttribute(input_resource.name, attribute))
             {
                 continue;
             }
 
             VkVertexInputAttributeDescription vertex_attribute{};
-            vertex_attribute.binding = input_resource.location;
+            vertex_attribute.binding = 0;
             vertex_attribute.format = attribute.format;
             vertex_attribute.location = input_resource.location;
             vertex_attribute.offset = attribute.offset;
 
             vertex_input_state.attributes.push_back(vertex_attribute);
-
-            VkVertexInputBindingDescription vertex_binding{};
-            vertex_binding.binding = input_resource.location;
-            vertex_binding.stride = attribute.stride;
-
-            vertex_input_state.bindings.push_back(vertex_binding);
         }
+        VkVertexInputBindingDescription vertex_binding{};
+        vertex_binding.binding = 0;
+        vertex_binding.stride = sub_mesh.meshData->vertex_buffer_bindings["Vertex"].stride;
 
+        vertex_input_state.bindings.push_back(vertex_binding);
         command_buffer.set_vertex_input_state(vertex_input_state);
 
-        // Find submesh vertex buffers matching the shader input attribute names
-        for (auto& input_resource : vertex_input_resources)
-        {
-            const auto& buffer_iter = sub_mesh.vertex_buffers.find(input_resource.name);
+        std::vector<std::reference_wrapper<const vkb::Buffer>> buffers;
+        buffers.emplace_back(std::ref(*sub_mesh.meshData->vertex_buffer_bindings["Vertex"].buffer));
 
-            if (buffer_iter != sub_mesh.vertex_buffers.end())
-            {
-                std::vector<std::reference_wrapper<const vkb::Buffer>> buffers;
-                buffers.emplace_back(std::ref(buffer_iter->second));
-
-                // Bind vertex buffers only for the attribute locations defined
-                command_buffer.bind_vertex_buffers(input_resource.location, std::move(buffers), {0});
-            }
-        }
+        // Bind vertex buffers only for the attribute locations defined
+        command_buffer.bind_vertex_buffers(0, std::move(buffers), {0});
 
         draw_submesh_command(command_buffer, sub_mesh);
     }
