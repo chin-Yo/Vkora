@@ -259,3 +259,9 @@ add_library(nlohmann-json INTERFACE)
 target_include_directories(nlohmann-json INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/nlohmann-json/include/
 )
+
+# assimp
+add_subdirectory(assimp)
+set_target_properties(assimp PROPERTIES FOLDER ${third_party_folder}/assimp POSITION_INDEPENDENT_CODE ON)
+set_target_properties(UpdateAssimpLibsDebugSymbolsAndDLLs PROPERTIES FOLDER ${third_party_folder}/assimp POSITION_INDEPENDENT_CODE ON)
+set_target_properties(zlibstatic PROPERTIES FOLDER ${third_party_folder}/assimp POSITION_INDEPENDENT_CODE ON)

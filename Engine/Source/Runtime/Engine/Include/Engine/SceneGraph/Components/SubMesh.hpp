@@ -93,18 +93,6 @@ namespace scene
 
         bool GetAttribute(const std::string& name, MeshData::VertexAttribute& attribute) const;
 
-        VkIndexType index_type{};
-
-        std::uint32_t index_buffer_offset = 0;
-
-        std::uint32_t vertices_count = 0;
-
-        std::uint32_t index_count = 0;
-
-        std::unordered_map<std::string, vkb::Buffer> vertex_buffers;
-
-        std::unique_ptr<vkb::Buffer> index_buffer;
-
         void set_attribute(const std::string& name, const VertexAttribute& attribute);
 
         bool get_attribute(const std::string& name, VertexAttribute& attribute) const;

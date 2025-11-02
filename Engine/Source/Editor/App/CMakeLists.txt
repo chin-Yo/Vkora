@@ -25,6 +25,8 @@ target_include_directories(${TARGET_NAME} PUBLIC
     #${THIRD_PARTY_DIR}/spdlog/include
 )
 
+target_compile_definitions(${TARGET_NAME} PRIVATE GLM_ENABLE_EXPERIMENTAL)
+
 set_source_files_properties(Source/main.cpp PROPERTIES
     COMPILE_DEFINITIONS VOLK_IMPLEMENTATION
 )

@@ -26,29 +26,28 @@
 #ifdef __ANDROID__
 #include "VulkanAndroid.h"
 #endif
-#define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 
 namespace vks
 {
-	namespace debug
-	{
-		VKAPI_ATTR VkBool32 VKAPI_CALL debugUtilsMessageCallback(
-			VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-			VkDebugUtilsMessageTypeFlagsEXT messageType,
-			const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
-			void *pUserData);
+    namespace debug
+    {
+        VKAPI_ATTR VkBool32 VKAPI_CALL debugUtilsMessageCallback(
+            VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+            VkDebugUtilsMessageTypeFlagsEXT messageType,
+            const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+            void* pUserData);
 
-		void setupDebugging(VkInstance instance);
-		void freeDebugCallback(VkInstance instance);
-		void setupDebugingMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT &debugUtilsMessengerCI);
-	}
+        void setupDebugging(VkInstance instance);
+        void freeDebugCallback(VkInstance instance);
+        void setupDebugingMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& debugUtilsMessengerCI);
+    }
 
-	namespace debugutils
-	{
-		void setup(VkInstance instance);
-		void cmdBeginLabel(VkCommandBuffer cmdbuffer, std::string caption, glm::vec4 color);
-		void cmdEndLabel(VkCommandBuffer cmdbuffer);
-	}
+    namespace debugutils
+    {
+        void setup(VkInstance instance);
+        void cmdBeginLabel(VkCommandBuffer cmdbuffer, std::string caption, glm::vec4 color);
+        void cmdEndLabel(VkCommandBuffer cmdbuffer);
+    }
 }
