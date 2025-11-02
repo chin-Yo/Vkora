@@ -65,18 +65,20 @@ namespace vkb
         // TODO opaque_nodes
         auto camera_transform = camera.GetOwner()->GetTransform().GetWorldMatrix();
 
-        for (auto& mesh : meshes)
+        auto& sub_meshes = scene.GetComponentManager()->GetComponentsByClass<scene::SubMesh>();
+
+
+        for (auto& sub_mesh : sub_meshes)
         {
-            for (auto& sub_mesh : mesh.GetSubmeshes())
+            if (!sub_mesh.bHasMeshData)
+                continue;
+            if (sub_mesh.get_material()->alpha_mode == scene::AlphaMode::Blend)
             {
-                if (sub_mesh->bHasMeshData && sub_mesh->get_material()->alpha_mode == scene::AlphaMode::Blend)
-                {
-                    transparent_nodes.emplace(0, std::make_pair(sub_mesh->GetOwner(), sub_mesh));
-                }
-                else
-                {
-                    opaque_nodes.emplace(0, std::make_pair(sub_mesh->GetOwner(), sub_mesh));
-                }
+                transparent_nodes.emplace(0, std::make_pair(sub_mesh.GetOwner(), &sub_mesh));
+            }
+            else
+            {
+                opaque_nodes.emplace(0, std::make_pair(sub_mesh.GetOwner(), &sub_mesh));
             }
         }
     }
@@ -291,18 +293,19 @@ namespace vkb
     void GeometrySubpass::draw_submesh_command(vkb::CommandBuffer& command_buffer, scene::SubMesh& sub_mesh)
     {
         // Draw submesh indexed if indices exists
-        if (sub_mesh.index_count != 0)
+        if (sub_mesh.meshData->index_count != 0)
         {
             // Bind index buffer of submesh
-            command_buffer.bind_index_buffer(*sub_mesh.index_buffer, sub_mesh.index_buffer_offset, sub_mesh.index_type);
+            command_buffer.bind_index_buffer(*sub_mesh.meshData->index_buffer, sub_mesh.meshData->index_buffer_offset,
+                                             sub_mesh.meshData->index_type);
 
             // Draw submesh using indexed data
-            command_buffer.draw_indexed(sub_mesh.index_count, 1, 0, 0, 0);
+            command_buffer.draw_indexed(sub_mesh.meshData->index_count, 1, 0, 0, 0);
         }
         else
         {
             // Draw submesh using vertices only
-            command_buffer.draw(sub_mesh.vertices_count, 1, 0, 0);
+            command_buffer.draw(sub_mesh.meshData->vertices_count, 1, 0, 0);
         }
     }
 

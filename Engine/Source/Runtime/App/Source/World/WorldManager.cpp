@@ -11,7 +11,7 @@ scene::Scene* WorldManager::CreateWorld(const std::string& name)
 
     auto cameraNode = std::make_unique<scene::Node>(world.get(), "DefaultCamera");
     ViewportCamera = world->GetComponentManager()->AddComponent<scene::PerspectiveCamera>(cameraNode.get());
-
+    ViewportCamera->SetFarPlane(10000.0f);
     world->AddNode(std::move(cameraNode));
 
     activeWorld = world.get();

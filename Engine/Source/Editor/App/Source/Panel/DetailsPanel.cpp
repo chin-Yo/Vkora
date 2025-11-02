@@ -4,9 +4,11 @@
 
 #include "GlobalContext.hpp"
 #include "Engine/Asset/AssetRegistry.hpp"
+#include "Engine/Asset/Import/ModelLoader.hpp"
 #include "Engine/SceneGraph/ComponentPool.hpp"
+#include "Engine/SceneGraph/Components/Material.hpp"
+#include "Engine/SceneGraph/Components/Pbr_Material.hpp"
 #include "Engine/SceneGraph/Components/SubMesh.hpp"
-#include "Import/ObjLoader.hpp"
 #include "Misc/Paths.hpp"
 #include "Render/RenderSystem.hpp"
 #include "UIManage/EditorGlobalContext.hpp"
@@ -78,16 +80,24 @@ void DetailsPanel::DisplaySelectedNode(scene::Node* node)
                             subMesh->bHasMeshData = false;
                             delete subMesh->meshData;
 
-                            asset::ObjLoader loader(GRuntimeGlobalContext.renderSystem->GetDevice());
-                            subMesh->meshData = new scene::MeshData();
-                            auto success = loader.ReadMeshDataFromFile(*subMesh->meshData,
-                                                        Paths::GetAssetFullPath((options[i]->relativePath)));
-                            if (success)
+                            auto mesh = ModelLoader::GetInstance().LoadAsSingleMesh(Paths::GetAssetFullPath(
+                                (options[i]->relativePath)));
+                            if (mesh)
                             {
-                                subMesh->bHasMeshData = true;
-                            }else
-                            {
-                                delete subMesh->meshData;
+                                subMesh->meshData = new scene::MeshData();
+                                auto success = ModelLoader::MeshToBuffer(
+                                    GRuntimeGlobalContext.renderSystem->GetDevice(),
+                                    *subMesh->meshData, *mesh);
+                                if (success)
+                                {
+                                    subMesh->bHasMeshData = true;
+                                    scene::Material* material = new scene::PBRMaterial("Default");
+                                    subMesh->set_material(*material);
+                                }
+                                else
+                                {
+                                    delete subMesh->meshData;
+                                }
                             }
                         }
                         if (isSelected)
