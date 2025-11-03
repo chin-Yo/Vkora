@@ -1,5 +1,6 @@
 #include "GlobalContext.hpp"
 #include "WindowSystem.hpp"
+#include "Engine/Asset/Manager/AssetManager.hpp"
 #include "Render/RenderSystem.hpp"
 #include "Engine/SceneGraph/Scene.hpp"
 #include "Engine/SceneGraph/Node.hpp"
@@ -19,7 +20,7 @@ void RuntimeGlobalContext::StartSystems(const std::string& config_file_path)
 
 void RuntimeGlobalContext::ShutdownSystems()
 {
-    renderSystem.reset();
     worldManager.reset();
+    renderSystem.reset();
     windowSystem.reset();
 }

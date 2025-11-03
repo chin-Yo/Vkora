@@ -23,7 +23,7 @@ namespace scene
 {
     SubMesh::SubMesh(SubMesh&& other) noexcept
         : Component(std::move(other)),
-          meshData(meshData),
+          meshData(std::move(other.meshData)),
           ModelPath(std::move(other.ModelPath)),
           bHasMeshData(other.bHasMeshData),
           vertex_attributes(std::move(other.vertex_attributes)),
@@ -104,6 +104,23 @@ namespace scene
     vkb::ShaderVariant& SubMesh::get_mut_shader_variant()
     {
         return shader_variant;
+    }
+
+    void SubMesh::SetMeshData(std::shared_ptr<MeshData> meshData)
+    {
+        if (!meshData)
+        {
+            LOG_ERROR("MeshData is null")
+            return;
+        }
+        bHasMeshData = true;
+        this->meshData = meshData;
+    }
+
+    void SubMesh::ClearMeshData()
+    {
+        bHasMeshData = false;
+        meshData.reset();
     }
 }
 

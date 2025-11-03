@@ -32,6 +32,7 @@ namespace scene
     }
 
     Light::Light(Light&& other) noexcept
+        : Component(std::move(other))
     {
         node = other.node;
         light_type = other.light_type;

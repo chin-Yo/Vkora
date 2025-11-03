@@ -4,6 +4,7 @@
 #include <string>
 #include "WindowSystem.hpp"
 
+class AssetManager;
 class WorldManager;
 class RenderSystem;
 class WindowSystem;

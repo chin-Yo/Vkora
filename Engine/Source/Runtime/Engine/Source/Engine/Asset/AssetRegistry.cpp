@@ -6,6 +6,7 @@
 #include <nlohmann/json.hpp>
 
 #include "Engine/Asset/Meta/Mesh.hpp"
+#include "Logging/Logger.hpp"
 
 using json = nlohmann::json;
 
@@ -22,11 +23,11 @@ void AssetRegistry::ScanDirectory(const std::string& assetRootPath)
 
     if (!std::filesystem::exists(AssetRootPath))
     {
-        std::cerr << "[AssetRegistry] Error: Asset root path does not exist: " << AssetRootPath << std::endl;
+        LOG_ERROR("[AssetRegistry] Error: Asset root path does not exist: " + AssetRootPath)
         return;
     }
 
-    std::cout << "[AssetRegistry] Scanning for .meta files in: " << AssetRootPath << std::endl;
+    LOG_INFO("[AssetRegistry] Scanning for .meta files in: {}", AssetRootPath)
     for (const auto& entry : std::filesystem::recursive_directory_iterator(AssetRootPath))
     {
         if (entry.is_regular_file() && entry.path().extension() == ".meta")
@@ -34,7 +35,7 @@ void AssetRegistry::ScanDirectory(const std::string& assetRootPath)
             LoadMetadataFromFile(entry.path());
         }
     }
-    std::cout << "[AssetRegistry] Scan finished. Registered " << AssetMetas.size() << " assets." << std::endl;
+    LOG_INFO("[AssetRegistry] Registered {} assets.", std::to_string(AssetMetas.size()))
 }
 
 const AssetMetadata* AssetRegistry::GetByGUID(const std::string& guid) const
@@ -77,7 +78,7 @@ std::filesystem::path AssetRegistry::GetFullPath(const std::string& guid)
     {
         return GetFullPath(*meta);
     }
-    return {}; // 返回空路径
+    return {};
 }
 
 bool AssetRegistry::LoadMetadataFromFile(const std::filesystem::path& metaFilePath)
@@ -85,7 +86,7 @@ bool AssetRegistry::LoadMetadataFromFile(const std::filesystem::path& metaFilePa
     std::ifstream f(metaFilePath);
     if (!f.is_open())
     {
-        std::cerr << "[AssetRegistry] Error: Failed to open meta file: " << metaFilePath.string() << std::endl;
+        LOG_ERROR("AssetRegistry", "Error: Failed to open meta file: " + metaFilePath.string())
         return false;
     }
 
@@ -96,30 +97,26 @@ bool AssetRegistry::LoadMetadataFromFile(const std::filesystem::path& metaFilePa
         std::string guid = metaJson.at("guid");
         if (PersistentIdToRuntimeId.count(guid))
         {
-            std::cerr << "[AssetRegistry] Warning: Duplicate GUID '" << guid << "' found in file "
-                << metaFilePath.string() << ". Skipping." << std::endl;
+            LOG_ERROR("AssetRegistry", "Error: Duplicate GUID '{}' found in file {}. Skipping.", guid,
+                      metaFilePath.string())
             return false;
         }
 
         AssetType type = StringToAssetType(metaJson.at("type"));
         if (type == AssetType::Unknown)
         {
-            return false; // 不支持的类型
+            return false;
         }
 
         std::unique_ptr<AssetMetadata> metadata = std::make_unique<AssetMetadata>();
         AssetID newId = NextRuntimeID++;
 
-        // 根据类型创建具体的元数据对象
         switch (type)
         {
         case AssetType::Mesh:
             metadata = std::make_unique<MeshAssetMetadata>();
-        // 在这里可以解析 Mesh 特有的导入设置
             break;
         case AssetType::Texture:
-            //metadata = std::make_unique<TextureAssetMetadata>();
-            // 在这里可以解析 Texture 特有的导入设置
             break;
         default:
             metadata = std::make_unique<AssetMetadata>();
@@ -145,8 +142,7 @@ bool AssetRegistry::LoadMetadataFromFile(const std::filesystem::path& metaFilePa
     }
     catch (const json::exception& e)
     {
-        std::cerr << "[AssetRegistry] Error: Failed to parse meta file: " << metaFilePath.string()
-            << ". Details: " << e.what() << std::endl;
+        LOG_ERROR("[AssetRegistry] Error: Failed to parse meta file: {}. Details:{}", metaFilePath.string(), e.what())
         return false;
     }
 

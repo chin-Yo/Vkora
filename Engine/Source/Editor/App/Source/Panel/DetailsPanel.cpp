@@ -6,6 +6,7 @@
 #include "Drawer/Refl_Drawer.hpp"
 #include "Engine/Asset/AssetRegistry.hpp"
 #include "Engine/Asset/Import/ModelLoader.hpp"
+#include "Engine/Asset/Manager/AssetManager.hpp"
 #include "Engine/SceneGraph/ComponentPool.hpp"
 #include "Engine/SceneGraph/Components/Light.hpp"
 #include "Engine/SceneGraph/Components/Material.hpp"
@@ -79,27 +80,14 @@ void DetailsPanel::DisplaySelectedNode(scene::Node* node)
                         {
                             // Execute once when selected, within one frame
                             currentSelection = i;
-                            subMesh->bHasMeshData = false;
-                            delete subMesh->meshData;
 
-                            auto mesh = ModelLoader::GetInstance().LoadAsSingleMesh(Paths::GetAssetFullPath(
-                                (options[i]->relativePath)));
-                            if (mesh)
+                            auto* aM = GRuntimeGlobalContext.renderSystem->GetAssetManager();
+                            auto meshData = aM->GetMesh(options[i]->relativePath);
+                            if (meshData)
                             {
-                                subMesh->meshData = new scene::MeshData();
-                                auto success = ModelLoader::MeshToBuffer(
-                                    GRuntimeGlobalContext.renderSystem->GetDevice(),
-                                    *subMesh->meshData, *mesh);
-                                if (success)
-                                {
-                                    subMesh->bHasMeshData = true;
-                                    scene::Material* material = new scene::PBRMaterial("Default");
-                                    subMesh->set_material(*material);
-                                }
-                                else
-                                {
-                                    delete subMesh->meshData;
-                                }
+                                subMesh->SetMeshData(meshData);
+                                scene::Material* material = new scene::PBRMaterial("Default");
+                                subMesh->set_material(*material);
                             }
                         }
                         if (isSelected)
@@ -110,9 +98,6 @@ void DetailsPanel::DisplaySelectedNode(scene::Node* node)
 
                     ImGui::EndCombo();
                 }
-            }
-            if (subMesh->bHasMeshData)
-            {
             }
         }
         else if (handle.type == rttr::type::get<scene::Light>())
@@ -139,7 +124,8 @@ void DetailsPanel::DrawComponentSelector(scene::Node* node)
     {
         if (ImGui::MenuItem("SubMesh"))
         {
-            scene->GetComponentManager()->AddComponent<::scene::SubMesh>(node);
+            auto* subMesh = scene->GetComponentManager()->AddComponent<::scene::SubMesh>(node);
+            subMesh->bHasMeshData = false;
         }
         if (ImGui::MenuItem("Camera"))
         {

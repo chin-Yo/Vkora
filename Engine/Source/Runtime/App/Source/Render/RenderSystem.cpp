@@ -2,6 +2,7 @@
 
 #include "GlobalContext.hpp"
 #include "backends/imgui_impl_vulkan.h"
+#include "Engine/Asset/Manager/AssetManager.hpp"
 #include "Engine/SceneGraph/Components/PerspectiveCamera.hpp"
 #include "Framework/Core/CommandBuffer.hpp"
 #include "Framework/Core/Queue.hpp"
@@ -23,6 +24,7 @@ RenderSystem::~RenderSystem()
     ViewportRTs.clear();
     UIManager->Shutdown();
     render_context.reset();
+    assetManager.reset();
     device.reset();
 
     if (surface)
@@ -142,6 +144,7 @@ bool RenderSystem::Prepare(const ApplicationOptions& options)
         debug_utils = std::make_unique<vkb::DummyDebugUtils>();
     }
     device = CreateDevice(gpu);
+    assetManager = std::make_unique<AssetManager>(GetDevice());
     // VULKAN_HPP_DEFAULT_DISPATCHER.init(device->GetHandle());
     CreateRenderContext();
     render_context->prepare(1, vkb::RenderTarget::ONE_IMAGE_FUNC);
