@@ -76,3 +76,35 @@ namespace scene
         return properties;
     }
 }
+
+RTTR_REGISTRATION
+{
+    using namespace rttr;
+    using namespace scene;
+
+    registration::enumeration<LightType>("LightType")
+    (
+        value("Directional", LightType::Directional),
+        value("Point", LightType::Point),
+        value("Spot", LightType::Spot)
+    );
+    registration::class_<LightProperties>("LightProperties")
+        .constructor<>()
+        .property("Direction", &LightProperties::direction)
+        .property("Color", &LightProperties::color)
+        (
+            //using the metadata, inform the UI renderer that this should be a color selector.
+            metadata("widget", "color")
+        )
+        .property("Intensity", &LightProperties::intensity)
+        .property("Range", &LightProperties::range)
+        .property("Inner Cone Angle", &LightProperties::inner_cone_angle)
+        .property("Outer Cone Angle", &LightProperties::outer_cone_angle);
+
+    registration::class_<Light>("Light")
+        .constructor<>()
+        .constructor<const std::string&>()
+        .property("Type", &Light::get_light_type, &Light::set_light_type)
+        // RTTR will automatically recognize that LightProperties is a registered class/structure.
+        .property("Properties", &Light::get_properties, &Light::set_properties);
+}
