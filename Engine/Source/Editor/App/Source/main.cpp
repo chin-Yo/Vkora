@@ -9,7 +9,7 @@
 int main(int argc, char** argv)
 {
     std::filesystem::path ExecutablePath(argv[0]);
-    std::filesystem::path ConfigFilePath = ExecutablePath.parent_path() / "CyREditor.ini";
+    std::filesystem::path ConfigFilePath = ExecutablePath.parent_path() / "VkoraEngineEditor.ini";
     Engine* engine = new Engine();
 
     engine->StartEngine(ConfigFilePath.generic_string());

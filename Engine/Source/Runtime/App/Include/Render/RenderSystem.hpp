@@ -11,6 +11,8 @@
 #include "Framework/Rendering/RenderPipeline.hpp"
 
 
+class AssetManager;
+
 namespace scene
 {
     class Camera;
@@ -181,6 +183,8 @@ private: // -----------------Member
 
     std::unique_ptr<vkb::DebugUtils> debug_utils;
 
+    std::unique_ptr<AssetManager> assetManager;
+
 public:
     vkb::Instance const& GetInstance() const { return *instance; }
     vkb::Instance& GetInstance() { return *instance; }
@@ -197,4 +201,6 @@ public:
     //Configuration get_configuration()
     std::vector<VkSurfaceFormatKHR> const& GetSurfacePriorityList() const;
     std::vector<VkSurfaceFormatKHR>& GetSurfacePriorityList();
+
+    AssetManager* GetAssetManager() { return assetManager.get(); }
 };

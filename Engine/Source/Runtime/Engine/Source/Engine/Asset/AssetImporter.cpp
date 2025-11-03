@@ -5,11 +5,12 @@
 #include <fstream>
 
 #include "Engine/Asset/AssetRegistry.hpp"
+#include "Logging/Logger.hpp"
 #include "Misc/Paths.hpp"
 
 void AssetImporter::ScanAndImport(const std::string& assetRootPath)
 {
-    std::cout << "[AssetImporter] Starting scan for new and modified assets in: " << assetRootPath << std::endl;
+    LOG_INFO("[AssetImporter] Starting scan for new and modified assets in: {} ", assetRootPath)
     m_assetRootPath = std::filesystem::absolute(assetRootPath);
 
     for (const auto& entry : std::filesystem::recursive_directory_iterator(m_assetRootPath))
@@ -36,12 +37,12 @@ void AssetImporter::ScanAndImport(const std::string& assetRootPath)
             }
         }
     }
-    std::cout << "[AssetImporter] Scan finished." << std::endl;
+    LOG_INFO("[AssetImporter] Scan finished.")
 }
 
 void AssetImporter::ImportNewAsset(const std::filesystem::path& relativeAssetPath)
 {
-    std::cout << "[AssetImporter] Found new asset, importing: " << relativeAssetPath.string() << std::endl;
+    LOG_INFO("[AssetImporter] Found new asset, importing: {}", relativeAssetPath.string())
     auto assetFullPath = std::filesystem::path(Paths::GetAssetFullPath(relativeAssetPath.generic_string()));
 
     AssetType type = AssetRegistry::StringToAssetType(
@@ -49,7 +50,7 @@ void AssetImporter::ImportNewAsset(const std::filesystem::path& relativeAssetPat
 
     if (type == AssetType::Unknown)
     {
-        std::cout << "[AssetImporter] Skipping unsupported file type: " << assetFullPath << std::endl;
+        LOG_INFO("[AssetImporter] Skipping unsupported file type: {}", assetFullPath.string())
         return;
     }
 
@@ -67,14 +68,14 @@ void AssetImporter::ImportNewAsset(const std::filesystem::path& relativeAssetPat
     std::ofstream metaFile(metaPath);
     if (!metaFile.is_open())
     {
-        std::cerr << "[AssetImporter] ERROR: Cannot create meta file: " << metaPath.string() << std::endl;
+        LOG_ERROR("[AssetImporter] ERROR: Cannot create meta file: {}", metaPath.string());
         return;
     }
 
     metaFile << metaJson.dump(4);
     metaFile.close();
 
-    std::cout << "[AssetImporter] Created meta file: " << metaPath.string() << std::endl;
+    LOG_INFO("[AssetImporter] Created meta file: {}", metaPath.string())
 }
 
 void AssetImporter::CheckForModification(const std::filesystem::path& assetPath, const std::filesystem::path& metaPath)
@@ -82,33 +83,31 @@ void AssetImporter::CheckForModification(const std::filesystem::path& assetPath,
     std::ifstream f(metaPath);
     if (!f.is_open())
     {
-        std::cerr << "[AssetImporter] Warning: Could not open meta file for checking: " << metaPath.string() <<
-            std::endl;
+        LOG_ERROR("[AssetImporter] Warning: Could not open meta file for checking: {}", metaPath.string())
         return;
     }
 
     try
     {
         nlohmann::json metaJson = nlohmann::json::parse(f);
-        f.close(); 
+        f.close();
 
         std::string oldHash = metaJson.value("source_file_hash", "");
         std::string newHash = CalculateFileHash(Paths::GetAssetFullPath(assetPath.generic_string()));
 
         if (oldHash != newHash)
         {
-            std::cout << "[AssetImporter] Asset modified: " << assetPath.string() << std::endl;
-
+            LOG_INFO("[AssetImporter] Asset modified: {}", assetPath.string())
             metaJson["source_file_hash"] = newHash;
             std::ofstream outFile(metaPath);
             outFile << metaJson.dump(4);
 
             std::string guid = metaJson["guid"];
-            std::cout << "[AssetImporter] Triggering re-import/hot-reload for GUID: " << guid << std::endl;
+            LOG_INFO("[AssetImporter] Triggering re-import/hot-reload for GUID: {}", guid)
         }
     }
     catch (const nlohmann::json::exception& e)
     {
-        std::cerr << "[AssetImporter] Error parsing meta file " << metaPath.string() << ": " << e.what() << std::endl;
+        LOG_ERROR("[AssetImporter] Error parsing meta file: {} : {}", metaPath.string(), e.what())
     }
 }

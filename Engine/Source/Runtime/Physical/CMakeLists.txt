@@ -1,5 +1,5 @@
 
-set(TARGET_NAME PhysicsEngine)
+set(TARGET_NAME Physics)
 
 Include(${CMAKE_DIR}/LibBase.cmake)
 

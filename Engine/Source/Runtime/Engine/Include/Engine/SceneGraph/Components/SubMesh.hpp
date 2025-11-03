@@ -87,7 +87,7 @@ namespace scene
 
         RTTR_ENABLE(Component)
     public:
-        MeshData* meshData = nullptr;
+        std::shared_ptr<MeshData> meshData;
         std::string ModelPath;
         bool bHasMeshData = false;
 
@@ -104,6 +104,10 @@ namespace scene
         const vkb::ShaderVariant& get_shader_variant() const;
 
         vkb::ShaderVariant& get_mut_shader_variant();
+
+        void SetMeshData(std::shared_ptr<MeshData> meshData);
+
+        void ClearMeshData();
 
     private:
         std::unordered_map<std::string, VertexAttribute> vertex_attributes;
