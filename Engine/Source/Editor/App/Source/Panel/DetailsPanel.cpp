@@ -3,9 +3,11 @@
 #include <imgui.h>
 
 #include "GlobalContext.hpp"
+#include "Drawer/Refl_Drawer.hpp"
 #include "Engine/Asset/AssetRegistry.hpp"
 #include "Engine/Asset/Import/ModelLoader.hpp"
 #include "Engine/SceneGraph/ComponentPool.hpp"
+#include "Engine/SceneGraph/Components/Light.hpp"
 #include "Engine/SceneGraph/Components/Material.hpp"
 #include "Engine/SceneGraph/Components/Pbr_Material.hpp"
 #include "Engine/SceneGraph/Components/SubMesh.hpp"
@@ -113,6 +115,14 @@ void DetailsPanel::DisplaySelectedNode(scene::Node* node)
             {
             }
         }
+        else if (handle.type == rttr::type::get<scene::Light>())
+        {
+            auto* light = scene->GetComponentManager()->GetComponentFormNode<scene::Light>(node->GetID());
+            if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen))
+            {
+                ui::PropertyDrawer::DrawObject(light);
+            }
+        }
     }
 }
 
@@ -138,12 +148,18 @@ void DetailsPanel::DrawComponentSelector(scene::Node* node)
         {
             if (ImGui::MenuItem("Point Light"))
             {
+                auto* light = scene->GetComponentManager()->AddComponent<::scene::Light>(node);
+                light->set_light_type(::scene::LightType::Point);
             }
             if (ImGui::MenuItem("Directional Light"))
             {
+                auto* light = scene->GetComponentManager()->AddComponent<::scene::Light>(node);
+                light->set_light_type(::scene::LightType::Directional);
             }
             if (ImGui::MenuItem("Spot Light"))
             {
+                auto* light = scene->GetComponentManager()->AddComponent<::scene::Light>(node);
+                light->set_light_type(::scene::LightType::Spot);
             }
             ImGui::EndMenu();
         }

@@ -304,7 +304,7 @@ namespace vkb
         for (auto& scene_light : scene_lights)
         {
             const auto& properties = scene_light.get_properties();
-            auto& transform = scene_light.get_node()->GetTransform();
+            auto& transform = scene_light.GetOwner()->GetTransform();
 
             vkb::Light light{
                 {transform.GetTranslation(), static_cast<float>(scene_light.get_light_type())},
