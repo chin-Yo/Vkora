@@ -108,6 +108,7 @@ if(NOT TARGET imgui)
     add_subdirectory(imgui)
     target_compile_definitions(imgui PRIVATE IMGUI_IMPL_VULKAN_NO_PROTOTYPES)
 
+    target_compile_definitions(imgui PRIVATE IMGUI_DEFINE_MATH_OPERATORS)
     target_link_libraries(imgui PUBLIC volk)
     
     set_target_properties(imgui PROPERTIES FOLDER ${third_party_folder}/imgui)

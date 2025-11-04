@@ -110,6 +110,7 @@ void EditorUIManager::BeginFrame()
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+    ImGuizmo::BeginFrame();
 }
 
 void EditorUIManager::EndFrame()
