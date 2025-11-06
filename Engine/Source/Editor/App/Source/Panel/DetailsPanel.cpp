@@ -42,6 +42,28 @@ void DetailsPanel::OnUIRender()
 
 void DetailsPanel::DisplaySelectedNode(scene::Node* node)
 {
+    if (!node)
+    {
+        m_LastSelectedNode = nullptr;
+        return;
+    }
+    if (node != m_LastSelectedNode)
+    {
+        // 如果是新选择的节点，就将它的名字复制到我们的缓冲区
+        // 使用 strncpy 来防止缓冲区溢出
+        const std::string& nodeName = node->GetName(); // 假设 GetName() 返回 std::string
+        const size_t copyLength = std::min(nodeName.length(), sizeof(m_NodeNameBuffer) - 1);
+        std::copy_n(nodeName.begin(), copyLength, m_NodeNameBuffer);
+        m_NodeNameBuffer[copyLength] = '\0';
+        m_LastSelectedNode = node;
+    }
+    if (ImGui::InputText("Node Name", m_NodeNameBuffer, sizeof(m_NodeNameBuffer)))
+    {
+        node->SetName(m_NodeNameBuffer);
+    }
+
+    ImGui::Separator();
+
     auto& transform = node->GetTransform();
     DrawTransformInspector(transform);
 

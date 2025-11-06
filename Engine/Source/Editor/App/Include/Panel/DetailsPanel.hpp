@@ -20,4 +20,9 @@ private:
     void DisplaySelectedNode(scene::Node* node);
     void DrawComponentSelector(scene::Node* node);
     void DrawTransformInspector(scene::Transform& transform);
+
+
+    scene::Node* m_LastSelectedNode = nullptr;
+
+    char m_NodeNameBuffer[256] = {0};
 };
