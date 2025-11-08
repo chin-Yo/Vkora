@@ -266,3 +266,10 @@ add_subdirectory(assimp)
 set_target_properties(assimp PROPERTIES FOLDER ${third_party_folder}/assimp POSITION_INDEPENDENT_CODE ON)
 set_target_properties(UpdateAssimpLibsDebugSymbolsAndDLLs PROPERTIES FOLDER ${third_party_folder}/assimp POSITION_INDEPENDENT_CODE ON)
 set_target_properties(zlibstatic PROPERTIES FOLDER ${third_party_folder}/assimp POSITION_INDEPENDENT_CODE ON)
+
+# stb_image
+add_library(stb_image INTERFACE)
+
+target_include_directories(stb_image SYSTEM INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}/tinygltf/
+)
