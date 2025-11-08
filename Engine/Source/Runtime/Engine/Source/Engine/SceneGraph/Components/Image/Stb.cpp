@@ -38,7 +38,8 @@ namespace scene
 
         if (!raw_data)
         {
-            throw std::runtime_error{"Failed to load " + name + ": " + stbi_failure_reason()};
+            LOG_ERROR("Failed to load {} {}", name, stbi_failure_reason())
+            return;
         }
 
         set_data(raw_data, width * height * req_comp);

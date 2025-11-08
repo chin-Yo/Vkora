@@ -21,12 +21,20 @@ bool ui::PropertyDrawer::DrawObject(rttr::instance obj)
 
 bool ui::PropertyDrawer::DrawProperty(rttr::instance obj, rttr::property prop)
 {
+    void* instance_id = obj.get_wrapped_instance().try_convert<void>();
+    if (!instance_id)
+    {
+        instance_id = const_cast<void*>(static_cast<const void*>(&obj));
+    }
     bool is_readonly = prop.is_readonly();
     if (is_readonly)
     {
         ImGui::BeginDisabled();
     }
 
+    ImGui::PushID(instance_id);
+    ImGui::PushID(prop.get_name().to_string().c_str());
+    
     bool modified = false;
     std::string label = prop.get_name().to_string();
     rttr::type prop_type = prop.get_type();
@@ -80,7 +88,9 @@ bool ui::PropertyDrawer::DrawProperty(rttr::instance obj, rttr::property prop)
     {
         ImGui::Text("%s: (Unsupported Type: %s)", label.c_str(), prop_type.get_name().to_string().c_str());
     }
-
+    
+    ImGui::PopID(); // 对应属性名
+    ImGui::PopID(); // 对应 instance_id
     if (is_readonly)
     {
         ImGui::EndDisabled();
@@ -151,15 +161,9 @@ bool ui::PropertyDrawer::DrawStructProperty(rttr::instance obj, rttr::property p
 
     if (ImGui::TreeNodeEx(label.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
     {
-        // 核心技巧: 
-        // 1. 获取结构体的一个副本。
         rttr::variant struct_variant = prop.get_value(obj);
-
-        // 2. 在这个副本上递归调用 DrawObject。
-        //    我们传递的是 struct_variant 的实例，它是一个值，而不是指针。
         if (DrawObject(struct_variant))
         {
-            // 3. 如果副本被修改了，通过 setter 将整个修改后的结构体设置回去。
             prop.set_value(obj, struct_variant);
             modified = true;
         }

@@ -3,7 +3,7 @@ set(TARGET_NAME Engine)
 Include(${CMAKE_DIR}/LibBase.cmake)
 
 
-target_link_libraries(${TARGET_NAME} PUBLIC spdlog::spdlog glm VkWrap Core ctpl tinyobj nlohmann-json assimp)
+target_link_libraries(${TARGET_NAME} PUBLIC spdlog::spdlog glm VkWrap Core ctpl tinyobj nlohmann-json assimp stb_image)
 
 set_property(TARGET ${TARGET_NAME} PROPERTY VS_GLOBAL_DisableExternalDependencies true)
 
