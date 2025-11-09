@@ -39,7 +39,10 @@ ViewportPanel::~ViewportPanel()
 void ViewportPanel::OnUIRender()
 {
     ImGui::SetNextWindowSize(ImVec2(500, 600), ImGuiCond_Once);
-    ImGui::Begin("Viewport", nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+    if (!ImGui::Begin("Viewport", nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
+    {
+        return;
+    }
     HandleGuizmoInput();
     DrawGuizmoToolbar();
     ImVec2 currentViewportSize = ImGui::GetContentRegionAvail();
@@ -84,7 +87,7 @@ void ViewportPanel::HandleGuizmoInput()
         {
             GizmoOperation = ImGuizmo::SCALE;
         }
-        
+
         if (ImGui::IsKeyPressed(ImGuiKey_T))
         {
             GizmoMode = (GizmoMode == ImGuizmo::LOCAL) ? ImGuizmo::WORLD : ImGuizmo::LOCAL;
@@ -97,11 +100,11 @@ void ViewportPanel::DrawGuizmoToolbar()
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 2));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0, 0));
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-    
+
     auto& colors = ImGui::GetStyle().Colors;
     const auto& buttonHovered = colors[ImGuiCol_ButtonHovered];
     const auto& buttonActive = colors[ImGuiCol_ButtonActive];
-    
+
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(buttonHovered.x, buttonHovered.y, buttonHovered.z, 0.5f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(buttonActive.x, buttonActive.y, buttonActive.z, 0.5f));
 
@@ -112,13 +115,13 @@ void ViewportPanel::DrawGuizmoToolbar()
     bool isTranslate = GizmoOperation == ImGuizmo::TRANSLATE;
     if (isTranslate)
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.3f, 0.5f, 0.8f, 1.0f));
-    
+
     if (ImGui::Button("T", buttonSize))
         GizmoOperation = ImGuizmo::TRANSLATE;
-    
+
     if (isTranslate)
         ImGui::PopStyleColor();
-    
+
     if (ImGui::IsItemHovered())
         ImGui::SetTooltip("Translate (Q)");
 
@@ -128,13 +131,13 @@ void ViewportPanel::DrawGuizmoToolbar()
     bool isRotate = GizmoOperation == ImGuizmo::ROTATE;
     if (isRotate)
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.3f, 0.5f, 0.8f, 1.0f));
-    
+
     if (ImGui::Button("R", buttonSize))
         GizmoOperation = ImGuizmo::ROTATE;
-    
+
     if (isRotate)
         ImGui::PopStyleColor();
-    
+
     if (ImGui::IsItemHovered())
         ImGui::SetTooltip("Rotate (E)");
 
@@ -144,13 +147,13 @@ void ViewportPanel::DrawGuizmoToolbar()
     bool isScale = GizmoOperation == ImGuizmo::SCALE;
     if (isScale)
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.3f, 0.5f, 0.8f, 1.0f));
-    
+
     if (ImGui::Button("S", buttonSize))
         GizmoOperation = ImGuizmo::SCALE;
-    
+
     if (isScale)
         ImGui::PopStyleColor();
-    
+
     if (ImGui::IsItemHovered())
         ImGui::SetTooltip("Scale (R)");
 
@@ -162,7 +165,7 @@ void ViewportPanel::DrawGuizmoToolbar()
     bool isLocal = GizmoMode == ImGuizmo::LOCAL;
     if (ImGui::Button(isLocal ? "Local" : "World", ImVec2(60, buttonSize.y)))
         GizmoMode = isLocal ? ImGuizmo::WORLD : ImGuizmo::LOCAL;
-    
+
     if (ImGui::IsItemHovered())
         ImGui::SetTooltip("Toggle Coordinate System (T)");
 

@@ -44,7 +44,8 @@ void MenuBar::OnUIRender()
     if (!opt_padding)
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
-    ImGui::Begin("DockSpace ImGui", &dockspaceOpen, window_flags);
+    if (!ImGui::Begin("DockSpace ImGui", &dockspaceOpen, window_flags))
+        return;
 
     if (!opt_padding)
         ImGui::PopStyleVar();

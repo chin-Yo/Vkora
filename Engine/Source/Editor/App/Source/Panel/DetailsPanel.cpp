@@ -1,8 +1,10 @@
 #include "Panel/DetailsPanel.hpp"
 
 #include <imgui.h>
+#include <imgui_internal.h>
 
 #include "GlobalContext.hpp"
+#include "Drawer/ImageSelector.hpp"
 #include "Drawer/Refl_Drawer.hpp"
 #include "Engine/Asset/AssetRegistry.hpp"
 #include "Engine/Asset/Import/ModelLoader.hpp"
@@ -15,7 +17,7 @@
 #include "Misc/Paths.hpp"
 #include "Render/RenderSystem.hpp"
 #include "UIManage/EditorGlobalContext.hpp"
-
+#include "Logging/Logger.hpp"
 
 DetailsPanel::DetailsPanel()
 {
@@ -36,6 +38,7 @@ void DetailsPanel::OnUIRender()
     {
         DisplaySelectedNode(node);
         DrawComponentSelector(node);
+        DrawDuplicateComponentModal();
     }
     ImGui::End();
 }
@@ -44,22 +47,22 @@ void DetailsPanel::DisplaySelectedNode(scene::Node* node)
 {
     if (!node)
     {
-        m_LastSelectedNode = nullptr;
+        LastSelectedNode = nullptr;
         return;
     }
-    if (node != m_LastSelectedNode)
+    if (node != LastSelectedNode)
     {
         // 如果是新选择的节点，就将它的名字复制到我们的缓冲区
         // 使用 strncpy 来防止缓冲区溢出
         const std::string& nodeName = node->GetName(); // 假设 GetName() 返回 std::string
-        const size_t copyLength = std::min(nodeName.length(), sizeof(m_NodeNameBuffer) - 1);
-        std::copy_n(nodeName.begin(), copyLength, m_NodeNameBuffer);
-        m_NodeNameBuffer[copyLength] = '\0';
-        m_LastSelectedNode = node;
+        const size_t copyLength = std::min(nodeName.length(), sizeof(NodeNameBuffer) - 1);
+        std::copy_n(nodeName.begin(), copyLength, NodeNameBuffer);
+        NodeNameBuffer[copyLength] = '\0';
+        LastSelectedNode = node;
     }
-    if (ImGui::InputText("Node Name", m_NodeNameBuffer, sizeof(m_NodeNameBuffer)))
+    if (ImGui::InputText("Node Name", NodeNameBuffer, sizeof(NodeNameBuffer)))
     {
-        node->SetName(m_NodeNameBuffer);
+        node->SetName(NodeNameBuffer);
     }
 
     ImGui::Separator();
@@ -74,6 +77,7 @@ void DetailsPanel::DisplaySelectedNode(scene::Node* node)
         if (handle.type == rttr::type::get<scene::SubMesh>())
         {
             auto* subMesh = scene->GetComponentManager()->GetComponentFormNode<scene::SubMesh>(node->GetID());
+            ImGui::PushID(subMesh);
             if (ImGui::CollapsingHeader("SubMesh", ImGuiTreeNodeFlags_DefaultOpen))
             {
                 static int currentSelection = -1; // -1 表示“无选择”
@@ -120,7 +124,10 @@ void DetailsPanel::DisplaySelectedNode(scene::Node* node)
 
                     ImGui::EndCombo();
                 }
+                ImTextureID textureID = 0;
+                ui::ImageSelector::Draw("base colot texture", textureID, {});
             }
+            ImGui::PopID();
         }
         else if (handle.type == rttr::type::get<scene::Light>())
         {
@@ -136,6 +143,7 @@ void DetailsPanel::DisplaySelectedNode(scene::Node* node)
 void DetailsPanel::DrawComponentSelector(scene::Node* node)
 {
     auto* scene = node->GetScene();
+    bool bIsRepeat = false;
     float center = ImGui::GetWindowSize().x * 0.5f;
     ImGui::SetCursorPosX(center - 60);
     if (ImGui::Button("AddComponent", ImVec2(120, 0)))
@@ -146,8 +154,15 @@ void DetailsPanel::DrawComponentSelector(scene::Node* node)
     {
         if (ImGui::MenuItem("SubMesh"))
         {
-            auto* subMesh = scene->GetComponentManager()->AddComponent<::scene::SubMesh>(node);
-            subMesh->bHasMeshData = false;
+            if (!node->HasComponent(rttr::type::get<::scene::SubMesh>()))
+            {
+                auto* subMesh = scene->GetComponentManager()->AddComponent<::scene::SubMesh>(node);
+                subMesh->bHasMeshData = false;
+            }
+            else
+            {
+                bIsRepeat = true;
+            }
         }
         if (ImGui::MenuItem("Camera"))
         {
@@ -172,6 +187,11 @@ void DetailsPanel::DrawComponentSelector(scene::Node* node)
             ImGui::EndMenu();
         }
         ImGui::EndPopup();
+    }
+    if (bIsRepeat)
+    {
+        ShowDuplicateComponentError(rttr::type::get<scene::SubMesh>());
+        bIsRepeat = false;
     }
 }
 
@@ -347,5 +367,49 @@ void DetailsPanel::DrawTransformInspector(scene::Transform& transform)
         }
 
         ImGui::Spacing();
+    }
+}
+
+void DetailsPanel::ShowDuplicateComponentError(const rttr::type& type)
+{
+    PendingDuplicateComponentType = type;
+    ImGui::OpenPopup("Component type already exists");
+#ifdef DEBUG
+    ImGuiContext& g = *GImGui;
+    LOG_INFO("Current popup stack size: {}", g.OpenPopupStack.Size)
+    for (int i = 0; i < g.OpenPopupStack.Size; ++i)
+    {
+        LOG_INFO("  [{}] ID: 0x{}, Name: {}", i, (uint32_t)g.OpenPopupStack[i].PopupId,
+                 (uint32_t)g.OpenPopupStack[i].PopupId)
+    }
+#endif
+}
+
+void DetailsPanel::DrawDuplicateComponentModal()
+{
+    if (!PendingDuplicateComponentType.has_value())
+        return;
+
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+    if (ImGui::BeginPopupModal("Component type already exists", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::Text("The component type: %s already exists and cannot be added again!",
+                    PendingDuplicateComponentType->get_name().data());
+        ImGui::Separator();
+
+        if (ImGui::Button("OK", ImVec2(120, 0)) || ImGui::Button("Cancel", ImVec2(120, 0)))
+        {
+            ImGui::CloseCurrentPopup();
+            PendingDuplicateComponentType.reset();
+        }
+        ImGui::SetItemDefaultFocus();
+
+        ImGui::EndPopup();
+    }
+    else
+    {
+        PendingDuplicateComponentType.reset();
     }
 }
