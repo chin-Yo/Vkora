@@ -58,7 +58,8 @@ void AssetImporter::ImportNewAsset(const std::filesystem::path& relativeAssetPat
     metaJson["guid"] = GenerateGUID();
     metaJson["asset_path"] = relativeAssetPath.generic_string();
     metaJson["type"] = AssetRegistry::AssetTypeToString(type);
-    metaJson["source_file_hash"] = CalculateFileHash(Paths::GetAssetFullPath(relativeAssetPath.generic_string()));
+    std::string hash = CalculateFileHash(Paths::GetAssetFullPath(relativeAssetPath.generic_string()));
+    metaJson["source_file_hash"] = hash;
 
     auto metaPath = Paths::GetContentPath() / relativeAssetPath;
     metaPath += ".meta";

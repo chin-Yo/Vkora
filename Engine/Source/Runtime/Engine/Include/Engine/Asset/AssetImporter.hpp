@@ -5,6 +5,8 @@
 #include <random>
 #include <sstream>
 
+#include "Misc/PicoSHA2.hpp"
+
 inline std::string GenerateGUID()
 {
     std::random_device rd;
@@ -30,10 +32,14 @@ inline std::string CalculateFileHash(const std::filesystem::path& filepath)
 {
     std::ifstream file(filepath, std::ios::binary);
     if (!file) return "";
-
-    auto fileSize = std::filesystem::file_size(filepath);
-    auto modTime = std::filesystem::last_write_time(filepath).time_since_epoch().count();
-    return std::to_string(fileSize) + "-" + std::to_string(modTime);
+    std::vector<unsigned char> hash(picosha2::k_digest_size);
+    picosha2::hash256(
+        std::istreambuf_iterator<char>(file),
+        std::istreambuf_iterator<char>(),
+        hash.begin(),
+        hash.end()
+    );
+    return picosha2::bytes_to_hex_string(hash.begin(), hash.end());
 }
 
 
