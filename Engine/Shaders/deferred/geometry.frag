@@ -20,8 +20,9 @@ precision highp float;
 
 // 输入纹理
 layout (set = 0, binding = 0) uniform sampler2D base_color_texture;
-layout (set = 0, binding = 1) uniform sampler2D metallic_roughness_texture; // ← 新增
-layout (set = 0, binding = 2) uniform sampler2D ao_texture;                // ← 可选
+layout (set = 0, binding = 1) uniform sampler2D normal_texture;
+layout (set = 0, binding = 2) uniform sampler2D metallic_roughness_texture; // ← 新增
+layout (set = 0, binding = 3) uniform sampler2D ao_texture;                // ← 可选
 
 
 layout (location = 0) in vec4 in_pos;

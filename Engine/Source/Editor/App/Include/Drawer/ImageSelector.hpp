@@ -4,6 +4,11 @@
 #include <string>
 #include <vector>
 
+namespace scene
+{
+    class Texture;
+}
+
 namespace ui
 {
     struct ImageItem
@@ -14,6 +19,7 @@ namespace ui
 
     class ImageSelector
     {
+    public:
         /**
         * @brief 创建一个图像/纹理选择控件。
         *
@@ -24,8 +30,10 @@ namespace ui
         * @param preview_size 预览图像框的大小。
         * @return 如果选择发生了改变，则返回 true，否则返回 false。
         */
-        bool Draw(const char* label, ImTextureID& current_texture_id,
-                  const std::vector<ImageItem>& available_images,
-                  const ImVec2& preview_size = ImVec2(64, 64));
+        static bool Draw(const char* label, ImTextureID& current_texture_id,
+                         const std::vector<ImageItem>& available_images,
+                         const ImVec2& preview_size = ImVec2(64, 64));
+
+        static ImTextureID GetTextureID(scene::Texture& texture);
     };
 }

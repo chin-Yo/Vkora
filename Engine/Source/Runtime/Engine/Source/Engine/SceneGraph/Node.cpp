@@ -85,4 +85,12 @@ namespace scene
     {
         componentHandles.push_back(handle);
     }
+
+    bool Node::HasComponent(const ComponentTypeID& type) const
+    {
+        return std::any_of(componentHandles.begin(), componentHandles.end(), [&](const ComponentHandle& handle)
+        {
+            return handle.type == type;
+        });
+    }
 }

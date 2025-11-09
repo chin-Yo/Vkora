@@ -66,22 +66,10 @@ namespace scene
 
         bool IsMarked() const { return isMarkedForDeletion; }
         const std::vector<ComponentHandle>& GetComponentHandles() const { return componentHandles; }
-        // loop ref
-        /*template <typename T>
-        T* AddComponent()
-        {
-            // 委托给 ComponentManager
-            return scene->GetComponentManager()->AddComponent<T>(this);
-        }*/
-
-        /*template <typename T>
-        T* GetComponent()
-        {
-            // 委托给 ComponentManager
-            return scene->GetComponentManager()->GetComponent<T>(this->id);
-        }*/
 
         void RegisterComponent(const ComponentHandle& handle);
+
+        bool HasComponent(const ComponentTypeID& type) const;
 
     private:
         friend class Scene;

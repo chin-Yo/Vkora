@@ -1,5 +1,9 @@
 #include "Drawer/ImageSelector.hpp"
 
+#include "backends/imgui_impl_vulkan.h"
+#include "Engine/SceneGraph/Components/Image.hpp"
+#include "Engine/SceneGraph/Components/Texture.hpp"
+
 namespace ui
 {
     bool ImageSelector::Draw(const char* label, ImTextureID& current_texture_id,
@@ -86,5 +90,15 @@ namespace ui
 
         ImGui::PopID();
         return value_changed;
+    }
+
+    ImTextureID ImageSelector::GetTextureID(scene::Texture& texture)
+    {
+        auto* image = texture.get_image();
+        auto* sampler = texture.get_sampler();
+
+        return reinterpret_cast<ImTextureID>(ImGui_ImplVulkan_AddTexture(sampler->vk_sampler.GetHandle(),
+                                                                         image->get_vk_image_view().GetHandle(),
+                                                                         VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL));
     }
 }

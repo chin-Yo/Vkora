@@ -1,6 +1,14 @@
 #pragma once
-#include "EditorInterface/Panel.hpp"
+#include <optional>
 
+#include "EditorInterface/Panel.hpp"
+#include "rttr/type.h"
+
+
+namespace scene
+{
+    class Scene;
+}
 
 namespace scene
 {
@@ -21,8 +29,12 @@ private:
     void DrawComponentSelector(scene::Node* node);
     void DrawTransformInspector(scene::Transform& transform);
 
+    // 
+    void ShowDuplicateComponentError(const rttr::type& type);
+    void DrawDuplicateComponentModal();
+    std::optional<rttr::type> PendingDuplicateComponentType;
+    //
 
-    scene::Node* m_LastSelectedNode = nullptr;
-
-    char m_NodeNameBuffer[256] = {0};
+    scene::Node* LastSelectedNode = nullptr;
+    char NodeNameBuffer[256] = {0};
 };

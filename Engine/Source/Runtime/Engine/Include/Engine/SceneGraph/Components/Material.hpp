@@ -57,6 +57,14 @@ namespace scene
 
         std::unordered_map<std::string, Texture*> textures;
 
+        std::shared_ptr<Texture> base_color_texture;
+
+        std::shared_ptr<Texture> normal_texture;
+
+        std::shared_ptr<Texture> metallic_roughness_texture;
+
+        std::shared_ptr<Texture> ao_texture;
+
         /// Emissive color of the material
         glm::vec3 emissive{0.0f, 0.0f, 0.0f};
 
