@@ -27,6 +27,7 @@
 #include "Framework/Common/glmCommon.hpp"
 #include "Framework/Common/VkHelpers.hpp"
 #include "Engine/SceneGraph/Component.hpp"
+#include "Engine/Texture/Texture2D.hpp"
 
 
 namespace scene
@@ -57,13 +58,13 @@ namespace scene
 
         std::unordered_map<std::string, Texture*> textures;
 
-        std::shared_ptr<Texture> base_color_texture;
+        std::shared_ptr<Texture2D> base_color_texture;
 
-        std::shared_ptr<Texture> normal_texture;
+        std::shared_ptr<Texture2D> normal_texture;
 
-        std::shared_ptr<Texture> metallic_roughness_texture;
+        std::shared_ptr<Texture2D> metallic_roughness_texture;
 
-        std::shared_ptr<Texture> ao_texture;
+        std::shared_ptr<Texture2D> ao_texture;
 
         /// Emissive color of the material
         glm::vec3 emissive{0.0f, 0.0f, 0.0f};

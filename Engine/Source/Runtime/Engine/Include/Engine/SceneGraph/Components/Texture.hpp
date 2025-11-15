@@ -47,6 +47,8 @@ namespace scene
 
         Sampler* get_sampler();
 
+        VkDescriptorSet texture_id = 0;
+
     private:
         Image* image{nullptr};
 

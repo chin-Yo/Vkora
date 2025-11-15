@@ -21,10 +21,25 @@
 
 namespace scene
 {
+    struct StbData
+    {
+        uint32_t width;
+        uint32_t height;
+        uint32_t channels;
+        uint8_t* data;
+
+        StbData(uint32_t width, uint32_t height, uint32_t channels, uint8_t* data)
+            : width(width), height(height), channels(channels), data(data)
+        {
+        }
+    };
+
     class Stb : public Image
     {
     public:
         Stb(const std::string& name, const std::vector<uint8_t>& data, ContentType content_type);
+
+        Stb(const std::string& name, StbData src, ContentType content_type);
 
         virtual ~Stb() = default;
     };

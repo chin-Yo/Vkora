@@ -44,6 +44,8 @@ public:
 public:
     bool Prepare(const ApplicationOptions& options);
 
+    bool RenderPrepare();
+
     void RequestGpuFeatures(vkb::PhysicalDevice& gpu);
 
     std::unique_ptr<vkb::Instance> CreateInstance();

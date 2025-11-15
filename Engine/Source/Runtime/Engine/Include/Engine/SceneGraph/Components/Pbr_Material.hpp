@@ -38,7 +38,7 @@ namespace scene
 
         virtual ~PBRMaterial() = default;
 
-        glm::vec4 base_color_factor{1.0f, 0.0f, 0.0f, 0.0f};
+        glm::vec4 base_color_factor{1.0f, 1.0f, 1.0f, 0.0f};
 
         float metallic_factor{0.5f};
 

@@ -50,4 +50,15 @@ namespace scene
         set_height(vkb::to_u32(height));
         set_depth(1u);
     }
+
+    Stb::Stb(const std::string& name, StbData src, ContentType content_type)
+        : Image{name}
+    {
+        set_data(src.data, src.width * src.height * src.channels);
+
+        set_format(content_type == Color ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM);
+        set_width(vkb::to_u32(src.width));
+        set_height(vkb::to_u32(src.height));
+        set_depth(1u);
+    }
 }

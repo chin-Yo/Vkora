@@ -20,7 +20,7 @@ layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 texcoord_0;
 layout(location = 2) in vec3 normal;
 
-layout(set = 0, binding = 1) uniform GlobalUniform {
+layout(set = 0, binding = 4) uniform GlobalUniform {
     mat4 model;
     mat4 view_proj;
     vec3 camera_position;

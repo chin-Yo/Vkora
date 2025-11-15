@@ -20,11 +20,12 @@
 RenderSystem::~RenderSystem()
 {
     Finish();
+    render_pipeline.reset();
     EditorUIRenderpass.reset();
     ViewportRTs.clear();
+    assetManager.reset();
     UIManager->Shutdown();
     render_context.reset();
-    assetManager.reset();
     device.reset();
 
     if (surface)
@@ -93,6 +94,11 @@ bool RenderSystem::Prepare(const ApplicationOptions& options)
         gpu.get_mutable_requested_features().textureCompressionASTC_LDR = true;
     }
 
+    if (gpu.get_features().samplerAnisotropy)
+    {
+        gpu.get_mutable_requested_features().samplerAnisotropy = true;
+    }
+
     RequestGpuFeatures(gpu);
 
     // Creating vulkan device, specifying the swapchain extension always
@@ -144,8 +150,7 @@ bool RenderSystem::Prepare(const ApplicationOptions& options)
         debug_utils = std::make_unique<vkb::DummyDebugUtils>();
     }
     device = CreateDevice(gpu);
-    assetManager = std::make_unique<AssetManager>(GetDevice());
-    // VULKAN_HPP_DEFAULT_DISPATCHER.init(device->GetHandle());
+
     CreateRenderContext();
     render_context->prepare(1, vkb::RenderTarget::ONE_IMAGE_FUNC);
 
@@ -156,6 +161,15 @@ bool RenderSystem::Prepare(const ApplicationOptions& options)
 
     std::set<VkImageUsageFlagBits> usage = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT};
     GetRenderContext().update_swapchain(usage);
+    return true;
+}
+
+bool RenderSystem::RenderPrepare()
+{
+    assetManager = std::make_unique<AssetManager>(GetDevice());
+    assetManager->LodaAllTexture();
+    // VULKAN_HPP_DEFAULT_DISPATCHER.init(device->GetHandle());
+
 
     render_pipeline = CreateOneRenderpassTwoSubpasses(*GRuntimeGlobalContext.worldManager->GetActiveWorld()
                                                       , *GRuntimeGlobalContext.worldManager->GetViewportCamera());
@@ -499,8 +513,8 @@ std::unique_ptr<vkb::RenderPipeline> RenderSystem::CreateOneRenderpassTwoSubpass
                                                                 std::move(geometry_fs), scene, camera);
 
     // Outputs are depth, albedo, and normal
-    scene_subpass->set_output_attachments({1, 2, 3});
-
+    scene_subpass->set_output_attachments({1, 2, 3, 4});
+    scene_subpass->defaultTexture = assetManager->GetTexture();
     // Lighting subpass
     auto lighting_vs = vkb::ShaderSource{Paths::GetShaderFullPath("deferred/lighting.vert.spv")};
     auto lighting_fs = vkb::ShaderSource{Paths::GetShaderFullPath("deferred/lighting.frag.spv")};
@@ -509,7 +523,7 @@ std::unique_ptr<vkb::RenderPipeline> RenderSystem::CreateOneRenderpassTwoSubpass
                                                                    ViewportRTs);
 
     // Inputs are depth, albedo, and normal from the geometry subpass
-    lighting_subpass->set_input_attachments({1, 2, 3});
+    lighting_subpass->set_input_attachments({1, 2, 3, 4});
 
     // Create subpasses pipeline
     std::vector<std::unique_ptr<vkb::Subpass>> subpasses{};
@@ -565,6 +579,14 @@ std::unique_ptr<vkb::RenderTarget> RenderSystem::CreateRenderTarget(ImVec2 size)
         VMA_MEMORY_USAGE_GPU_ONLY
     };
 
+    vkb::Image material_image{
+        GetDevice(),
+        extent,
+        VK_FORMAT_R8G8B8A8_UNORM,
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | rt_usage_flags,
+        VMA_MEMORY_USAGE_GPU_ONLY
+    };
+
     std::vector<vkb::Image> images;
 
     // Attachment 0
@@ -578,6 +600,9 @@ std::unique_ptr<vkb::RenderTarget> RenderSystem::CreateRenderTarget(ImVec2 size)
 
     // Attachment 3
     images.push_back(std::move(normal_image));
+
+    // Attachment 4
+    images.push_back(std::move(material_image));
 
     return std::make_unique<vkb::RenderTarget>(std::move(images));
 }

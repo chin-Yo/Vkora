@@ -18,7 +18,7 @@ EditorUIManager::EditorUIManager(vkb::VulkanDevice& device)
 
 {
     descriptorPool = vks::DescriptorPoolBuilder(device.GetHandle())
-                     .setMaxSets(10)
+                     .setMaxSets(1000)
                      .addPoolSize(VK_DESCRIPTOR_TYPE_SAMPLER, 1000)
                      .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000)
                      .addPoolSize(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000)

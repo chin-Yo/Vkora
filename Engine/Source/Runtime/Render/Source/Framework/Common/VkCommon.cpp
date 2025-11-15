@@ -540,7 +540,7 @@ namespace vkb
         std::vector<LoadStoreInfo> get_clear_all_store_swapchain()
         {
             // Clear every attachment and store only swapchain
-            std::vector<LoadStoreInfo> load_store{4};
+            std::vector<LoadStoreInfo> load_store{5};
 
             // Swapchain
             load_store[0].load_op = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -557,6 +557,10 @@ namespace vkb
             // Normal
             load_store[3].load_op = VK_ATTACHMENT_LOAD_OP_CLEAR;
             load_store[3].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+            // material
+            load_store[4].load_op = VK_ATTACHMENT_LOAD_OP_CLEAR;
+            load_store[4].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 
             return load_store;
         }
@@ -588,12 +592,12 @@ namespace vkb
         std::vector<VkClearValue> get_clear_value()
         {
             // Clear values TODO
-            std::vector<VkClearValue> clear_value{4};
+            std::vector<VkClearValue> clear_value{5};
             clear_value[0].color = {{0.2f, 0.2f, 0.2f, 1.0f}};
             clear_value[1].depthStencil = {0.0f, ~0U};
-            clear_value[2].color = {{0.2f, 0.2f, 0.2f, 1.0f}};
-            clear_value[3].color = {{0.2f, 0.2f, 0.2f, 1.0f}};
-
+            clear_value[2].color = {{0.0f, 0.0f, 0.0f, 0.0f}};
+            clear_value[3].color = {{0.0f, 0.0f, 0.0f, 0.0f}};
+            clear_value[4].color = {{0.0f, 0.0f, 0.0f, 0.0f}};
             return clear_value;
         }
     } // namespace gbuffer

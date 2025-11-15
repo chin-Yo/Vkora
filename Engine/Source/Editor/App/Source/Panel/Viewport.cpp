@@ -17,7 +17,7 @@
 
 ViewportPanel::ViewportPanel()
 {
-    vkb::VulkanDevice& device = GRuntimeGlobalContext.renderSystem->GetRenderContext().get_device();
+    vkb::VulkanDevice& device = GRuntimeGlobalContext.renderSystem->GetDevice();
     OffScreenSampler = new vkb::Sampler({device, vks::initializers::samplerCreateInfo()});
     ViewportDescriptorSets.resize(3);
 

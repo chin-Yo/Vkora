@@ -114,9 +114,10 @@ bool AssetRegistry::LoadMetadataFromFile(const std::filesystem::path& metaFilePa
         switch (type)
         {
         case AssetType::Mesh:
-            metadata = std::make_unique<MeshAssetMetadata>();
+            metadata = std::make_unique<MeshAssetMetaData>();
             break;
         case AssetType::Texture:
+            metadata = std::make_unique<TextureAssetMetaData>();
             break;
         default:
             metadata = std::make_unique<AssetMetadata>();
