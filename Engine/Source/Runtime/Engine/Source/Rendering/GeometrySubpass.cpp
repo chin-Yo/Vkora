@@ -85,6 +85,8 @@ namespace vkb
 
     void GeometrySubpass::draw(vkb::CommandBuffer& command_buffer)
     {
+        if (!defaultTexture)
+            return;
         std::multimap<float, std::pair<scene::Node*, scene::SubMesh*>> opaque_nodes;
         std::multimap<float, std::pair<scene::Node*, scene::SubMesh*>> transparent_nodes;
 
@@ -107,7 +109,7 @@ namespace vkb
             }
         }
 
-        // Enable alpha blending TODO
+        /*// Enable alpha blending TODO
         ColorBlendAttachmentState color_blend_attachment{};
         color_blend_attachment.blend_enable = VK_FALSE;
         color_blend_attachment.src_color_blend_factor = VK_BLEND_FACTOR_SRC_ALPHA;
@@ -134,7 +136,7 @@ namespace vkb
 
                 draw_submesh(command_buffer, *node_it->second.second);
             }
-        }
+        }*/
     }
 
     void GeometrySubpass::update_uniform(vkb::CommandBuffer& command_buffer, scene::Node& node, size_t thread_index)
@@ -157,7 +159,7 @@ namespace vkb
 
         allocation.update(global_uniform);
 
-        command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 1, 0);
+        command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 4, 0);
     }
 
     void GeometrySubpass::draw_submesh(vkb::CommandBuffer& command_buffer, scene::SubMesh& sub_mesh,
@@ -199,6 +201,57 @@ namespace vkb
                                           texture.second->get_sampler()->vk_sampler,
                                           0, layout_binding->binding, 0);
             }
+        }
+
+        if (sub_mesh.get_material()->base_color_texture)
+        {
+            command_buffer.bind_image(sub_mesh.get_material()->base_color_texture->get_vk_image_view(),
+                                      *sub_mesh.get_material()->base_color_texture->sampler.lock(),
+                                      0, descriptor_set_layout.get_layout_binding("base_color_texture")->binding, 0);
+        }
+        else
+        {
+            command_buffer.bind_image(defaultTexture->get_vk_image_view(),
+                                      *defaultTexture->sampler.lock(),
+                                      0, descriptor_set_layout.get_layout_binding("base_color_texture")->binding, 0);
+        }
+        if (sub_mesh.get_material()->normal_texture)
+        {
+            command_buffer.bind_image(sub_mesh.get_material()->normal_texture->get_vk_image_view(),
+                                      *sub_mesh.get_material()->normal_texture->sampler.lock(),
+                                      0, descriptor_set_layout.get_layout_binding("normal_texture")->binding, 0);
+        }
+        else
+        {
+            command_buffer.bind_image(defaultTexture->get_vk_image_view(),
+                                      *defaultTexture->sampler.lock(),
+                                      0, descriptor_set_layout.get_layout_binding("normal_texture")->binding, 0);
+        }
+        if (sub_mesh.get_material()->metallic_roughness_texture)
+        {
+            command_buffer.bind_image(
+                sub_mesh.get_material()->metallic_roughness_texture->get_vk_image_view(),
+                *sub_mesh.get_material()->metallic_roughness_texture->sampler.lock(),
+                0, descriptor_set_layout.get_layout_binding("metallic_roughness_texture")->binding, 0);
+        }
+        else
+        {
+            command_buffer.bind_image(defaultTexture->get_vk_image_view(),
+                                      *defaultTexture->sampler.lock(),
+                                      0, descriptor_set_layout.get_layout_binding("metallic_roughness_texture")->
+                                                               binding, 0);
+        }
+        if (sub_mesh.get_material()->ao_texture)
+        {
+            command_buffer.bind_image(sub_mesh.get_material()->ao_texture->get_vk_image_view(),
+                                      *sub_mesh.get_material()->ao_texture->sampler.lock(),
+                                      0, descriptor_set_layout.get_layout_binding("ao_texture")->binding, 0);
+        }
+        else
+        {
+            command_buffer.bind_image(defaultTexture->get_vk_image_view(),
+                                      *defaultTexture->sampler.lock(),
+                                      0, descriptor_set_layout.get_layout_binding("ao_texture")->binding, 0);
         }
 
         auto vertex_input_resources = pipeline_layout.get_resources(ShaderResourceType::Input,

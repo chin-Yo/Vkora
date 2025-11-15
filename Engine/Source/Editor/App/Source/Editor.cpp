@@ -32,6 +32,7 @@ void Editor::Run()
 {
     assert(RuntimeEngine);
 
+    GRuntimeGlobalContext.renderSystem->RenderPrepare();
     float delta_time;
     while (true)
     {

@@ -14,6 +14,7 @@
 #include "Engine/SceneGraph/Components/Material.hpp"
 #include "Engine/SceneGraph/Components/Pbr_Material.hpp"
 #include "Engine/SceneGraph/Components/SubMesh.hpp"
+#include "Engine/SceneGraph/Components/Texture.hpp"
 #include "Misc/Paths.hpp"
 #include "Render/RenderSystem.hpp"
 #include "UIManage/EditorGlobalContext.hpp"
@@ -124,8 +125,11 @@ void DetailsPanel::DisplaySelectedNode(scene::Node* node)
 
                     ImGui::EndCombo();
                 }
-                ImTextureID textureID = 0;
-                ui::ImageSelector::Draw("base colot texture", textureID, {});
+                auto* material = subMesh->get_mut_material();
+                ui::ImageSelector::Draw("base colot texture", material->base_color_texture);
+                ui::ImageSelector::Draw("normal texture", material->normal_texture);
+                ui::ImageSelector::Draw("metallic roughness texture", material->metallic_roughness_texture);
+                ui::ImageSelector::Draw("ao texture", material->ao_texture);
             }
             ImGui::PopID();
         }

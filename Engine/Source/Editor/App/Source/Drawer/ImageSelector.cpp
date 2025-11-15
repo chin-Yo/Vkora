@@ -1,13 +1,17 @@
 #include "Drawer/ImageSelector.hpp"
 
+#include "GlobalContext.hpp"
 #include "backends/imgui_impl_vulkan.h"
+#include "Engine/Asset/AssetRegistry.hpp"
+#include "Engine/Asset/Manager/AssetManager.hpp"
 #include "Engine/SceneGraph/Components/Image.hpp"
 #include "Engine/SceneGraph/Components/Texture.hpp"
+#include "Engine/Texture/Texture2D.hpp"
+#include "Render/RenderSystem.hpp"
 
 namespace ui
 {
-    bool ImageSelector::Draw(const char* label, ImTextureID& current_texture_id,
-                             const std::vector<ImageItem>& available_images, const ImVec2& preview_size)
+    bool ImageSelector::Draw(const char* label, std::shared_ptr<Texture2D>& imageItem, const ImVec2& preview_size)
     {
         bool value_changed = false;
         ImGui::PushID(label);
@@ -17,9 +21,9 @@ namespace ui
 
         bool open_popup = false;
 
-        if (current_texture_id != (ImTextureID)0)
+        if (imageItem && imageItem->texture_id != (ImTextureID)0)
         {
-            if (ImGui::ImageButton("##preview", current_texture_id, preview_size, ImVec2(0, 0), ImVec2(1, 1),
+            if (ImGui::ImageButton("##preview", imageItem->texture_id, preview_size, ImVec2(0, 0), ImVec2(1, 1),
                                    ImVec4(0, 0, 0, 0), ImVec4(1, 1, 1, 1)))
             {
                 open_popup = true;
@@ -45,13 +49,13 @@ namespace ui
         }
         ImGui::EndGroup();
 
-        if (ImGui::IsItemHovered() && current_texture_id != (ImTextureID)0)
+        /*if (ImGui::IsItemHovered() && imageItem->texture_id != (ImTextureID)0)
         {
             ImGui::BeginTooltip();
             ImGui::Text("Click to select another image");
-            ImGui::Image(current_texture_id, ImVec2(256, 256));
+            ImGui::Image(imageItem->texture_id, ImVec2(256, 256));
             ImGui::EndTooltip();
-        }
+        }*/
 
         if (open_popup)
         {
@@ -60,31 +64,48 @@ namespace ui
 
         if (ImGui::BeginPopup("ImageSelectorPopup"))
         {
-            if (ImGui::Selectable("None", current_texture_id == (ImTextureID)0))
-            {
-                if (current_texture_id != (ImTextureID)0)
-                {
-                    current_texture_id = (ImTextureID)0;
-                    value_changed = true;
-                }
-                ImGui::CloseCurrentPopup();
-            }
-            ImGui::Separator();
+            ImGui::PushItemWidth(-1); // 可选：让内容占满宽度
 
-            for (const auto& item : available_images)
+            // 限制最大高度并启用滚动
+            float max_height = 300.0f; // 例如最大 300 像素高
+            if (ImGui::BeginChild("ImageList", ImVec2(0, max_height), false,
+                                  ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
             {
-                ImGui::Image(item.texture_id, ImVec2(24, 24));
-                ImGui::SameLine();
-                if (ImGui::Selectable(item.name.c_str(), current_texture_id == item.texture_id))
+                if (ImGui::Selectable("None", imageItem == nullptr))
                 {
-                    if (current_texture_id != item.texture_id)
+                    if (!imageItem)
                     {
-                        current_texture_id = item.texture_id;
+                        imageItem.reset();
                         value_changed = true;
                     }
                     ImGui::CloseCurrentPopup();
                 }
+                ImGui::Separator();
+
+                auto& Textures = GRuntimeGlobalContext.renderSystem->GetAssetManager()->GetTextureCache();
+                for (auto& item : Textures)
+                {
+                    if (!item.second)
+                    {
+                        continue;
+                    }
+                    ImGui::Image(item.second->texture_id, ImVec2(24, 24));
+                    ImGui::SameLine();
+                    if (ImGui::Selectable(item.second->get_name().c_str(),
+                                          imageItem && imageItem->get_name() == item.first))
+                    {
+                        if (imageItem != item.second)
+                        {
+                            imageItem = item.second;
+                            value_changed = true;
+                        }
+                        ImGui::CloseCurrentPopup();
+                    }
+                }
             }
+            ImGui::EndChild();
+            ImGui::PopItemWidth();
+
             ImGui::EndPopup();
         }
 

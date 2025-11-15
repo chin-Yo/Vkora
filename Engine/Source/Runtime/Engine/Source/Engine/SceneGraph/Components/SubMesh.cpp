@@ -18,6 +18,9 @@
 
 #include "Engine/SceneGraph/Components/SubMesh.hpp"
 
+#include "Engine/SceneGraph/Components/Material.hpp"
+#include "Engine/SceneGraph/Components/Pbr_Material.hpp"
+
 
 namespace scene
 {
@@ -65,6 +68,7 @@ namespace scene
     SubMesh::SubMesh(const std::string& name) :
         Component{name}
     {
+        material = new scene::PBRMaterial("pbr");
     }
 
     void SubMesh::set_attribute(const std::string& attribute_name, const VertexAttribute& attribute)
@@ -86,12 +90,17 @@ namespace scene
         return true;
     }
 
-    void SubMesh::set_material(const Material& new_material)
+    void SubMesh::set_material(Material& new_material)
     {
         material = &new_material;
     }
 
     const Material* SubMesh::get_material() const
+    {
+        return material;
+    }
+
+    Material* SubMesh::get_mut_material() const
     {
         return material;
     }

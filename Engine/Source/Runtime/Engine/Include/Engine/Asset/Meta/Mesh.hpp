@@ -1,7 +1,12 @@
 #pragma once
 #include "Meta.hpp"
 
-struct MeshAssetMetadata : public AssetMetadata
+struct MeshAssetMetaData : public AssetMetadata
 {
-    MeshAssetMetadata() { type = AssetType::Mesh; }
+    MeshAssetMetaData() { type = AssetType::Mesh; }
+};
+
+struct TextureAssetMetaData : public AssetMetadata
+{
+    TextureAssetMetaData() { type = AssetType::Texture; }
 };

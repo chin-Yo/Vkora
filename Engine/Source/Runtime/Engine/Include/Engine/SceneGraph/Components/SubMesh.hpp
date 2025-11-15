@@ -97,9 +97,11 @@ namespace scene
 
         bool get_attribute(const std::string& name, VertexAttribute& attribute) const;
 
-        void set_material(const Material& material);
+        void set_material(Material& material);
 
         const Material* get_material() const;
+
+        Material* get_mut_material() const;
 
         const vkb::ShaderVariant& get_shader_variant() const;
 
@@ -112,7 +114,7 @@ namespace scene
     private:
         std::unordered_map<std::string, VertexAttribute> vertex_attributes;
 
-        const Material* material{nullptr};
+        Material* material{nullptr};
 
         vkb::ShaderVariant shader_variant;
     };
