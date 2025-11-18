@@ -40,6 +40,7 @@ namespace vkb
     {
         glm::mat4 inv_view_proj;
         glm::vec2 inv_resolution;
+        glm::vec4 camPos; // .w ignored
     };
 
     struct alignas(16) DeferredLights

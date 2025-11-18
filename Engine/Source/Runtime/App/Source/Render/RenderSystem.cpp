@@ -517,7 +517,7 @@ std::unique_ptr<vkb::RenderPipeline> RenderSystem::CreateOneRenderpassTwoSubpass
     scene_subpass->defaultTexture = assetManager->GetTexture();
     // Lighting subpass
     auto lighting_vs = vkb::ShaderSource{Paths::GetShaderFullPath("deferred/lighting.vert.spv")};
-    auto lighting_fs = vkb::ShaderSource{Paths::GetShaderFullPath("deferred/lighting.frag.spv")};
+    auto lighting_fs = vkb::ShaderSource{Paths::GetShaderFullPath("deferred/Pbr_lighting.frag.spv")};
     auto lighting_subpass = std::make_unique<vkb::LightingSubpass>(GetRenderContext(), std::move(lighting_vs),
                                                                    std::move(lighting_fs), camera, scene,
                                                                    ViewportRTs);

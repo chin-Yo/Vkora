@@ -1,20 +1,4 @@
 #version 450
-/* Copyright (c) 2019-2025, Arm Limited and Contributors
- *
- * SPDX-License-Identifier: Apache-2.0
- *
- * Licensed under the Apache License, Version 2.0 the "License";
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 precision highp float;
 
 layout (input_attachment_index = 0, binding = 0) uniform subpassInput i_depth;
@@ -27,12 +11,13 @@ layout (location = 0) out vec4 o_color;
 
 #define PI 3.1415926535897932384626433832795
 
-#include "Common/PbrFun.h"
+#include "PbrFun.h"
 
-layout (set = 0, binding = 3) uniform GlobalUniform
+layout (set = 1, binding = 0) uniform GlobalUniform
 {
     mat4 inv_view_proj;
     vec2 inv_resolution;
+    vec4 camPos; // .w ignored
 }
 global_uniform;
 
@@ -46,9 +31,11 @@ struct Light
 };
 
 vec3 apply_directional_light(Light light, vec3 pos, vec3 N, vec3 V, vec3 albedo, float metallic, float roughness)
-{
-    vec3 L = normalize(-light.direction.xyz); // light direction toward surface
-    return evaluateDirectPBR(L, V, N, albedo, metallic, roughness, light.color.rgb, light.color.w);
+{	
+    vec3 world_to_light = -light.direction.xyz;
+	world_to_light      = normalize(world_to_light);
+	float ndotl         = clamp(dot(N, world_to_light), 0.0, 1.0);
+	return ndotl * light.color.w * light.color.rgb;
 }
 
 vec3 apply_point_light(Light light, vec3 pos, vec3 N, vec3 V, vec3 albedo, float metallic, float roughness)
@@ -102,7 +89,7 @@ vec3 apply_spot_light(Light light, vec3 pos, vec3 N, vec3 V, vec3 albedo, float 
     return evaluateDirectPBR(L, V, N, albedo, metallic, roughness, light.color.rgb, light.color.w * atten);
 }
 
-layout (set = 0, binding = 4) uniform LightsInfo
+layout (set = 1, binding = 1) uniform LightsInfo
 {
     Light directional_lights[48];
     Light point_lights[48];
@@ -118,7 +105,12 @@ void main()
 {
     // --- Reconstruct world position from depth ---
     float depth = subpassLoad(i_depth).x;
-    if (depth >= 1.0) discard; // optional: skip sky
+    //if (depth >= 1.0) discard; // optional: skip sky
+
+    if (depth <= 0.0 || depth >= 1.0) {
+        o_color = vec4(0.0, 0.0, 0.0, 1.0);
+        return;
+    }
 
     vec4 clip = vec4(in_uv * 2.0 - 1.0, depth, 1.0);
     vec4 world_pos_h = global_uniform.inv_view_proj * clip;
@@ -132,10 +124,10 @@ void main()
     vec3 albedo = albedo_ao.rgb;          // sRGB
     float ao = albedo_ao.a;               // [0,1]
     vec3 normal = normalize(normal_rough.xyz * 2.0 - 1.0);
-    float roughness = normal_rough.w;     // [0,1]
+    float roughness = subpassLoad(i_material).g;     // [0,1]
 
     // View vector (from surface to camera)
-    vec3 V = normalize(global_uniform.camPos - world_pos);
+    vec3 V = normalize(global_uniform.camPos.xyz - world_pos);
 
     // Accumulate direct lighting (HDR)
     vec3 directLight = vec3(0.0);
@@ -160,5 +152,5 @@ void main()
     }
 
     // Output: HDR direct light in RGB, AO in alpha (for composition pass)
-    o_color = vec4(directLight, ao);
+    o_color = vec4(directLight, 1);
 }
