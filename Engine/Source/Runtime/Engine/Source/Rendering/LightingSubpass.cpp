@@ -52,7 +52,7 @@ namespace vkb
                                  MAX_DEFERRED_LIGHT_COUNT, lighting_state);
 
         allocate_lights<DeferredLights>(lighting_state);
-        command_buffer.bind_lighting(get_lighting_state(), 0, 4);
+        command_buffer.bind_lighting(get_lighting_state(), 1, 1);
 
         // Get shaders from cache
         auto& resource_cache = command_buffer.GetDevice().get_resource_cache();
@@ -86,6 +86,9 @@ namespace vkb
         auto& normal_view = target_views[3];
         command_buffer.bind_input(normal_view, 0, 2, 0);
 
+        auto& material_view = target_views[4];
+        command_buffer.bind_input(material_view, 0, 3, 0);
+
         // Set cull mode to front as full screen triangle is clock-wise
         RasterizationState rasterization_state;
         rasterization_state.cull_mode = VK_CULL_MODE_FRONT_BIT;
@@ -102,11 +105,13 @@ namespace vkb
         light_uniform.inv_view_proj = glm::inverse(
             vkb::vulkan_style_projection(camera.GetProjection()) * camera.GetView());
 
+        light_uniform.camPos.rgb = camera.GetOwner()->GetTransform().GetTranslation();
+
         // Allocate a buffer using the buffer pool from the active frame to store uniform values and bind it
         auto& render_frame = get_render_context().get_active_frame();
         auto allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(LightUniform));
         allocation.update(light_uniform);
-        command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 3, 0);
+        command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 1, 0, 0);
 
         // Draw full screen triangle triangle
         command_buffer.draw(3, 1, 0, 0);
