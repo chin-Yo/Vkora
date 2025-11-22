@@ -33,6 +33,8 @@ void Editor::Run()
     assert(RuntimeEngine);
 
     GRuntimeGlobalContext.renderSystem->RenderPrepare();
+    GRuntimeGlobalContext.assetManager->LodaAllTexture();
+
     float delta_time;
     while (true)
     {
