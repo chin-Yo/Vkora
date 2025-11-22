@@ -62,7 +62,9 @@ namespace scene
 
         std::shared_ptr<Texture2D> normal_texture;
 
-        std::shared_ptr<Texture2D> metallic_roughness_texture;
+        std::shared_ptr<Texture2D> metallic_texture;
+
+        std::shared_ptr<Texture2D> roughness_texture;
 
         std::shared_ptr<Texture2D> ao_texture;
 

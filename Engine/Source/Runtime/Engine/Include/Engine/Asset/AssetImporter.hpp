@@ -30,16 +30,24 @@ inline std::string GenerateGUID()
 
 inline std::string CalculateFileHash(const std::filesystem::path& filepath)
 {
-    std::ifstream file(filepath, std::ios::binary);
-    if (!file) return "";
-    std::vector<unsigned char> hash(picosha2::k_digest_size);
-    picosha2::hash256(
-        std::istreambuf_iterator<char>(file),
-        std::istreambuf_iterator<char>(),
-        hash.begin(),
-        hash.end()
-    );
-    return picosha2::bytes_to_hex_string(hash.begin(), hash.end());
+    std::error_code ec;
+    if (!std::filesystem::exists(filepath, ec))
+    {
+        return "";
+    }
+    auto sz = std::filesystem::file_size(filepath, ec);
+    if (ec) return "";
+
+    auto ftime = std::filesystem::last_write_time(filepath, ec);
+    if (ec) return "";
+
+    auto sctp = std::chrono::time_point_cast<std::chrono::seconds>(ftime);
+    auto dur = sctp.time_since_epoch();
+    auto timestamp = std::chrono::duration_cast<std::chrono::seconds>(dur).count();
+
+    std::ostringstream oss;
+    oss << sz << '-' << timestamp;
+    return oss.str();
 }
 
 

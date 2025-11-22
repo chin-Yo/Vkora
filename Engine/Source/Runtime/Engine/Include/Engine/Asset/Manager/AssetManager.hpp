@@ -54,7 +54,7 @@ public:
     AssetManager(vkb::VulkanDevice& device);
     std::shared_ptr<scene::MeshData> GetMesh(const std::string& relativePath);
 
-    std::shared_ptr<Texture2D> GetTexture(const std::string& relativePath = "Textures/demo1_22.png");
+    std::shared_ptr<Texture2D> GetTexture(const std::string& relativePath = "Textures/Default.png");
     void LodaAllTexture();
 
 
