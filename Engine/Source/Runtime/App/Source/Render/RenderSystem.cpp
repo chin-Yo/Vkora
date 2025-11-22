@@ -17,148 +17,25 @@
 #include "Tools/Utils.hpp"
 #include "World/WorldManager.hpp"
 
+RenderSystem::RenderSystem(vkb::Window* window, vkb::VulkanDevice* device, VkSurfaceKHR surface)
+    : window(window), device(device), surface(surface)
+{
+}
+
 RenderSystem::~RenderSystem()
 {
     Finish();
     render_pipeline.reset();
     EditorUIRenderpass.reset();
     ViewportRTs.clear();
-    assetManager.reset();
     UIManager->Shutdown();
     render_context.reset();
-    device.reset();
-
-    if (surface)
-    {
-        vkDestroySurfaceKHR(instance->get_handle(), surface, nullptr);
-    }
-
-    instance.reset();
 }
 
-bool RenderSystem::Prepare(const ApplicationOptions& options)
+bool RenderSystem::Prepare()
 {
-    LOG_INFO("Initializing vulkan render system!")
-    assert(options.window != nullptr && "Window is invalid");
-    window = options.window;
-
-    // static vk::detail::DynamicLoader dl;
-    // VULKAN_HPP_DEFAULT_DISPATCHER.init(dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr"));
-
-    bool headless = window->GetWindowMode() == vkb::Window::Mode::Headless;
-
-    VK_CHECK_RESULT(volkInitialize());
-
-    // Creating the vulkan instance
-    for (const char* extension_name : window->GetRequiredSurfaceExtensions())
-    {
-        AddInstanceExtension(extension_name);
-    }
-
-#ifdef DEBUG
-    {
-        uint32_t available_extension_count = 0;
-        vkEnumerateInstanceExtensionProperties(nullptr, &available_extension_count, nullptr);
-        std::vector<VkExtensionProperties> available_instance_extensions(available_extension_count);
-        vkEnumerateInstanceExtensionProperties(nullptr, &available_extension_count,
-                                               available_instance_extensions.data());
-        auto debugExtensionIt =
-            std::find_if(available_instance_extensions.begin(), available_instance_extensions.end(),
-                         [](VkExtensionProperties const& ep)
-                         {
-                             return strcmp(ep.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0;
-                         });
-        if (debugExtensionIt != available_instance_extensions.end())
-        {
-            LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-
-            debug_utils = std::make_unique<vkb::DebugUtilsExtDebugUtils>();
-            AddInstanceExtension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-        }
-    }
-#endif
-
-    instance = CreateInstance();
-    // VULKAN_HPP_DEFAULT_DISPATCHER.init(instance->get_handle());
-    surface = window->CreateSurface(*instance);
-    if (!surface)
-    {
-        throw std::runtime_error("Failed to create window surface.");
-    }
-
-    auto& gpu = instance->get_suitable_gpu(surface, headless);
-    gpu.set_high_priority_graphics_queue_enable(high_priority_graphics_queue);
-
-    if (gpu.get_features().textureCompressionASTC_LDR)
-    {
-        gpu.get_mutable_requested_features().textureCompressionASTC_LDR = true;
-    }
-
-    if (gpu.get_features().samplerAnisotropy)
-    {
-        gpu.get_mutable_requested_features().samplerAnisotropy = true;
-    }
-
-    RequestGpuFeatures(gpu);
-
-    // Creating vulkan device, specifying the swapchain extension always
-    // If using VK_EXT_headless_surface, we still create and use a swap-chain
-    {
-        AddDeviceExtension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-
-        if (instance_extensions.find(VK_KHR_DISPLAY_EXTENSION_NAME) != instance_extensions.end())
-        {
-            AddDeviceExtension(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME, /*optional=*/true);
-        }
-    }
-    // TODO
-#ifdef VK_ENABLE_PORTABILITY
-    // VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS with beta extensions enabled)
-    add_device_extension(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME, /*optional=*/true);
-#endif
-
-#ifdef DEBUG
-    if (!debug_utils)
-    {
-        uint32_t extensionCount = 0;
-        vkEnumerateDeviceExtensionProperties(gpu.get_handle(), nullptr, &extensionCount, nullptr);
-        std::vector<VkExtensionProperties> available_device_extensions(extensionCount);
-        vkEnumerateDeviceExtensionProperties(gpu.get_handle(), nullptr, &extensionCount,
-                                             available_device_extensions.data());
-        auto debugExtensionIt =
-            std::find_if(available_device_extensions.begin(),
-                         available_device_extensions.end(),
-                         [](const VkExtensionProperties& ep)
-                         {
-                             return strcmp(ep.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0;
-                         });
-        if (debugExtensionIt != available_device_extensions.end())
-        {
-            LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
-            AddDeviceExtension(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
-        }
-    }
-
-    if (!debug_utils)
-    {
-        LOGW("Vulkan debug utils were requested, but no extension that provides them was found");
-    }
-#endif
-
-    if (!debug_utils)
-    {
-        debug_utils = std::make_unique<vkb::DummyDebugUtils>();
-    }
-    device = CreateDevice(gpu);
-
     CreateRenderContext();
     render_context->prepare(1, vkb::RenderTarget::ONE_IMAGE_FUNC);
-
-    // stats = std::make_unique<vkb::stats::HPPStats>(*render_context);
-
-    // Start the sample in the first GUI configuration
-    // configuration.reset();
-
     std::set<VkImageUsageFlagBits> usage = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT};
     GetRenderContext().update_swapchain(usage);
     return true;
@@ -166,11 +43,6 @@ bool RenderSystem::Prepare(const ApplicationOptions& options)
 
 bool RenderSystem::RenderPrepare()
 {
-    assetManager = std::make_unique<AssetManager>(GetDevice());
-    assetManager->LodaAllTexture();
-    // VULKAN_HPP_DEFAULT_DISPATCHER.init(device->GetHandle());
-
-
     render_pipeline = CreateOneRenderpassTwoSubpasses(*GRuntimeGlobalContext.worldManager->GetActiveWorld()
                                                       , *GRuntimeGlobalContext.worldManager->GetViewportCamera());
     return true;
@@ -179,17 +51,6 @@ bool RenderSystem::RenderPrepare()
 void RenderSystem::RequestGpuFeatures(vkb::PhysicalDevice& gpu)
 {
     // To be overridden by sample
-}
-
-std::unique_ptr<vkb::Instance> RenderSystem::CreateInstance()
-{
-    return std::make_unique<vkb::Instance>("VulkanRenderer", GetInstanceExtensions(), GetInstanceLayers(),
-                                           GetLayerSettings(), api_version);
-}
-
-std::unique_ptr<vkb::VulkanDevice> RenderSystem::CreateDevice(vkb::PhysicalDevice& gpu)
-{
-    return std::make_unique<vkb::VulkanDevice>(gpu, surface, std::move(debug_utils), GetDeviceExtensions());
 }
 
 void RenderSystem::Draw(vkb::CommandBuffer& command_buffer, vkb::RenderTarget& render_target)
@@ -437,11 +298,6 @@ bool RenderSystem::Resize(uint32_t width, uint32_t height)
     return true;*/
 }
 
-void RenderSystem::SetApiVersion(uint32_t requested_api_version)
-{
-    api_version = requested_api_version;
-}
-
 void RenderSystem::SetRenderContext(std::unique_ptr<vkb::RenderContext>&& rc)
 {
     render_context.reset(rc.release());
@@ -450,26 +306,6 @@ void RenderSystem::SetRenderContext(std::unique_ptr<vkb::RenderContext>&& rc)
 void RenderSystem::SetRenderPipeline(std::unique_ptr<vkb::RenderPipeline>&& rp)
 {
     render_pipeline.reset(rp.release());
-}
-
-void RenderSystem::AddDeviceExtension(const char* extension, bool optional)
-{
-    device_extensions[extension] = optional;
-}
-
-void RenderSystem::AddInstanceExtension(const char* extension, bool optional)
-{
-    instance_extensions[extension] = optional;
-}
-
-void RenderSystem::AddInstanceLayer(const char* layer, bool optional)
-{
-    instance_layers[layer] = optional;
-}
-
-void RenderSystem::AddLayerSetting(VkLayerSettingEXT const& layerSetting)
-{
-    layer_settings.push_back(layerSetting);
 }
 
 void RenderSystem::InitializeUIRenderBackend(EditorUIInterface* UIManager)
@@ -514,7 +350,7 @@ std::unique_ptr<vkb::RenderPipeline> RenderSystem::CreateOneRenderpassTwoSubpass
 
     // Outputs are depth, albedo, and normal
     scene_subpass->set_output_attachments({1, 2, 3, 4});
-    scene_subpass->defaultTexture = assetManager->GetTexture();
+    scene_subpass->defaultTexture = GRuntimeGlobalContext.assetManager->GetTexture();
     // Lighting subpass
     auto lighting_vs = vkb::ShaderSource{Paths::GetShaderFullPath("deferred/lighting.vert.spv")};
     auto lighting_fs = vkb::ShaderSource{Paths::GetShaderFullPath("deferred/Pbr_lighting.frag.spv")};
@@ -658,26 +494,6 @@ void RenderSystem::DrawPipeline(vkb::CommandBuffer& command_buffer, vkb::RenderT
     render_pipeline.draw(command_buffer, render_target);
 
     command_buffer.end_render_pass();
-}
-
-std::unordered_map<const char*, bool> const& RenderSystem::GetDeviceExtensions() const
-{
-    return device_extensions;
-}
-
-std::unordered_map<const char*, bool> const& RenderSystem::GetInstanceExtensions() const
-{
-    return instance_extensions;
-}
-
-std::unordered_map<const char*, bool> const& RenderSystem::GetInstanceLayers() const
-{
-    return instance_layers;
-}
-
-std::vector<VkLayerSettingEXT> const& RenderSystem::GetLayerSettings() const
-{
-    return layer_settings;
 }
 
 std::vector<VkSurfaceFormatKHR> const& RenderSystem::GetSurfacePriorityList() const

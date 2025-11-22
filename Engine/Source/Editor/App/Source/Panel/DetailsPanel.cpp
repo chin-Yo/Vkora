@@ -108,7 +108,7 @@ void DetailsPanel::DisplaySelectedNode(scene::Node* node)
                             // Execute once when selected, within one frame
                             currentSelection = i;
 
-                            auto* aM = GRuntimeGlobalContext.renderSystem->GetAssetManager();
+                            auto* aM = GRuntimeGlobalContext.assetManager;
                             auto meshData = aM->GetMesh(options[i]->relativePath);
                             if (meshData)
                             {

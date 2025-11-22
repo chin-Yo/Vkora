@@ -4,6 +4,11 @@
 #include <string>
 #include "WindowSystem.hpp"
 
+namespace vkb
+{
+    class VulkanDevice;
+}
+
 class AssetManager;
 class WorldManager;
 class RenderSystem;
@@ -21,9 +26,11 @@ public:
     void ShutdownSystems();
 
 public:
-    std::shared_ptr<WindowSystem> windowSystem;
-    std::shared_ptr<RenderSystem> renderSystem;
-    std::shared_ptr<WorldManager> worldManager;
+    vkb::VulkanDevice* device;
+    WindowSystem* windowSystem;
+    RenderSystem* renderSystem;
+    WorldManager* worldManager;
+    AssetManager* assetManager;
 };
 
 extern RuntimeGlobalContext GRuntimeGlobalContext;
