@@ -159,7 +159,7 @@ namespace vkb
 
         allocation.update(global_uniform);
 
-        command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 4, 0);
+        command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 1, 0, 0);
     }
 
     void GeometrySubpass::draw_submesh(vkb::CommandBuffer& command_buffer, scene::SubMesh& sub_mesh,
@@ -227,18 +227,32 @@ namespace vkb
                                       *defaultTexture->sampler.lock(),
                                       0, descriptor_set_layout.get_layout_binding("normal_texture")->binding, 0);
         }
-        if (sub_mesh.get_material()->metallic_roughness_texture)
+        if (sub_mesh.get_material()->metallic_texture)
         {
             command_buffer.bind_image(
-                sub_mesh.get_material()->metallic_roughness_texture->get_vk_image_view(),
-                *sub_mesh.get_material()->metallic_roughness_texture->sampler.lock(),
-                0, descriptor_set_layout.get_layout_binding("metallic_roughness_texture")->binding, 0);
+                sub_mesh.get_material()->metallic_texture->get_vk_image_view(),
+                *sub_mesh.get_material()->metallic_texture->sampler.lock(),
+                0, descriptor_set_layout.get_layout_binding("metallic_texture")->binding, 0);
         }
         else
         {
             command_buffer.bind_image(defaultTexture->get_vk_image_view(),
                                       *defaultTexture->sampler.lock(),
-                                      0, descriptor_set_layout.get_layout_binding("metallic_roughness_texture")->
+                                      0, descriptor_set_layout.get_layout_binding("metallic_texture")->
+                                                               binding, 0);
+        }
+        if (sub_mesh.get_material()->roughness_texture)
+        {
+            command_buffer.bind_image(
+                sub_mesh.get_material()->roughness_texture->get_vk_image_view(),
+                *sub_mesh.get_material()->roughness_texture->sampler.lock(),
+                0, descriptor_set_layout.get_layout_binding("roughness_texture")->binding, 0);
+        }
+        else
+        {
+            command_buffer.bind_image(defaultTexture->get_vk_image_view(),
+                                      *defaultTexture->sampler.lock(),
+                                      0, descriptor_set_layout.get_layout_binding("roughness_texture")->
                                                                binding, 0);
         }
         if (sub_mesh.get_material()->ao_texture)

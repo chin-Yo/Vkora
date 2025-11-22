@@ -126,9 +126,10 @@ void DetailsPanel::DisplaySelectedNode(scene::Node* node)
                     ImGui::EndCombo();
                 }
                 auto* material = subMesh->get_mut_material();
-                ui::ImageSelector::Draw("base colot texture", material->base_color_texture);
+                ui::ImageSelector::Draw("base color texture", material->base_color_texture);
                 ui::ImageSelector::Draw("normal texture", material->normal_texture);
-                ui::ImageSelector::Draw("metallic roughness texture", material->metallic_roughness_texture);
+                ui::ImageSelector::Draw("metallic texture", material->metallic_texture);
+                ui::ImageSelector::Draw("roughness texture", material->roughness_texture);
                 ui::ImageSelector::Draw("ao texture", material->ao_texture);
             }
             ImGui::PopID();

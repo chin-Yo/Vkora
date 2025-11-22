@@ -19,8 +19,10 @@
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 texcoord_0;
 layout(location = 2) in vec3 normal;
+layout(location = 3) in vec3 color;
+layout(location = 4) in vec3 tangent;
 
-layout(set = 0, binding = 4) uniform GlobalUniform {
+layout(set = 1, binding = 0) uniform GlobalUniform {
     mat4 model;
     mat4 view_proj;
     vec3 camera_position;
@@ -29,6 +31,7 @@ layout(set = 0, binding = 4) uniform GlobalUniform {
 layout (location = 0) out vec4 o_pos;
 layout (location = 1) out vec2 o_uv;
 layout (location = 2) out vec3 o_normal;
+layout (location = 3) out vec3 o_tangent;
 
 void main(void)
 {
@@ -36,7 +39,11 @@ void main(void)
 
     o_uv = texcoord_0;
 
-    o_normal = mat3(global_uniform.model) * normal;
+    mat3 model_3x3 = mat3(global_uniform.model);
+
+    o_normal = model_3x3 * normal;
+
+    o_tangent = model_3x3 * tangent.xyz;
 
     gl_Position = global_uniform.view_proj * o_pos;
 }

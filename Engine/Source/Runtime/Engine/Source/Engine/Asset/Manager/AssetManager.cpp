@@ -57,7 +57,8 @@ std::shared_ptr<Texture2D> AssetManager::GetTexture(const std::string& relativeP
     {
         return it->second;
     }
-    auto newTexture = std::make_shared<Texture2D>(relativePath, Paths::GetAssetFullPath(relativePath),
+    auto newTexture = std::make_shared<Texture2D>(Paths::ExtractBasename(relativePath),
+                                                  Paths::GetAssetFullPath(relativePath),
                                                   Texture::ContentType::Color);
     newTexture->MoveToGPU(device);
 
