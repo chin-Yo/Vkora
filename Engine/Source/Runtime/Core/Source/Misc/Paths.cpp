@@ -113,3 +113,24 @@ std::string Paths::GetContentPath()
     }();
     return path;
 }
+
+std::string Paths::ExtractBasename(const std::string& path)
+{
+    std::string filename;
+    size_t lastSlash = path.find_last_of("/\\");
+    if (lastSlash != std::string::npos)
+    {
+        filename = path.substr(lastSlash + 1);
+    }
+    else
+    {
+        filename = path;
+    }
+    size_t firstDot = filename.find('.');
+    if (firstDot != std::string::npos)
+    {
+        filename = filename.substr(0, firstDot);
+    }
+
+    return filename;
+}

@@ -1,5 +1,7 @@
 #include "Engine/Texture/Texture2D.hpp"
 
+#include <ktx.h>
+#include <ktxvulkan.h>
 #include <stb_image.h>
 
 #include "Framework/Common/VkHelpers.hpp"
@@ -55,6 +57,26 @@ Texture2D::Texture2D(const std::string& name, const std::string& uri, ContentTyp
         set_format(content_type == Color ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM);
         set_width(vkb::to_u32(width));
         set_height(vkb::to_u32(height));
+        set_depth(1u);
+    }
+    else if (extension == "ktx")
+    {
+        auto data_buffer = reinterpret_cast<const ktx_uint8_t*>(data.data());
+        auto data_size = static_cast<int>(data.size());
+        ktxTexture* ktxtex = nullptr;
+        ktxTexture_CreateFromMemory(data_buffer, data_size, KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktxtex);
+        ktx_uint8_t* ktx_data = ktxTexture_GetData(ktxtex);
+        ktx_size_t ktx_size = ktxTexture_GetLevelSize(ktxtex, 0);
+        uint32_t width = ktxtex->baseWidth;
+        uint32_t height = ktxtex->baseHeight;
+
+        VkFormat format = ktxTexture_GetVkFormat(ktxtex);
+        
+        set_data(ktx_data, ktx_size);
+        ktxTexture_Destroy(ktxtex);
+        set_format(format); 
+        set_width(width);
+        set_height(height);
         set_depth(1u);
     }
 }

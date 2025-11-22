@@ -176,6 +176,6 @@ std::string AssetRegistry::AssetTypeToString(AssetType type)
 std::string AssetRegistry::GetAssetTypeStringFromExtension(const std::string& ext)
 {
     if (ext == ".fbx" || ext == ".obj" || ext == ".gltf") return "Mesh";
-    if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp") return "Texture";
+    if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" || ext == ".ktx") return "Texture";
     return "Unknown";
 }

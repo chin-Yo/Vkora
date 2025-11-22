@@ -25,4 +25,6 @@ public:
     static std::string GetEngineRootPath();
 
     static std::string GetContentPath();
+
+    static std::string ExtractBasename(const std::string& path);
 };

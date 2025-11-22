@@ -40,6 +40,7 @@ namespace vkb
     {
         glm::mat4 inv_view_proj;
         glm::vec2 inv_resolution;
+        glm::vec2 padding_0;
         glm::vec4 camPos; // .w ignored
     };
 

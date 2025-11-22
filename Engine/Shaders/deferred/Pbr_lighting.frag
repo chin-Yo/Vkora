@@ -9,7 +9,6 @@ layout (input_attachment_index = 3, binding = 3) uniform subpassInput i_material
 layout (location = 0) in vec2 in_uv;
 layout (location = 0) out vec4 o_color;
 
-#define PI 3.1415926535897932384626433832795
 
 #include "PbrFun.h"
 
@@ -17,6 +16,7 @@ layout (set = 1, binding = 0) uniform GlobalUniform
 {
     mat4 inv_view_proj;
     vec2 inv_resolution;
+    vec3 padding_0;
     vec4 camPos; // .w ignored
 }
 global_uniform;
@@ -32,10 +32,8 @@ struct Light
 
 vec3 apply_directional_light(Light light, vec3 pos, vec3 N, vec3 V, vec3 albedo, float metallic, float roughness)
 {	
-    vec3 world_to_light = -light.direction.xyz;
-	world_to_light      = normalize(world_to_light);
-	float ndotl         = clamp(dot(N, world_to_light), 0.0, 1.0);
-	return ndotl * light.color.w * light.color.rgb;
+    vec3 L = normalize(-light.direction.xyz); // light direction toward surface
+    return evaluateDirectPBR(L, V, N, albedo, metallic, roughness, light.color.rgb, light.color.w);
 }
 
 vec3 apply_point_light(Light light, vec3 pos, vec3 N, vec3 V, vec3 albedo, float metallic, float roughness)
@@ -125,6 +123,7 @@ void main()
     float ao = albedo_ao.a;               // [0,1]
     vec3 normal = normalize(normal_rough.xyz * 2.0 - 1.0);
     float roughness = subpassLoad(i_material).g;     // [0,1]
+    roughness = clamp(roughness, 0.04, 1.0);
 
     // View vector (from surface to camera)
     vec3 V = normalize(global_uniform.camPos.xyz - world_pos);

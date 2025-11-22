@@ -8,6 +8,7 @@
 #include "Engine/SceneGraph/Components/Texture.hpp"
 #include "Engine/Texture/Texture2D.hpp"
 #include "Render/RenderSystem.hpp"
+static ImGuiTextFilter textureFilter;
 
 namespace ui
 {
@@ -49,14 +50,6 @@ namespace ui
         }
         ImGui::EndGroup();
 
-        /*if (ImGui::IsItemHovered() && imageItem->texture_id != (ImTextureID)0)
-        {
-            ImGui::BeginTooltip();
-            ImGui::Text("Click to select another image");
-            ImGui::Image(imageItem->texture_id, ImVec2(256, 256));
-            ImGui::EndTooltip();
-        }*/
-
         if (open_popup)
         {
             ImGui::OpenPopup("ImageSelectorPopup");
@@ -64,51 +57,80 @@ namespace ui
 
         if (ImGui::BeginPopup("ImageSelectorPopup"))
         {
-            ImGui::PushItemWidth(-1); // 可选：让内容占满宽度
+            // --- 搜索栏 ---
+            textureFilter.Draw("Search...", 300.0f);
+            ImGui::Separator();
 
-            // 限制最大高度并启用滚动
-            float max_height = 300.0f; // 例如最大 300 像素高
-            if (ImGui::BeginChild("ImageList", ImVec2(0, max_height), false,
-                                  ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
+            // --- 滚动区域 ---
+            ImGui::BeginChild("ScrollingRegion", ImVec2(0, 400), false, ImGuiWindowFlags_HorizontalScrollbar);
+
+            // --- "None" 选项 (允许清空选择) ---
+            if (textureFilter.PassFilter("None"))
             {
                 if (ImGui::Selectable("None", imageItem == nullptr))
                 {
-                    if (!imageItem)
+                    imageItem = nullptr;
+                    value_changed = true;
+                    ImGui::CloseCurrentPopup();
+                }
+            }
+            // --- 数据处理：过滤 & 分组 & 排序 ---
+            // 使用 map 自动按类别名称排序 (key=类别名, value=纹理列表)
+            // 注意：Texture2D* 使用原始指针仅用于UI展示，不涉及所有权转移，是安全的
+            std::vector<std::pair<std::string, Texture2D*>> groupedAssets;
+            auto& textureCache = GRuntimeGlobalContext.renderSystem->GetAssetManager()->GetTextureCache();
+            for (const auto& [path, texturePtr] : textureCache)
+            {
+                if (!texturePtr) continue;
+
+                // 过滤逻辑：匹配 文件名 或 路径
+                if (textureFilter.PassFilter(texturePtr->get_name().c_str()) ||
+                    textureFilter.PassFilter(path.c_str()))
+                {
+                    // 存入临时列表：pair<路径(用于tooltip), 纹理指针>
+                    groupedAssets.push_back({path, texturePtr.get()});
+                }
+            }
+
+            std::sort(groupedAssets.begin(), groupedAssets.end(),
+                      [](const std::pair<std::string, Texture2D*>& a, const std::pair<std::string, Texture2D*>& b)
+                      {
+                          return a.second->get_name() < b.second->get_name();
+                      });
+            for (const auto& [assetPath, assetPtr] : groupedAssets)
+            {
+                ImGui::PushID(assetPtr);
+
+                // 小图标
+                ImGui::Image((ImTextureID)assetPtr->texture_id, ImVec2(20, 20));
+                ImGui::SameLine();
+
+                // 选择项
+                bool isSelected = (imageItem.get() == assetPtr);
+                if (ImGui::Selectable(assetPtr->get_name().c_str(), isSelected))
+                {
+                    // 这里我们需要从 Cache 中重新获取 shared_ptr
+                    // 方法1：直接用 textureCache.at(assetPath) (最安全)
+                    // 方法2：因为我们已经在循环里了，实际上并没有直接持有 shared_ptr 的引用，
+                    //       所以最简单的办法是通过 key (assetPath) 去 map 里拿。
+                    auto it = textureCache.find(assetPath);
+                    if (it != textureCache.end())
                     {
-                        imageItem.reset();
+                        imageItem = it->second; // 赋值 shared_ptr
                         value_changed = true;
                     }
                     ImGui::CloseCurrentPopup();
                 }
-                ImGui::Separator();
-
-                auto& Textures = GRuntimeGlobalContext.renderSystem->GetAssetManager()->GetTextureCache();
-                for (auto& item : Textures)
+                if (ImGui::IsItemHovered())
                 {
-                    if (!item.second)
-                    {
-                        continue;
-                    }
-                    ImGui::Image(item.second->texture_id, ImVec2(24, 24));
-                    ImGui::SameLine();
-                    if (ImGui::Selectable(item.second->get_name().c_str(),
-                                          imageItem && imageItem->get_name() == item.first))
-                    {
-                        if (imageItem != item.second)
-                        {
-                            imageItem = item.second;
-                            value_changed = true;
-                        }
-                        ImGui::CloseCurrentPopup();
-                    }
+                    ImGui::SetTooltip("%s", assetPath.c_str());
                 }
+
+                ImGui::PopID();
             }
             ImGui::EndChild();
-            ImGui::PopItemWidth();
-
             ImGui::EndPopup();
         }
-
         ImGui::PopID();
         return value_changed;
     }
