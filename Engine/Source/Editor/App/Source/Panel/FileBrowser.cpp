@@ -1,5 +1,7 @@
 #include "Panel/FileBrowser.hpp"
 
+#include <IconsFontAwesome5.h>
+
 #include "Misc/Paths.hpp"
 
 
@@ -7,8 +9,9 @@ static fs::path SelectedPath;
 
 void FileBrowser::OnUIRender()
 {
-    if (!ImGui::Begin("FileBrowser", &Enabled))
+    if (!ImGui::Begin(ICON_FA_FOLDER " FileBrowser", &Enabled))
     {
+        ImGui::End();
         return;
     }
     if (ImGui::BeginChild("##tree", ImVec2(300, 0),

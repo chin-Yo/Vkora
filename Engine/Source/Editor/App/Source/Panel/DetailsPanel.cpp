@@ -1,5 +1,6 @@
 #include "Panel/DetailsPanel.hpp"
 
+#include <IconsFontAwesome5.h>
 #include <imgui.h>
 #include <imgui_internal.h>
 
@@ -31,8 +32,9 @@ DetailsPanel::~DetailsPanel()
 
 void DetailsPanel::OnUIRender()
 {
-    if (!ImGui::Begin("Details", &Enabled))
+    if (!ImGui::Begin(ICON_FA_INFO_CIRCLE " Details", &Enabled))
     {
+        ImGui::End();
         return;
     }
     if (auto* node = GEditorGlobalContext.selectedNode)
