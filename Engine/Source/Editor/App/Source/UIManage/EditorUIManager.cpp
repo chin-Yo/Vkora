@@ -49,6 +49,10 @@ void EditorUIManager::Initialize()
     EditorPanels.push_back(std::make_shared<ViewportPanel>());
     EditorPanels.push_back(std::make_shared<DetailsPanel>());
     GRuntimeGlobalContext.renderSystem->InitializeUIRenderBackend(this);
+    for (const auto& panel : EditorPanels)
+    {
+        panel->Init();
+    }
 }
 
 void EditorUIManager::Prepare(VkRenderPass renderPass, VkQueue queue, uint32_t MinImageCount, uint32_t ImageCount)
@@ -67,7 +71,6 @@ void EditorUIManager::Prepare(VkRenderPass renderPass, VkQueue queue, uint32_t M
     io.Fonts->AddFontDefault();
     io.Fonts->AddFontFromFileTTF((Paths::GetEngineRootPath() + "/ThirdParty/imgui/fonts/fa-solid-900.ttf").c_str(),
                                  8.f, &config, icon_ranges);
-
     ImGui::StyleColorsDark();
     // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
     ImGuiStyle& style = ImGui::GetStyle();
