@@ -13,7 +13,7 @@
 #include "Render/RenderSystem.hpp"
 #include "UIManage/EditorGlobalContext.hpp"
 #include "World/WorldManager.hpp"
-
+#include "IconsFontAwesome5.h"
 
 ViewportPanel::ViewportPanel()
 {
@@ -39,8 +39,10 @@ ViewportPanel::~ViewportPanel()
 void ViewportPanel::OnUIRender()
 {
     ImGui::SetNextWindowSize(ImVec2(500, 600), ImGuiCond_Once);
-    if (!ImGui::Begin("Viewport", nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
+    if (!ImGui::Begin(ICON_FA_VIDEO " Viewport", nullptr,
+                      ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse))
     {
+        ImGui::End();
         return;
     }
     HandleGuizmoInput();

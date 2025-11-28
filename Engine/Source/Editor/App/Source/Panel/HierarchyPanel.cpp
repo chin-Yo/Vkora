@@ -1,5 +1,6 @@
 #include "Panel/HierarchyPanel.hpp"
 
+#include <IconsFontAwesome5.h>
 #include <imgui.h>
 
 #include "GlobalContext.hpp"
@@ -33,8 +34,9 @@ void HierarchyPanel::CreateTree()
     if (!scene)
         return;
 
-    if (!ImGui::Begin("HierarchyPanel", &Enabled))
+    if (!ImGui::Begin(ICON_FA_LAYER_GROUP " HierarchyPanel", &Enabled))
     {
+        ImGui::End();
         return;
     }
     /*if (ImGui::BeginChild("##tree", ImVec2(300, 0),

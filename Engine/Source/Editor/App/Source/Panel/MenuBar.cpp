@@ -45,7 +45,10 @@ void MenuBar::OnUIRender()
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
     if (!ImGui::Begin("DockSpace ImGui", &dockspaceOpen, window_flags))
+    {
+        ImGui::End();
         return;
+    }
 
     if (!opt_padding)
         ImGui::PopStyleVar();
@@ -113,6 +116,8 @@ void MenuBar::OnUIRender()
                 }
                 ImGui::EndMenu();
             }
+
+            ImGui::MenuItem("Style Editor", NULL, &bShowStyleEditor);
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Options"))
@@ -155,7 +160,19 @@ void MenuBar::OnUIRender()
                 dockspaceOpen = false;
             ImGui::EndMenu();
         }
+
         ImGui::EndMenuBar();
     }
     ImGui::End();
+    DrawMenuPanel();
+}
+
+void MenuBar::DrawMenuPanel()
+{
+    if (bShowStyleEditor)
+    {
+        ImGui::Begin("Dear ImGui Style Editor", &bShowStyleEditor);
+        ImGui::ShowStyleEditor();
+        ImGui::End();
+    }
 }

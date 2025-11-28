@@ -5,10 +5,14 @@
 
 class MenuBar : public Panel
 {
-public: 
+public:
     MenuBar();
     ~MenuBar() override = default;
 
     void OnUIRender() override;
 
+protected:
+    void DrawMenuPanel();
+
+    bool bShowStyleEditor = false;
 };

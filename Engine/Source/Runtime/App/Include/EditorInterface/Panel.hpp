@@ -6,7 +6,7 @@ class Panel
 {
 public:
     virtual ~Panel() = default;
-    
+    virtual void Init(){}
     virtual void OnUIRender() = 0;
     
     void SetEnabled(bool enabled) { Enabled = enabled; }
