@@ -21,8 +21,6 @@ public:
     void OnUIRender() override;
 
 protected:
-    void RenderDirectoryTreeWithSelection(const std::filesystem::path& path);
-
     void constructAssetNavigator();
     void constructFolderFiles();
     void constructAsset(const std::string& filename, const ImVec2& size);
@@ -33,7 +31,6 @@ protected:
 
     void createCustomSeperatorText(const std::string& text);
 
-    virtual void openFolder(const std::string& folder) override;
 
     FileIconData GetFileIconData(const std::string& filename, bool is_folder);
     uint32_t m_poll_folder_timer_handle;

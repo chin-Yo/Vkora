@@ -1,6 +1,7 @@
 #include "Panel/FileBrowser.hpp"
 
 #include <IconsFontAwesome5.h>
+#include <imgui_internal.h>
 
 #include "Logging/Logger.hpp"
 #include "Misc/Paths.hpp"
@@ -17,8 +18,9 @@ void FileBrowser::Init()
     static const ImWchar icon_ranges[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
     config.MergeMode = false;
     config.PixelSnapH = true;
-    m_large_icon_font = ImGui::GetIO().Fonts->AddFontFromFileTTF((Paths::GetEngineRootPath() + "/ThirdParty/imgui/fonts/fa-solid-900.ttf").c_str(),
-                                 64.f, &config, icon_ranges);
+    m_large_icon_font = ImGui::GetIO().Fonts->AddFontFromFileTTF(
+        (Paths::GetEngineRootPath() + "/ThirdParty/imgui/fonts/fa-solid-900.ttf").c_str(),
+        64.f, &config, icon_ranges);
 }
 
 void FileBrowser::OnUIRender()
@@ -28,86 +30,97 @@ void FileBrowser::OnUIRender()
         ImGui::End();
         return;
     }
-
     // 样式设置
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(2.0f, 2.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4.0f, 4.0f));
-
-    const float k_folder_tree_width_scale = 0.2f;
-
-    // 获取可用区域
+    // 定义持久化的宽度状态
+    static float left_pane_width = 0.0f; // 初始为0，用于后续判断是否需要初始化
     ImVec2 content_size = ImGui::GetContentRegionAvail();
-    // 计算左侧宽度 (稍微减去一点以容纳分割线/间距，防止计算误差导致的换行)
-    float left_pane_width = content_size.x * k_folder_tree_width_scale;
-
-    // ---------------------------------------------------------
+    // 第一次运行时初始化宽度 (例如总宽度的 20%)
+    if (left_pane_width == 0.0f)
+        left_pane_width = content_size.x * 0.2f;
+    // 定义分割条的宽度
+    const float splitter_thickness = 4.0f;
     // 1. 左侧：Folder Tree
-    // ---------------------------------------------------------
+    // 使用 left_pane_width 变量
     ImGui::BeginChild("folder_tree", ImVec2(left_pane_width, content_size.y), true);
 
     ImGui::Spacing();
-
-    // 重置 hover 状态 (每一帧开始前重置)
     is_folder_tree_hovered = false;
-
-    // 绘制树
     constructFolderTree();
 
-    // 处理左侧区域的右键菜单
-    // IsWindowHovered 检查鼠标是否在当前 Child 范围内
     if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
     {
-        // 如果在 constructFolderTree 内部检测到了 Item Hover，则认为是节点操作
-        if (is_folder_tree_hovered)
-        {
-            ImGui::OpenPopup("folder_op_tree_hovered_popups");
-        }
-        else
-        {
-            ImGui::OpenPopup("folder_op_background_hovered_popups");
-        }
+        if (is_folder_tree_hovered) ImGui::OpenPopup("folder_op_tree_hovered_popups");
+        else ImGui::OpenPopup("folder_op_background_hovered_popups");
     }
 
     ImGui::EndChild(); // 结束 folder_tree
 
-    // 绘制左侧相关的弹窗 (放在 Child 之外以防被裁剪，尽管 Popup 默认是顶层的)
+    // 弹窗构建
     constructFolderOpPopups("folder_op_background_hovered_popups");
     constructFolderOpPopups("folder_op_tree_hovered_popups", true);
     constructFolderOpPopupModal(m_selected_folder);
 
-    ImGui::SameLine();
+    // 插入 SplitterBehavior
+    ImGui::SameLine(0.0f, 0.0f);
 
-    // ---------------------------------------------------------
+    {
+        ImGuiWindow* window = ImGui::GetCurrentWindow();
+        ImGuiID splitter_id = window->GetID("MySplitter");
+
+        // 2. [关键修复] 正确计算矩形坐标
+        // 使用 ImVec2 直接加法，避免分量计算出错
+        ImRect bb;
+        bb.Min = window->DC.CursorPos; // 当前光标位置 (左上角)
+        bb.Max = bb.Min; // 先把 Max 设为 Min
+        bb.Max.x += splitter_thickness; // 加上宽度
+        bb.Max.y += content_size.y; // 加上高度 (content_size.y 是整个区域的高度)
+
+        // 3. 重新计算右侧剩余宽度
+        // (总宽 - 左侧宽 - 分割条宽)
+        float right_pane_width = content_size.x - left_pane_width - splitter_thickness;
+
+        // 4. 调用行为逻辑
+        ImGui::SplitterBehavior(bb, splitter_id, ImGuiAxis_X,
+                                &left_pane_width, &right_pane_width,
+                                50.0f, 50.0f,
+                                4.0f);
+        ImU32 col = ImGui::GetColorU32(ImGui::IsItemActive() || ImGui::IsItemHovered()
+                                           ? ImGuiCol_SeparatorHovered
+                                           : ImGuiCol_Separator);
+
+        window->DrawList->AddRectFilled(bb.Min, bb.Max, col);
+
+        // 6. [关键] 占位
+        // 告诉 ImGui 这里有个东西占了位置，光标要往后移，否则右侧窗口会叠上来
+        ImGui::ItemSize(bb);
+    }
+
+    // 7. 再次去掉间距，让右侧窗口紧贴分割条
+    ImGui::SameLine(0.0f, 0.0f);
     // 2. 右侧：Asset Browser
-    // ---------------------------------------------------------
-    // 宽度设为 0，让 ImGui 自动计算剩余宽度，避免数学计算导致的溢出
+    // 宽度设为 0 (自动占据剩余) 或者填入计算后的 right_pane_width
     ImGui::BeginChild("AssetBrowser", ImVec2(0, content_size.y), true);
 
     const uint32_t k_spacing = 4;
     ImGui::Spacing();
     ImGui::Indent((float)k_spacing);
 
-    // 2.1 导航栏 (高度固定 24)
-    ImGui::BeginChild("AssetNav", ImVec2(0, 24), false); // border 设为 false 可能更美观
+    ImGui::BeginChild("AssetNav", ImVec2(0, 24), false);
     constructAssetNavigator();
     ImGui::EndChild();
 
     ImGui::Spacing();
 
-    // 2.2 文件列表区域 (占据剩余高度)
     ImGui::BeginChild("FileListArea", ImVec2(0, 0), false);
-    // 注意：这里 indent 可能会导致内部布局偏移，需确认 constructFolderFiles 是否需要这个 indent
-    // 如果不需要额外缩进，建议去掉 Indent，或者在 EndChild 前 Unindent
-    // ImGui::Indent((float)k_spacing); 
-
+    ImGui::Indent((float)k_spacing);
     ImGui::PushFont(DefaultFont);
     constructFolderFiles();
     ImGui::PopFont();
+    ImGui::EndChild();
 
-    ImGui::EndChild(); // 结束 FileListArea
-
-    // 右侧背景右键检测
-    // 检测是否悬停在 AssetBrowser 窗口内，且没有悬停在任何具体 Item (如文件图标) 上
+    // 右键菜单逻辑...
     if (ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows) &&
         !ImGui::IsAnyItemHovered() &&
         ImGui::IsMouseClicked(ImGuiMouseButton_Right))
@@ -148,39 +161,6 @@ void FileBrowser::OnUIRender()
     is_asset_hovered = false;
 }
 
-void FileBrowser::RenderDirectoryTreeWithSelection(const std::filesystem::path& path)
-{
-    for (const auto& entry : std::filesystem::directory_iterator(path))
-    {
-        if (!entry.is_directory()) continue;
-
-        std::string name = entry.path().filename().u8string();
-        std::filesystem::path fullPath = entry.path();
-
-        ImGui::PushID(fullPath.u8string().c_str());
-
-        if (ImGui::TreeNodeEx(name.c_str(), ImGuiTreeNodeFlags_SpanAvailWidth))
-        {
-            RenderDirectoryTreeWithSelection(fullPath);
-            ImGui::TreePop();
-        }
-
-        if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
-        {
-            SelectedPath = fullPath;
-        }
-
-        if (fullPath == SelectedPath)
-        {
-            ImDrawList* drawList = ImGui::GetWindowDrawList();
-            ImVec2 min = ImGui::GetItemRectMin();
-            ImVec2 max = ImGui::GetItemRectMax();
-            drawList->AddRectFilled(min, max, IM_COL32(60, 130, 230, 100), 2.0f);
-        }
-        ImGui::PopID();
-    }
-}
-
 void FileBrowser::constructAssetNavigator()
 {
     ImVec2 button_size(20, 20);
@@ -198,7 +178,7 @@ void FileBrowser::constructAssetNavigator()
 
     ImGui::SameLine();
     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 10.0f);
-    ImGui::Text(m_selected_folder.c_str());
+    ImGui::Text(GetSelectedFolderRelative().c_str());
 
     ImGui::SameLine(ImGui::GetWindowWidth() - 22);
     if (ImGui::Button(ICON_FA_COG, button_size))
@@ -341,8 +321,7 @@ void FileBrowser::constructFolderFiles()
                 {
                     if (item.is_folder)
                     {
-                        // 进入文件夹逻辑
-                        // EnterFolder(item.name); 
+                        openFolder((ui::FolderNode*)item.id);
                     }
                     else
                     {
@@ -498,10 +477,6 @@ void FileBrowser::createCustomSeperatorText(const std::string& text)
     ImGui::PopFont();
     ImGui::PopStyleVar(2);
     ImGui::PopStyleColor();
-}
-
-void FileBrowser::openFolder(const std::string& folder)
-{
 }
 
 FileIconData FileBrowser::GetFileIconData(const std::string& filename, bool is_folder)

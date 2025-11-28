@@ -58,36 +58,11 @@ namespace ui
         FolderTreeUI() = default;
         virtual ~FolderTreeUI() = default;
 
-        // 初始化时必须设置根目录
         void SetRootPath(const std::string& AssetRootPath_absolute);
 
-        void draw()
-        {
-            // 每帧检测（也可以做成手动触发刷新）
-            // pollFolders(); // 建议不要每帧调用，仅在文件变动时调用
+        void Refresh();
 
-            constructFolderTree();
-        }
-
-        // 外部调用以刷新文件列表
-        void refresh()
-        {
-            pollFolders();
-        }
-
-        // 获取当前选中的相对路径
-        std::string getSelectedFolderRelative() const
-        {
-            if (m_selected_folder.empty() || m_root_path.empty()) return "";
-            try
-            {
-                return std::filesystem::relative(m_selected_folder, m_root_path).generic_string();
-            }
-            catch (...)
-            {
-                return "";
-            }
-        }
+        std::string GetSelectedFolderRelative() const;
 
     protected:
         std::filesystem::path m_root_path;
@@ -110,7 +85,7 @@ namespace ui
         void constructFolderTree();
         void constructFolderTreeRecursive(std::shared_ptr<FolderNode> node);
 
-        virtual void openFolder(const std::string& folder_path);
+        virtual void openFolder(FolderNode* new_selected_node);
         std::string createFolder();
         bool deleteFolder(const std::string& folder_path);
 

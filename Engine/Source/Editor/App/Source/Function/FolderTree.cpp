@@ -17,6 +17,24 @@ namespace ui
         pollFolders();
     }
 
+    void FolderTreeUI::Refresh()
+    {
+        pollFolders();
+    }
+
+    std::string FolderTreeUI::GetSelectedFolderRelative() const
+    {
+        if (m_selected_folder.empty() || m_root_path.empty()) return "";
+        try
+        {
+            return std::filesystem::relative(m_selected_folder, m_root_path).generic_string();
+        }
+        catch (...)
+        {
+            return "";
+        }
+    }
+
     void FolderTreeUI::pollFolders()
     {
         namespace fs = std::filesystem;
@@ -196,9 +214,14 @@ namespace ui
         }
     }
 
-    void FolderTreeUI::openFolder(const std::string& folder_path)
+    void FolderTreeUI::openFolder(FolderNode* new_selected_node)
     {
-        m_selected_folder = folder_path;
+        m_selected_node = new_selected_node;
+        m_selected_folder = new_selected_node->dir;
+        if (auto lock = new_selected_node->parent_folder.lock())
+        {
+            m_folder_opened_map[lock->dir] = true;
+        }
     }
 
     std::string FolderTreeUI::createFolder()
@@ -218,7 +241,7 @@ namespace ui
         {
             std::filesystem::create_directory(new_folder);
             std::cout << "Created: " << new_folder << std::endl;
-            refresh();
+            Refresh();
         }
         catch (const std::exception& e)
         {
@@ -245,7 +268,7 @@ namespace ui
                 m_selected_folder = m_root_path.generic_string();
             }
 
-            refresh();
+            Refresh();
             return true;
         }
         catch (const std::exception& e)
@@ -291,7 +314,7 @@ namespace ui
                     try
                     {
                         std::filesystem::rename(p, new_path);
-                        refresh();
+                        Refresh();
                     }
                     catch (const std::exception& e)
                     {
