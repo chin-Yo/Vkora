@@ -12,7 +12,7 @@ static ImGuiTextFilter textureFilter;
 
 namespace ui
 {
-    bool ImageSelector::Draw(const char* label, std::shared_ptr<Texture2D>& imageItem, const ImVec2& preview_size)
+    bool ImageSelector::Draw(const char* label, ObserverPtr<Texture2D>& imageItem, const ImVec2& preview_size)
     {
         bool value_changed = false;
         ImGui::PushID(label);
@@ -78,7 +78,7 @@ namespace ui
             // 使用 map 自动按类别名称排序 (key=类别名, value=纹理列表)
             // 注意：Texture2D* 使用原始指针仅用于UI展示，不涉及所有权转移，是安全的
             std::vector<std::pair<std::string, Texture2D*>> groupedAssets;
-            auto& textureCache = GRuntimeGlobalContext.assetManager->GetTextureCache();
+            auto& textureCache = GRuntimeGlobalContext.assetManager->GetTexture2DCache();
             for (const auto& [path, texturePtr] : textureCache)
             {
                 if (!texturePtr) continue;

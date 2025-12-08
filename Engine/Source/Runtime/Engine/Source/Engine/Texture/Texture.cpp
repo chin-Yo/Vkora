@@ -5,7 +5,9 @@
 #include <vk_mem_alloc.h>
 
 #include "Framework/Common/VkHelpers.hpp"
+#include "Framework/Core/Buffer.hpp"
 #include "Framework/Core/Image.hpp"
+#include "Framework/Core/Queue.hpp"
 #include "Misc/FileLoader.hpp"
 #include "Framework/Core/VulkanDevice.hpp"
 
@@ -121,11 +123,6 @@ static VkFormat maybe_coerce_to_srgb(VkFormat fmt)
     }
 }
 
-Texture::Texture(const std::string& name, std::vector<uint8_t>&& d, std::vector<Mipmap>&& m)
-    : name{name}, data{std::move(d)}, format{VK_FORMAT_R8G8B8A8_UNORM}, mipmaps{std::move(m)}
-{
-}
-
 const std::vector<uint8_t>& Texture::get_data() const
 {
     return data;
@@ -163,7 +160,7 @@ const std::vector<std::vector<VkDeviceSize>>& Texture::get_offsets() const
     return offsets;
 }
 
-void Texture::create_vk_image(vkb::VulkanDevice& device, VkImageViewType image_view_type, VkImageCreateFlags flags)
+void Texture::create_vk_image(vkb::VulkanDevice& device)
 {
     assert(!vk_image && !vk_image_view && "Vulkan image already constructed");
 
@@ -176,10 +173,10 @@ void Texture::create_vk_image(vkb::VulkanDevice& device, VkImageViewType image_v
                                             vkb::to_u32(mipmaps.size()),
                                             layers,
                                             VK_IMAGE_TILING_OPTIMAL,
-                                            flags);
+                                            image_create_flags);
     vk_image->SetDebugName(get_name());
 
-    vk_image_view = std::make_unique<vkb::ImageView>(*vk_image, image_view_type);
+    vk_image_view = std::make_unique<vkb::ImageView>(*vk_image, view_type);
     vk_image_view->SetDebugName("View on " + get_name());
 }
 
@@ -328,4 +325,74 @@ void Texture::coerce_format_to_srgb()
 std::string Texture::get_name() const
 {
     return name;
+}
+
+
+void Texture::MoveToGPU(vkb::VulkanDevice& device)
+{
+    this->create_vk_image(device);
+
+    const auto& queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+
+    VkCommandBuffer command_buffer = device.create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+
+    vkb::Buffer stage_buffer = vkb::Buffer::create_staging_buffer(device, this->get_data());
+
+    // Setup buffer copy regions for each mip level
+    std::vector<VkBufferImageCopy> bufferCopyRegions;
+
+    auto& mipmaps = this->get_mipmaps();
+
+    for (size_t i = 0; i < mipmaps.size(); i++)
+    {
+        VkBufferImageCopy buffer_copy_region = {};
+        buffer_copy_region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        buffer_copy_region.imageSubresource.mipLevel = vkb::to_u32(i);
+        buffer_copy_region.imageSubresource.baseArrayLayer = 0;
+        buffer_copy_region.imageSubresource.layerCount = 1;
+        buffer_copy_region.imageExtent.width = this->get_extent().width >> i;
+        buffer_copy_region.imageExtent.height = this->get_extent().height >> i;
+        buffer_copy_region.imageExtent.depth = 1;
+        buffer_copy_region.bufferOffset = mipmaps[i].offset;
+
+        bufferCopyRegions.push_back(buffer_copy_region);
+    }
+
+    VkImageSubresourceRange subresource_range = {};
+    subresource_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    subresource_range.baseMipLevel = 0;
+    subresource_range.levelCount = vkb::to_u32(mipmaps.size());
+    subresource_range.layerCount = layers;
+
+    // Image barrier for optimal image (target)
+    // Optimal image will be used as destination for the copy
+    vkb::image_layout_transition(command_buffer,
+                                 this->get_vk_image().GetHandle(),
+                                 VK_IMAGE_LAYOUT_UNDEFINED,
+                                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                 subresource_range);
+
+    // Copy mip levels from staging buffer
+    vkCmdCopyBufferToImage(
+        command_buffer,
+        stage_buffer.GetHandle(),
+        this->get_vk_image().GetHandle(),
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        static_cast<uint32_t>(bufferCopyRegions.size()),
+        bufferCopyRegions.data());
+
+    // Change texture image layout to shader read after all mip levels have been copied
+    vkb::image_layout_transition(command_buffer,
+                                 this->get_vk_image().GetHandle(),
+                                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                 VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                 subresource_range);
+
+    device.flush_command_buffer(command_buffer, queue.get_handle());
+}
+
+Texture::Texture(const std::string& name, VkImageViewType type, VkImageCreateFlags flags, std::vector<uint8_t>&& data,
+                 std::vector<Mipmap>&& mipmaps): name(name), view_type(type), image_create_flags(flags),
+                                                 data(std::move(data)), mipmaps(std::move(mipmaps))
+{
 }

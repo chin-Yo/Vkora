@@ -99,21 +99,30 @@ layout (constant_id = 0) const uint DIRECTIONAL_LIGHT_COUNT = 0U;
 layout (constant_id = 1) const uint POINT_LIGHT_COUNT = 0U;
 layout (constant_id = 2) const uint SPOT_LIGHT_COUNT = 0U;
 
+vec3 getProceduralSky(vec3 viewDir)
+{
+    vec3 topColor = vec3(0.2, 0.4, 0.8);
+    vec3 bottomColor = vec3(0.8, 0.8, 0.8);
+    float t = 0.5 * (viewDir.y + 1.0);
+    return mix(bottomColor, topColor, t);
+}
+
 void main()
 {
     // --- Reconstruct world position from depth ---
     float depth = subpassLoad(i_depth).x;
     //if (depth >= 1.0) discard; // optional: skip sky
 
-    if (depth <= 0.0 || depth >= 1.0) {
-        o_color = vec4(0.0, 0.0, 0.0, 1.0);
-        return;
-    }
-
     vec4 clip = vec4(in_uv * 2.0 - 1.0, depth, 1.0);
     vec4 world_pos_h = global_uniform.inv_view_proj * clip;
     vec3 world_pos = world_pos_h.xyz / world_pos_h.w;
 
+    vec3 viewDir = normalize(world_pos - global_uniform.camPos.xyz);
+    if (depth <= 0.0 + 0.000001) // 使用一点 epsilon 容差
+    {
+        o_color = vec4(getProceduralSky(viewDir), 1.0);
+        return;
+    }
     // Load G-Buffer
     vec4 albedo_ao = subpassLoad(i_albedo);
     vec4 normal_rough = subpassLoad(i_normal);

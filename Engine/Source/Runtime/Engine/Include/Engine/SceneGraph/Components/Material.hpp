@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "Core/ObserverPtr.hpp"
 #include "Framework/Common/VkError.hpp"
 #include "Framework/Common/glmCommon.hpp"
 #include "Framework/Common/VkHelpers.hpp"
@@ -56,17 +57,15 @@ namespace scene
 
         virtual ~Material() = default;
 
-        std::unordered_map<std::string, Texture*> textures;
+        ObserverPtr<Texture2D> base_color_texture;
 
-        std::shared_ptr<Texture2D> base_color_texture;
+        ObserverPtr<Texture2D> normal_texture;
 
-        std::shared_ptr<Texture2D> normal_texture;
+        ObserverPtr<Texture2D> metallic_texture;
 
-        std::shared_ptr<Texture2D> metallic_texture;
+        ObserverPtr<Texture2D> roughness_texture;
 
-        std::shared_ptr<Texture2D> roughness_texture;
-
-        std::shared_ptr<Texture2D> ao_texture;
+        ObserverPtr<Texture2D> ao_texture;
 
         /// Emissive color of the material
         glm::vec3 emissive{0.0f, 0.0f, 0.0f};

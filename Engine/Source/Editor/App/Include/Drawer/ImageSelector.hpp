@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "Core/ObserverPtr.hpp"
+
 class Texture2D;
 
 namespace scene
@@ -32,7 +34,7 @@ namespace ui
         * @param preview_size 预览图像框的大小。
         * @return 如果选择发生了改变，则返回 true，否则返回 false。
         */
-        static bool Draw(const char* label, std::shared_ptr<Texture2D>& imageItem,
+        static bool Draw(const char* label, ObserverPtr<Texture2D>& imageItem,
                          const ImVec2& preview_size = ImVec2(64, 64));
 
         static ImTextureID GetTextureID(scene::Texture& texture);

@@ -46,11 +46,16 @@ public:
         Other
     };
 
-    Texture(const std::string& name, std::vector<uint8_t>&& data = {}, std::vector<Mipmap>&& mipmaps = {{}});
+    //Texture(const std::string& name, std::vector<uint8_t>&& data = {}, std::vector<Mipmap>&& mipmaps = {{}});
 
     //static std::unique_ptr<Texture> load(const std::string& name, const std::string& uri, ContentType content_type);
 
     virtual ~Texture() = default;
+
+    Texture(const Texture&) = delete;
+    Texture& operator=(const Texture&) = delete;
+    Texture(Texture&&) = default;
+    Texture& operator=(Texture&&) = default;
 
     const std::vector<uint8_t>& get_data() const;
 
@@ -68,8 +73,7 @@ public:
 
     void generate_mipmaps();
 
-    void create_vk_image(vkb::VulkanDevice& device, VkImageViewType image_view_type = VK_IMAGE_VIEW_TYPE_2D,
-                         VkImageCreateFlags flags = 0);
+    void create_vk_image(vkb::VulkanDevice& device);
 
     const vkb::Image& get_vk_image() const;
 
@@ -79,7 +83,12 @@ public:
 
     std::string get_name() const;
 
+    virtual void MoveToGPU(vkb::VulkanDevice& device);
+
 protected:
+    Texture(const std::string& name, VkImageViewType type, VkImageCreateFlags flags,
+            std::vector<uint8_t>&& data = {}, std::vector<Mipmap>&& mipmaps = {});
+
     std::vector<uint8_t>& get_mut_data();
 
     void set_data(const uint8_t* raw_data, size_t size);
@@ -104,11 +113,11 @@ protected:
 
     std::vector<uint8_t> data;
 
-    VkFormat format{VK_FORMAT_UNDEFINED};
+    VkFormat format{VK_FORMAT_R8G8B8A8_UNORM};
 
     uint32_t layers{1};
 
-    std::vector<Mipmap> mipmaps{{}};
+    std::vector<Mipmap> mipmaps{{}}; // default has [0]
 
     // Offsets stored like offsets[array_layer][mipmap_layer]
     std::vector<std::vector<VkDeviceSize>> offsets;
@@ -116,4 +125,7 @@ protected:
     std::unique_ptr<vkb::Image> vk_image;
 
     std::unique_ptr<vkb::ImageView> vk_image_view;
+
+    VkImageViewType view_type;
+    VkImageCreateFlags image_create_flags{0};
 };
