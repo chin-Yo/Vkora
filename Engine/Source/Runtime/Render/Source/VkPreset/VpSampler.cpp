@@ -42,4 +42,24 @@ namespace vp
         info.maxLod = 0.0f;
         return info;
     }
+
+    VkSamplerCreateInfo CubeMapSamplerPreset::CreateInfo() const
+    {
+        VkSamplerCreateInfo info{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
+        info.magFilter = VK_FILTER_LINEAR;
+        info.minFilter = VK_FILTER_LINEAR;
+        info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+        info.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        info.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        info.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        info.anisotropyEnable = VK_TRUE;
+        info.maxAnisotropy = 16.0f;
+        info.compareEnable = VK_FALSE;
+        info.unnormalizedCoordinates = VK_FALSE;
+        info.minLod = 0.0f;
+        info.maxLod = VK_LOD_CLAMP_NONE;
+        info.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
+        info.pNext = nullptr;
+        return info;
+    }
 }

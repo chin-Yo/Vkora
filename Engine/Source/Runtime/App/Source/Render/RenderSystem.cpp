@@ -4,6 +4,7 @@
 #include "backends/imgui_impl_vulkan.h"
 #include "Engine/Asset/Manager/AssetManager.hpp"
 #include "Engine/SceneGraph/Components/PerspectiveCamera.hpp"
+#include "Engine/Texture/Texture2D.hpp"
 #include "Framework/Core/CommandBuffer.hpp"
 #include "Framework/Core/Queue.hpp"
 #include "Framework/Core/Sampler.hpp"
@@ -350,7 +351,7 @@ std::unique_ptr<vkb::RenderPipeline> RenderSystem::CreateOneRenderpassTwoSubpass
 
     // Outputs are depth, albedo, and normal
     scene_subpass->set_output_attachments({1, 2, 3, 4});
-    scene_subpass->defaultTexture = GRuntimeGlobalContext.assetManager->GetTexture();
+    scene_subpass->defaultTexture = GRuntimeGlobalContext.assetManager->GetTexture<Texture2D>();
     // Lighting subpass
     auto lighting_vs = vkb::ShaderSource{Paths::GetShaderFullPath("deferred/lighting.vert.spv")};
     auto lighting_fs = vkb::ShaderSource{Paths::GetShaderFullPath("deferred/Pbr_lighting.frag.spv")};

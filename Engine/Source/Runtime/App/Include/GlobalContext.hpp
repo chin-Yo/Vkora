@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include "WindowSystem.hpp"
+#include "Async/PriorityThreadPool.hpp"
 
 namespace vkb
 {
@@ -31,6 +32,7 @@ public:
     RenderSystem* renderSystem;
     WorldManager* worldManager;
     AssetManager* assetManager;
+    PriorityThreadPool pThreadPool;
 };
 
 extern RuntimeGlobalContext GRuntimeGlobalContext;

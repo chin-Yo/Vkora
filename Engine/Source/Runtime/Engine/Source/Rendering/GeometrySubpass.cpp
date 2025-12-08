@@ -192,17 +192,7 @@ namespace vkb
         }
 
         DescriptorSetLayout& descriptor_set_layout = pipeline_layout.get_descriptor_set_layout(0);
-
-        for (auto& texture : sub_mesh.get_material()->textures)
-        {
-            if (auto layout_binding = descriptor_set_layout.get_layout_binding(texture.first))
-            {
-                command_buffer.bind_image(texture.second->get_image()->get_vk_image_view(),
-                                          texture.second->get_sampler()->vk_sampler,
-                                          0, layout_binding->binding, 0);
-            }
-        }
-
+        
         if (sub_mesh.get_material()->base_color_texture)
         {
             command_buffer.bind_image(sub_mesh.get_material()->base_color_texture->get_vk_image_view(),

@@ -204,11 +204,12 @@ namespace vkb
     public:
         void reset();
 
-        void set_pipeline_layout(PipelineLayout& pipeline_layout);
+        void set_pipeline_layout(PipelineLayout& pipeline_layout); // compute only
 
         void set_render_pass(const RenderPass& render_pass);
 
         void set_specialization_constant(uint32_t constant_id, const std::vector<uint8_t>& data);
+        // compute only optional
 
         void set_vertex_input_state(const VertexInputState& vertex_input_state);
 

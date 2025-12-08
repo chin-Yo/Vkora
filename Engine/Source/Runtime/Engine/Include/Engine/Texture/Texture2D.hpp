@@ -10,10 +10,11 @@ namespace vkb
 
 class Texture2D : public Texture
 {
-public:
-    Texture2D(const std::string& name, const std::string& uri, ContentType content_type);
+    friend class TextureFactory;
 
-    void MoveToGPU(vkb::VulkanDevice& device);
+public:
+    Texture2D(const std::string& name, std::vector<uint8_t>&& data = {}, std::vector<Mipmap>&& mipmaps = {{}});
+    //void MoveToGPU(vkb::VulkanDevice& device);
 
     std::weak_ptr<vkb::Sampler> sampler;
 

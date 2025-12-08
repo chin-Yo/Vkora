@@ -26,4 +26,10 @@ namespace vp
     private:
         VkCompareOp compareOp_;
     };
+
+    class CubeMapSamplerPreset : public SamplerPreset
+    {
+    public:
+        VkSamplerCreateInfo CreateInfo() const override;
+    };
 }
