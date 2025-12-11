@@ -96,8 +96,8 @@ void AssetManager::LodaAllTexture()
             }
             auto newTexture = TextureFactory::CreateTexture2DFromMemory(texture->relativePath, raw_data,
                                                                         (uint32_t)width, height,
-                                                                        req_comp, Texture::ContentType::Other);
-            newTexture->MoveToGPU(device);
+                                                                        req_comp, VK_FORMAT_R8G8B8A8_UNORM);
+            newTexture->CopyDataToGPU(device);
             stbi_image_free(raw_data);
             newTexture->sampler = defaultSampler;
             newTexture->texture_id = ImGui_ImplVulkan_AddTexture(newTexture->sampler.lock()->GetHandle(),
@@ -121,8 +121,8 @@ void AssetManager::LodaAllTexture()
             {
                 auto newTexture = TextureFactory::CreateTextureCubeFromMemory(
                     texture->relativePath, ktx_data, ktx_size, width, height,
-                    Texture::ContentType::Other);
-                newTexture->MoveToGPU(device);
+                    format);
+                newTexture->CopyDataToGPU(device);
                 newTexture->sampler = cubeSampler;
                 textureCubeCache[texture->relativePath] = std::move(newTexture);
             }
@@ -130,8 +130,8 @@ void AssetManager::LodaAllTexture()
             {
                 auto newTexture = TextureFactory::CreateTexture2DFromMemory(
                     texture->relativePath, ktx_data, ktx_size, width, height
-                    , Texture::ContentType::Other);
-                newTexture->MoveToGPU(device);
+                    , format);
+                newTexture->CopyDataToGPU(device);
                 newTexture->sampler = defaultSampler;
                 newTexture->texture_id = ImGui_ImplVulkan_AddTexture(newTexture->sampler.lock()->GetHandle(),
                                                                      newTexture->get_vk_image_view().GetHandle(),

@@ -14,7 +14,7 @@
 #include "Panel/HierarchyPanel.hpp"
 #include "Panel/MenuBar.hpp"
 #include "Panel/Viewport.hpp"
-#include "Render/RenderSystem.hpp"
+#include "Rendering/RenderSystem.hpp"
 
 EditorUIManager::EditorUIManager(vkb::VulkanDevice& device)
     : device(device)
@@ -48,7 +48,6 @@ void EditorUIManager::Initialize()
     EditorPanels.push_back(std::make_shared<FileBrowser>());
     EditorPanels.push_back(std::make_shared<ViewportPanel>());
     EditorPanels.push_back(std::make_shared<DetailsPanel>());
-    GRuntimeGlobalContext.renderSystem->InitializeUIRenderBackend(this);
     for (const auto& panel : EditorPanels)
     {
         panel->Init();

@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/ObserverPtr.hpp"
 #include "Engine/SceneGraph/Component.hpp"
 
 class Texture2D;
@@ -19,11 +20,11 @@ namespace scene
 
         RTTR_ENABLE(Component)
     public:
-        TextureCube* EnvCube = nullptr;
+        ObserverPtr<TextureCube> EnvCube = nullptr;
 
         // need spawn
-        TextureCube* IrradianceMap = nullptr;
-        TextureCube* SpecularIBLPrefilter = nullptr;
-        Texture2D* BRDFLUT = nullptr;
+        std::unique_ptr<TextureCube> IrradianceMap = nullptr;
+        std::unique_ptr<TextureCube> SpecularIBLPrefilter = nullptr;
+        std::unique_ptr<Texture2D> BRDFLUT = nullptr;
     };
 }

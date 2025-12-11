@@ -1,4 +1,4 @@
-#include "Render/RenderSystem.hpp"
+#include "Rendering/RenderSystem.hpp"
 
 #include "GlobalContext.hpp"
 #include "backends/imgui_impl_vulkan.h"
@@ -12,11 +12,11 @@
 #include "Framework/Rendering/RenderFrame.hpp"
 #include "Framework/Rendering/Subpass.hpp"
 #include "Misc/Paths.hpp"
-#include "Render/EditorUI.hpp"
 #include "Rendering/GeometrySubpass.hpp"
 #include "Rendering/LightingSubpass.hpp"
 #include "Tools/Utils.hpp"
 #include "World/WorldManager.hpp"
+#include "UIManage/EditorUIManager.hpp"
 
 RenderSystem::RenderSystem(vkb::Window* window, vkb::VulkanDevice* device, VkSurfaceKHR surface)
     : window(window), device(device), surface(surface)
@@ -29,7 +29,6 @@ RenderSystem::~RenderSystem()
     render_pipeline.reset();
     EditorUIRenderpass.reset();
     ViewportRTs.clear();
-    UIManager->Shutdown();
     render_context.reset();
 }
 
@@ -195,31 +194,6 @@ void RenderSystem::Update(float delta_time)
 
 void RenderSystem::UpdateDebugWindow()
 {
-    /*auto        driver_version     = device->get_gpu().get_driver_version();
-    std::string driver_version_str = fmt::format("major: {} minor: {} patch: {}", driver_version.major, driver_version.minor, driver_version.patch);
-
-    get_debug_info().template insert<field::Static, std::string>("driver_version", driver_version_str);
-    get_debug_info().template insert<field::Static, std::string>("resolution",
-                                                                 to_string(static_cast<VkExtent2D const &>(render_context->get_swapchain().get_extent())));
-    get_debug_info().template insert<field::Static, std::string>("surface_format",
-                                                                 to_string(render_context->get_swapchain().get_format()) + " (" +
-                                                                     to_string(vkb::common::get_bits_per_pixel(render_context->get_swapchain().get_format())) +
-                                                                     "bpp)");
-
-    if (scene != nullptr)
-    {
-        get_debug_info().template insert<field::Static, uint32_t>("mesh_count", to_u32(scene->get_components<sg::SubMesh>().size()));
-        get_debug_info().template insert<field::Static, uint32_t>("texture_count", to_u32(scene->get_components<sg::Texture>().size()));
-
-        if (auto camera = scene->get_components<vkb::sg::Camera>()[0])
-        {
-            if (auto camera_node = camera->get_node())
-            {
-                const glm::vec3 &pos = camera_node->get_transform().get_translation();
-                get_debug_info().template insert<field::Vector, float>("camera_pos", pos.x, pos.y, pos.z);
-            }
-        }
-    }*/
 }
 
 void RenderSystem::Finish()
@@ -272,31 +246,7 @@ void RenderSystem::ResetStatsView()
 bool RenderSystem::Resize(uint32_t width, uint32_t height)
 {
     return false;
-    /*if (!Parent::resize(width, height))
-    {
-        return false;
-    }
-
-    if (gui)
-    {
-        gui->resize(width, height);
-    }
-
-    if (scene && scene->has_component<sg::Script>())
-    {
-        auto scripts = scene->get_components<sg::Script>();
-
-        for (auto script : scripts)
-        {
-            script->resize(width, height);
-        }
-    }
-
-    if (stats)
-    {
-        stats->resize(width);
-    }
-    return true;*/
+    
 }
 
 void RenderSystem::SetRenderContext(std::unique_ptr<vkb::RenderContext>&& rc)

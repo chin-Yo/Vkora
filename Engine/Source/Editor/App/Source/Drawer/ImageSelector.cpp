@@ -7,7 +7,7 @@
 #include "Engine/SceneGraph/Components/Image.hpp"
 #include "Engine/SceneGraph/Components/Texture.hpp"
 #include "Engine/Texture/Texture2D.hpp"
-#include "Render/RenderSystem.hpp"
+#include "Rendering/RenderSystem.hpp"
 static ImGuiTextFilter textureFilter;
 
 namespace ui

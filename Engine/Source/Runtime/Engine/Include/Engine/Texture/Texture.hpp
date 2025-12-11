@@ -13,7 +13,9 @@ namespace vkb
     class VulkanDevice;
 }
 
-
+/**
+* @brief Create a texture. The default memory type is OnlyGPU.
+*/
 class Texture
 {
 public:
@@ -83,7 +85,7 @@ public:
 
     std::string get_name() const;
 
-    virtual void MoveToGPU(vkb::VulkanDevice& device);
+    virtual void CopyDataToGPU(vkb::VulkanDevice& device);
 
 protected:
     Texture(const std::string& name, VkImageViewType type, VkImageCreateFlags flags,

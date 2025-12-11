@@ -1,39 +1,15 @@
-set(TARGET_NAME VkoraEngineEditor)
+set(TARGET_NAME VkoraEditor)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+Include(${CMAKE_DIR}/LibBase.cmake)
 
-
-file(GLOB_RECURSE LIB_SOURCES CONFIGURE_DEPENDS
-    "Source/*.cpp"
-    "Source/*.cxx"
-    "*.cpp"
-)
-
-file(GLOB_RECURSE LIB_HEADERS
-    "Include/*.h"
-    "Include/*.hpp"
-)
-
-add_executable(${TARGET_NAME} ${LIB_SOURCES} ${LIB_HEADERS})
-target_compile_features(${TARGET_NAME} PRIVATE cxx_std_17)
 target_include_directories(${TARGET_NAME} PUBLIC 
     ${CMAKE_CURRENT_SOURCE_DIR}/Include
     ${RUNTIME_DIR}
     ${EDITOR_DIR}
     ${RUNTIME_DIR}/Core/Inlcude
-    #${THIRD_PARTY_DIR}/spdlog/include
 )
 
-target_compile_definitions(${TARGET_NAME} PRIVATE GLM_ENABLE_EXPERIMENTAL)
-
-set_source_files_properties(Source/main.cpp PROPERTIES
-    COMPILE_DEFINITIONS VOLK_IMPLEMENTATION
-)
-
-target_link_libraries(${TARGET_NAME} PRIVATE Application)
-target_link_libraries(${TARGET_NAME} PRIVATE glfw)
-target_link_libraries(${TARGET_NAME} PRIVATE Core)
+target_link_libraries(${TARGET_NAME} PUBLIC Engine eventpp)
 
 
 set_property(TARGET ${TARGET_NAME} PROPERTY VS_GLOBAL_DisableExternalDependencies true)
