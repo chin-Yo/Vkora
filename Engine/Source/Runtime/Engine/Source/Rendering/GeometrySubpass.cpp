@@ -86,7 +86,10 @@ namespace vkb
     void GeometrySubpass::draw(vkb::CommandBuffer& command_buffer)
     {
         if (!defaultTexture)
+        {
+            LOG_ERROR("No default texture set")
             return;
+        }
         std::multimap<float, std::pair<scene::Node*, scene::SubMesh*>> opaque_nodes;
         std::multimap<float, std::pair<scene::Node*, scene::SubMesh*>> transparent_nodes;
 

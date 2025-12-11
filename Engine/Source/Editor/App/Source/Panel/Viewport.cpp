@@ -10,7 +10,7 @@
 #include "Engine/SceneGraph/Components/PerspectiveCamera.hpp"
 #include "Framework/Core/Sampler.hpp"
 #include "Logging/Logger.hpp"
-#include "Render/RenderSystem.hpp"
+#include "Rendering/RenderSystem.hpp"
 #include "UIManage/EditorGlobalContext.hpp"
 #include "World/WorldManager.hpp"
 #include "IconsFontAwesome5.h"

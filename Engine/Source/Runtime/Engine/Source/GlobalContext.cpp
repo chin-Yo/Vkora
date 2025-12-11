@@ -1,7 +1,7 @@
 #include "GlobalContext.hpp"
 #include "WindowSystem.hpp"
 #include "Engine/Asset/Manager/AssetManager.hpp"
-#include "Render/RenderSystem.hpp"
+#include "Rendering/RenderSystem.hpp"
 #include "Engine/SceneGraph/Scene.hpp"
 #include "Engine/SceneGraph/Node.hpp"
 #include "World/WorldManager.hpp"

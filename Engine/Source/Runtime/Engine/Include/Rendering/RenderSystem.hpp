@@ -3,7 +3,6 @@
 #include <imgui.h>
 #include <volk.h>
 
-#include "EditorUI.hpp"
 #include "EditorInterface/EditorUIManager.hpp"
 #include "Framework/Core/Instance.hpp"
 #include "Framework/Core/VulkanDevice.hpp"

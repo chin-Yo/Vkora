@@ -1,5 +1,5 @@
 #include "Engine/SceneGraph/Components/Skybox.hpp"
-
+#include "Engine/Texture/TextureFactory.hpp"
 
 namespace scene
 {

@@ -5,7 +5,7 @@ project(VkoraEngine LANGUAGES CXX VERSION 0.1.0)
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
-
+option(BUILD_WITH_CONSOLE "Build with console subsystem (vs. windows subsystem)" ON)
 
 # ---- Compiler options ----
 if(MSVC)
@@ -87,3 +87,14 @@ file(GLOB_RECURSE SHADER_FILES
 
 add_custom_target(Shaders SOURCES ${SHADER_FILES})
 source_group(TREE ${SHADERS_ROOT_DIR} PREFIX "" FILES ${SHADER_FILES})
+
+# ---- BuildConfig ----
+# Macro-defined interface library, achieved through linking inheritance
+add_library(build_config INTERFACE)
+
+target_compile_definitions(build_config INTERFACE
+    $<$<CONFIG:Debug>:BUILD_DEBUG>
+    $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:BUILD_RELEASE>
+
+    $<$<BOOL:${BUILD_WITH_CONSOLE}>:WITH_CONSOLE>
+)

@@ -1,10 +1,10 @@
-#include "Engine.hpp"
+#include "Engine/Engine.hpp"
 #include "GlobalContext.hpp"
 #include "Logging/Logger.hpp"
 #include <iostream>
 #include <atomic>
 #include <chrono>
-#include "Render/RenderSystem.hpp"
+#include "Rendering/RenderSystem.hpp"
 #include <algorithm>
 
 #include "Engine/Asset/AssetImporter.hpp"
@@ -13,8 +13,11 @@
 #include "Misc/Paths.hpp"
 #include "World/WorldManager.hpp"
 #include "Engine/SceneGraph/ComponentPool.hpp"
+#include "UIManage/EditorGlobalContext.hpp"
 
 const float Engine::FPSAlpha = 1.f / 100;
+
+Engine *GEngine = nullptr;
 
 void Engine::LogicalTick(float DeltaTime)
 {
@@ -232,8 +235,6 @@ void Engine::ShutdownRenderBackend()
 
 void Engine::StartEngine(const std::string& ConfigFilePath)
 {
-    Logger::Init();
-
     vkb::Window::Properties window_properties;
     window_properties.title = "VkoraEngine";
     windowSystem = std::make_unique<WindowSystem>(window_properties);
@@ -251,6 +252,8 @@ void Engine::StartEngine(const std::string& ConfigFilePath)
 void Engine::ShutdownEngine()
 {
     assetManager.reset();
+    EditorManager->Shutdown();
+    EditorManager.reset();
     renderSystem.reset();
     worldManager.reset();
     windowSystem.reset();
@@ -289,10 +292,32 @@ void Engine::Initialize()
     GRuntimeGlobalContext.worldManager = worldManager.get();
     GRuntimeGlobalContext.windowSystem = windowSystem.get();
     GRuntimeGlobalContext.assetManager = assetManager.get();
+
+
+    EditorManager = std::make_unique<EditorUIManager>(renderSystem->GetDevice());
+    renderSystem->InitializeUIRenderBackend(EditorManager.get());
+    EditorManager->Initialize();
+    GEditorGlobalContext.Initialize({EditorManager.get()});
 }
 
 void Engine::Clear()
 {
+}
+
+void Engine::Tick()
+{
+    assetManager->LodaAllTexture();
+    renderSystem->RenderPrepare();
+
+    float delta_time;
+    while (true)
+    {
+        delta_time = CalculateDeltaTime();
+        LimitFPS(delta_time);
+
+        if (!TickOneFrame(delta_time))
+            return;
+    }
 }
 
 bool Engine::TickOneFrame(float DeltaTime)

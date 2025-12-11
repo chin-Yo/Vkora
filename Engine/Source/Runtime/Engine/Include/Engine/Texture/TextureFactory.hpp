@@ -13,19 +13,18 @@ public:
 
     static std::unique_ptr<Texture2D> CreateTexture2DFromMemory(const std::string& name,
                                                                 std::vector<uint8_t>&& data, uint32_t width,
-                                                                uint32_t height, Texture::ContentType content_type);
+                                                                uint32_t height, VkFormat format);
     static std::unique_ptr<Texture2D> CreateTexture2DFromMemory(const std::string& name,
                                                                 const uint8_t* data, uint32_t width, uint32_t height,
-                                                                uint32_t req_comp, Texture::ContentType content_type);
+                                                                uint32_t req_comp, VkFormat format);
     static std::unique_ptr<Texture2D> CreateTexture2DFromMemory(const std::string& name,
                                                                 const uint8_t* data, size_t size, uint32_t width,
-                                                                uint32_t height, Texture::ContentType content_type);
+                                                                uint32_t height, VkFormat format);
     static std::unique_ptr<TextureCube> CreateTextureCubeFromMemory(const std::string& name,
                                                                     std::vector<uint8_t>&& data, uint32_t width,
-                                                                    uint32_t height, Texture::ContentType content_type);
+                                                                    uint32_t height, VkFormat format);
     static std::unique_ptr<TextureCube> CreateTextureCubeFromMemory(const std::string& name,
                                                                     const uint8_t* data, size_t size, uint32_t width,
                                                                     uint32_t height,
-                                                                    Texture::ContentType content_type =
-                                                                        Texture::ContentType::Other);
+                                                                    VkFormat format);
 };

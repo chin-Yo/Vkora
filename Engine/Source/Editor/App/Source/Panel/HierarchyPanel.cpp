@@ -4,7 +4,7 @@
 #include <imgui.h>
 
 #include "GlobalContext.hpp"
-#include "Render/RenderSystem.hpp"
+#include "Rendering/RenderSystem.hpp"
 #include "Engine/SceneGraph/Scene.hpp"
 #include "Engine/SceneGraph/Node.hpp"
 #include "UIManage/EditorGlobalContext.hpp"

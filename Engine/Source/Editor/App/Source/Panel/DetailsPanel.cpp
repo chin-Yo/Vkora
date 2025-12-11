@@ -17,7 +17,7 @@
 #include "Engine/SceneGraph/Components/SubMesh.hpp"
 #include "Engine/SceneGraph/Components/Texture.hpp"
 #include "Misc/Paths.hpp"
-#include "Render/RenderSystem.hpp"
+#include "Rendering/RenderSystem.hpp"
 #include "UIManage/EditorGlobalContext.hpp"
 #include "Logging/Logger.hpp"
 

@@ -328,9 +328,12 @@ std::string Texture::get_name() const
 }
 
 
-void Texture::MoveToGPU(vkb::VulkanDevice& device)
+void Texture::CopyDataToGPU(vkb::VulkanDevice& device)
 {
-    this->create_vk_image(device);
+    if (!vk_image)
+    {
+        this->create_vk_image(device);
+    }
 
     const auto& queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 

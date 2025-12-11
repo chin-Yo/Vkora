@@ -9,10 +9,11 @@
 #include <volk.h>
 
 #include "WindowSystem.hpp"
-#include "Render/RenderSystem.hpp"
+#include "Rendering/RenderSystem.hpp"
 #include "Engine/Asset/Manager/AssetManager.hpp"
 #include "World/WorldManager.hpp"
 #include "Engine/SceneGraph/ComponentPool.hpp"
+#include "UIManage/EditorUIManager.hpp"
 
 namespace vkb
 {
@@ -45,6 +46,8 @@ public:
     void Initialize();
     void Clear();
 
+    void Tick();
+    
     bool IsQuit() const { return isQuit; }
     bool TickOneFrame(float DeltaTime);
 
@@ -122,8 +125,13 @@ protected:
 
     void InitRenderBackend(const BackendOptions& options);
     void ShutdownRenderBackend();
+
+    std::unique_ptr<EditorUIManager> EditorManager;
+    
     std::unique_ptr<WindowSystem> windowSystem;
     std::unique_ptr<WorldManager> worldManager;
     std::unique_ptr<RenderSystem> renderSystem;
     std::unique_ptr<AssetManager> assetManager;
 };
+
+extern Engine* GEngine;

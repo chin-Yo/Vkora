@@ -4,7 +4,6 @@
 #include <memory>
 #include <vector>
 #include <volk.h>
-#include <eventpp/callbacklist.h>
 
 #include "EditorInterface/EditorUIManager.hpp"
 #include "EditorInterface/Panel.hpp"
