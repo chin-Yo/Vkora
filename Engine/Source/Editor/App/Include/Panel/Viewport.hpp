@@ -26,9 +26,10 @@ public:
     void OnUIRender() override;
     void HandleGuizmoInput();
     void DrawGuizmoToolbar();
-
+    void HandleCameraInput();
+    
 private:
-    void DrawGuizmo(scene::Node* node, ImVec2 imagePos, ImVec2 imageSize);
+    bool DrawGuizmo(scene::Node* node, ImVec2 imagePos, ImVec2 imageSize);
 
     std::vector<VkDescriptorSet> ViewportDescriptorSets;
     eventpp::CallbackList<void(const ImVec2& PortSize)> OnViewportChange;
@@ -38,4 +39,6 @@ private:
     VkRenderPass render_pass{VK_NULL_HANDLE};
     ImGuizmo::OPERATION GizmoOperation;
     ImGuizmo::MODE GizmoMode;
+    bool bIsCameraControllable;
+    float moveSpeed = 0.1f;
 };

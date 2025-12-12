@@ -39,11 +39,15 @@ namespace scene
 
         void SetTranslation(const glm::vec3& translation);
 
+        void SetRotation(const glm::vec3& rotation);
+
         void SetRotation(const glm::quat& rotation);
 
         void SetScale(const glm::vec3& scale);
 
         const glm::vec3& GetTranslation() const;
+
+        glm::vec3 GetRotationEuler();
 
         const glm::quat& GetRotation() const;
 
@@ -54,6 +58,12 @@ namespace scene
         glm::mat4 GetMatrix() const;
 
         glm::mat4 GetWorldMatrix();
+
+        glm::vec3 GetRight();
+
+        glm::vec3 GetUp();
+
+        glm::vec3 GetForward();
 
         /**
          * @brief Marks the world transform invalid if any of
