@@ -14,6 +14,7 @@
 #include "UIManage/EditorGlobalContext.hpp"
 #include "World/WorldManager.hpp"
 #include "IconsFontAwesome5.h"
+#include "Engine/Engine.hpp"
 
 ViewportPanel::ViewportPanel()
 {
@@ -66,7 +67,9 @@ void ViewportPanel::OnUIRender()
         ImGui::Image(ViewportDescriptorSets[index], ViewportSize);
         ImVec2 imagePos = ImGui::GetItemRectMin();
         ImVec2 imageSize = ImGui::GetItemRectSize();
-        DrawGuizmo(GEditorGlobalContext.selectedNode, imagePos, imageSize);
+        bool bIsGuizmo = DrawGuizmo(GEditorGlobalContext.selectedNode, imagePos, imageSize);
+        if (!bIsGuizmo)
+            HandleCameraInput();
     }
 
     ImGui::End();
@@ -175,14 +178,115 @@ void ViewportPanel::DrawGuizmoToolbar()
     ImGui::PopStyleVar(2);
 }
 
-void ViewportPanel::DrawGuizmo(scene::Node* node, ImVec2 imagePos, ImVec2 imageSize)
+void ViewportPanel::HandleCameraInput()
+{
+    static ImVec2 g_ClickPos;
+    if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    {
+        auto* Win = GRuntimeGlobalContext.windowSystem->GetWindow();
+
+        // 记录点击位置（使用ImGui坐标，即窗口内坐标）
+        g_ClickPos = ImGui::GetIO().MousePos;
+
+        // 激活控制模式
+        bIsCameraControllable = true;
+        ImGui::SetWindowFocus();
+
+        // 隐藏光标（使用HIDDEN模式，保留位置控制能力）
+        glfwSetInputMode(Win, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
+        // 立即冻结光标位置（关键！）
+        glfwSetCursorPos(Win, g_ClickPos.x, g_ClickPos.y);
+        return; // 本帧不处理移动，避免初始跳变
+    }
+
+    // 2. 仅在控制状态下处理输入
+    if (!bIsCameraControllable)
+        return;
+
+    auto* Win = GRuntimeGlobalContext.windowSystem->GetWindow();
+    auto* Camera = GRuntimeGlobalContext.worldManager->GetViewportCamera();
+    auto* CameraNode = Camera->GetOwner();
+    auto& NodeTransform = CameraNode->GetTransform();
+
+    // 获取图像区域（用于边界检测）
+    ImVec2 imageRegionMin = ImGui::GetItemRectMin();
+    ImVec2 imageRegionMax = ImGui::GetItemRectMax();
+
+    // 检查焦点和区域有效性
+    bool shouldHandleInput =
+        ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) &&
+        ImGui::IsMouseHoveringRect(imageRegionMin, imageRegionMax, false);
+
+    if (shouldHandleInput)
+    {
+        const float moveSpeed = 0.1f;
+
+        // --- 键盘平移控制 ---
+        glm::vec3 translation(0.0f);
+        if (ImGui::IsKeyDown(ImGuiKey_W)) translation += NodeTransform.GetForward();
+        if (ImGui::IsKeyDown(ImGuiKey_S)) translation -= NodeTransform.GetForward();
+        if (ImGui::IsKeyDown(ImGuiKey_A)) translation -= NodeTransform.GetRight();
+        if (ImGui::IsKeyDown(ImGuiKey_D)) translation += NodeTransform.GetRight();
+        if (ImGui::IsKeyDown(ImGuiKey_E)) translation += NodeTransform.GetUp();
+        if (ImGui::IsKeyDown(ImGuiKey_Q)) translation -= NodeTransform.GetUp();
+
+        if (glm::length(translation) > 0.01f)
+        {
+            translation = glm::normalize(translation) * moveSpeed;
+            NodeTransform.SetTranslation(translation);
+        }
+
+        // --- 鼠标旋转控制（使用原生GLFW位置）---
+        double currX, currY;
+        glfwGetCursorPos(Win, &currX, &currY); // 获取真实物理位置
+
+        // 计算相对于点击点的偏移（关键：使用物理位置而非ImGui位置）
+        float deltaX = static_cast<float>(currX - g_ClickPos.x);
+        float deltaY = static_cast<float>(currY - g_ClickPos.y);
+
+        if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
+        {
+            const float rotateSpeed = 0.002f;
+            auto euler = NodeTransform.GetRotationEuler();
+
+            // 应用旋转（注意坐标系转换）
+            euler.z += deltaX * rotateSpeed; // Yaw (around Z-axis)
+            euler.y = glm::clamp(euler.y - deltaY * rotateSpeed, -1.5f, 1.5f); // Pitch (around Y-axis)
+
+            NodeTransform.SetRotation(euler);
+        }
+
+        // ✅ 每帧冻结光标位置（关键！）
+        glfwSetCursorPos(Win, g_ClickPos.x, g_ClickPos.y);
+    }
+    else
+    {
+        // 失去焦点时退出控制
+        bIsCameraControllable = false;
+    }
+
+    // 3. 检测释放控制
+    if (bIsCameraControllable && ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+    {
+        bIsCameraControllable = false;
+
+        // 恢复光标可见性
+        glfwSetInputMode(Win, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+        // ✅ 在点击位置精确恢复光标
+        glfwSetCursorPos(Win, g_ClickPos.x, g_ClickPos.y);
+    }
+}
+
+bool ViewportPanel::DrawGuizmo(scene::Node* node, ImVec2 imagePos, ImVec2 imageSize)
 {
     if (!node)
-        return;
+        return false;
 
     auto* camera = GRuntimeGlobalContext.worldManager->GetViewportCamera();
     if (!camera)
-        return;
+        return false;
     ImGuizmo::SetDrawlist();
     ImGuizmo::SetRect(imagePos.x, imagePos.y, imageSize.x, imageSize.y);
 
@@ -212,5 +316,7 @@ void ViewportPanel::DrawGuizmo(scene::Node* node, ImVec2 imagePos, ImVec2 imageS
 #endif
 
         node->GetTransform().SetMatrix(model);
+        return true;
     }
+    return false;
 }

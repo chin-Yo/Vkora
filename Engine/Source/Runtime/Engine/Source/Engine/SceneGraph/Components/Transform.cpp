@@ -37,27 +37,35 @@ namespace scene
     void Transform::SetTranslation(const glm::vec3& new_translation)
     {
         translation = new_translation;
+        InvalidateWorldMatrix();
+    }
 
+    void Transform::SetRotation(const glm::vec3& new_rotation)
+    {
+        rotation = EulerDegreesToQuat(new_rotation);
         InvalidateWorldMatrix();
     }
 
     void Transform::SetRotation(const glm::quat& new_rotation)
     {
         rotation = new_rotation;
-
         InvalidateWorldMatrix();
     }
 
     void Transform::SetScale(const glm::vec3& new_scale)
     {
         scale = new_scale;
-
         InvalidateWorldMatrix();
     }
 
     const glm::vec3& Transform::GetTranslation() const
     {
         return translation;
+    }
+
+    glm::vec3 Transform::GetRotationEuler()
+    {
+        return QuatToEulerDegrees(rotation);
     }
 
     const glm::quat& Transform::GetRotation() const
@@ -75,7 +83,6 @@ namespace scene
         glm::vec3 skew;
         glm::vec4 perspective;
         glm::decompose(matrix, scale, rotation, translation, skew, perspective);
-
         InvalidateWorldMatrix();
     }
 
@@ -89,8 +96,22 @@ namespace scene
     glm::mat4 Transform::GetWorldMatrix()
     {
         UpdateWorldTransform();
-
         return world_matrix;
+    }
+
+    glm::vec3 Transform::GetRight()
+    {
+        return glm::normalize(glm::vec3(GetWorldMatrix() * glm::vec4(1.0f, 0.0f, 0.0f, 0.0f)));
+    }
+
+    glm::vec3 Transform::GetUp()
+    {
+        return glm::normalize(glm::vec3(GetWorldMatrix() * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f)));
+    }
+
+    glm::vec3 Transform::GetForward()
+    {
+        return glm::normalize(glm::vec3(GetWorldMatrix() * glm::vec4(0.0f, 0.0f, -1.0f, 0.0f)));
     }
 
     void Transform::InvalidateWorldMatrix()
@@ -118,17 +139,12 @@ namespace scene
         {
             return;
         }
-
         world_matrix = GetMatrix();
-
-        auto parent = node.GetParent();
-
-        if (parent)
+        if (const auto parent = node.GetParent())
         {
             auto& transform = parent->GetTransform();
             world_matrix = transform.GetWorldMatrix() * world_matrix;
         }
-
         update_world_matrix = false;
     }
 }
@@ -140,7 +156,7 @@ RTTR_REGISTRATION
     registration::class_<Transform>("TransformComponent")
         .constructor<Node&>()
         .property("translation", &Transform::GetTranslation, &Transform::SetTranslation)
-        .property("rotation", &Transform::GetRotation, &Transform::SetRotation)
+        .property("rotation", &Transform::GetRotation, rttr::select_overload<void(const glm::quat&)>(&Transform::SetRotation))
         .property("scale", &Transform::GetScale, &Transform::SetScale)
 
         .method("SetMatrix", &Transform::SetMatrix)
