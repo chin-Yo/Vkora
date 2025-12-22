@@ -56,6 +56,26 @@ std::shared_ptr<scene::MeshData> AssetManager::GetMesh(const std::string& relati
     return meshCache[relativePath];
 }
 
+Texture2D* AssetManager::GetTexture(const std::string& relativePath)
+{
+    auto it = texture2DCache.find(relativePath);
+    if (it != texture2DCache.end())
+    {
+        return it->second.get();
+    }
+    return nullptr;
+}
+
+TextureCube* AssetManager::GetTextureCube(const std::string& relativePath)
+{
+    auto it = textureCubeCache.find(relativePath);
+    if (it != textureCubeCache.end())
+    {
+        return it->second.get();
+    }
+    return nullptr;
+}
+
 void AssetManager::LodaAllTexture()
 {
     auto textures = AssetRegistry::Get().GetAllAssetsOfType(AssetType::Texture);
@@ -147,6 +167,11 @@ void AssetManager::LodaAllTexture()
 const std::unordered_map<std::string, std::unique_ptr<Texture2D>>& AssetManager::GetTexture2DCache() const
 {
     return texture2DCache;
+}
+
+const std::unordered_map<std::string, std::unique_ptr<TextureCube>>& AssetManager::GetTextureCubeCache() const
+{
+    return textureCubeCache;
 }
 
 const std::unordered_map<std::string, std::shared_ptr<scene::MeshData>>& AssetManager::GetMeshCache() const

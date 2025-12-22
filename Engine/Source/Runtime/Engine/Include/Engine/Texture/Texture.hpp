@@ -75,7 +75,7 @@ public:
 
     void generate_mipmaps();
 
-    void create_vk_image(vkb::VulkanDevice& device);
+    void create_vk_image(vkb::VulkanDevice& device, VkImageUsageFlags extra_usage = 0);
 
     const vkb::Image& get_vk_image() const;
 

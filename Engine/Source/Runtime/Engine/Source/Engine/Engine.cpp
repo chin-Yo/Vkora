@@ -13,11 +13,12 @@
 #include "Misc/Paths.hpp"
 #include "World/WorldManager.hpp"
 #include "Engine/SceneGraph/ComponentPool.hpp"
+#include "Rendering/ComputeSystem.hpp"
 #include "UIManage/EditorGlobalContext.hpp"
 
 const float Engine::FPSAlpha = 1.f / 100;
 
-Engine *GEngine = nullptr;
+Engine* GEngine = nullptr;
 
 void Engine::LogicalTick(float DeltaTime)
 {
@@ -245,7 +246,8 @@ void Engine::StartEngine(const std::string& ConfigFilePath)
 
     renderSystem = std::make_unique<
         RenderSystem>(windowSystem.get(), RenderBackend.device.get(), RenderBackend.surface);
-    
+
+    computeSystem = std::make_unique<ComputeSystem>();
     LOG_INFO("Engine started")
 }
 
@@ -286,7 +288,7 @@ void Engine::Initialize()
     assetRegistry.ScanDirectory(Paths::GetContentPath());
 
     assetManager = std::make_unique<AssetManager>(RenderBackend.GetDevice());
-    
+
     GRuntimeGlobalContext.device = RenderBackend.device.get();
     GRuntimeGlobalContext.renderSystem = renderSystem.get();
     GRuntimeGlobalContext.worldManager = worldManager.get();
@@ -329,7 +331,7 @@ bool Engine::TickOneFrame(float DeltaTime)
     {
         RendererTick(DeltaTime);
     }
-
+    computeSystem->AllPoll();
     windowSystem->ProcessEvents();
     windowSystem->SetTitle(
         std::string("VkoraEngine - " + std::to_string(GetFPS()) + " FPS").c_str());

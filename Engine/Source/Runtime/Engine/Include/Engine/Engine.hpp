@@ -15,6 +15,8 @@
 #include "Engine/SceneGraph/ComponentPool.hpp"
 #include "UIManage/EditorUIManager.hpp"
 
+class ComputeSystem;
+
 namespace vkb
 {
     class DebugUtils;
@@ -47,7 +49,7 @@ public:
     void Clear();
 
     void Tick();
-    
+
     bool IsQuit() const { return isQuit; }
     bool TickOneFrame(float DeltaTime);
 
@@ -127,11 +129,13 @@ protected:
     void ShutdownRenderBackend();
 
     std::unique_ptr<EditorUIManager> EditorManager;
-    
+
     std::unique_ptr<WindowSystem> windowSystem;
     std::unique_ptr<WorldManager> worldManager;
     std::unique_ptr<RenderSystem> renderSystem;
     std::unique_ptr<AssetManager> assetManager;
+public:
+    std::unique_ptr<ComputeSystem> computeSystem;
 };
 
 extern Engine* GEngine;

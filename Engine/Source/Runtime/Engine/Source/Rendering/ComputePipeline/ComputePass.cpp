@@ -39,10 +39,11 @@ void ComputePassBase::Dispatch(uint32_t x, uint32_t y, uint32_t z,
     task.cmdBuffer = device.create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
     vkb::ResourceBindingState RBS;
+    std::vector<uint8_t> PushConstants;
     // 让用户绑定特定的 DescriptorSet 或 PushConstants
     if (recordFn)
     {
-        recordFn(RBS);
+        recordFn(RBS, PushConstants);
     }
     vkCmdBindPipeline(task.cmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, cp.get_handle());
 
@@ -176,14 +177,10 @@ void ComputePassBase::Poll()
     VkResult result = vkGetFenceStatus(device.GetHandle(), task.fence);
     if (result == VK_SUCCESS)
     {
-        // 1. 执行回调 (例如保存图片)
         if (task.onComplete)
         {
             task.onComplete();
         }
-        // 2. 清理临时资源
-        vkDestroyFence(device.GetHandle(), task.fence, nullptr);
-        // 3. 移除任务
         pendingTasks.pop_front();
     }
 }

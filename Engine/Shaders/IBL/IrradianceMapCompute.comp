@@ -1,0 +1,103 @@
+#version 450
+
+// 定义工作组大小，通常 8x8 或 16x16
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+// 绑定 0: 输入的环境贴图 (Sampler)
+layout(binding = 0) uniform samplerCube samplerEnv;
+
+// 绑定 1: 输出的辐照度贴图 (Storage Image, 需要在 C++ 端开启 storage bit)
+// 格式通常使用 rgba16f 或 rgba32f 以支持 HDR
+layout(binding = 1, rgba16f) uniform writeonly imageCube outIrradianceMap;
+
+// Push Constants 保持不变
+layout(push_constant) uniform PushConsts {
+    float deltaPhi;
+    float deltaTheta;
+} consts;
+
+#define PI 3.1415926535897932384626433832795
+
+// 辅助函数：根据立方体面的索引和 UV 坐标计算方向向量
+vec3 getDirectionFromCubeFace(uint face, vec2 uv) {
+    vec3 dir;
+    // 根据 Vulkan cubemap 的坐标系定义 (右手系, Y 向下)
+    // uv 范围是 [-1, 1]
+    switch(face) {
+        case 0: // POSITIVE_X
+            dir = vec3(1.0, uv.y, -uv.x);
+            break;
+        case 1: // NEGATIVE_X
+            dir = vec3(-1.0, uv.y, uv.x);
+            break;
+        case 2: // POSITIVE_Y
+            dir = vec3(uv.x, 1.0, -uv.y);
+            break;
+        case 3: // NEGATIVE_Y
+            dir = vec3(uv.x, -1.0, uv.y);
+            break;
+        case 4: // POSITIVE_Z
+            dir = vec3(uv.x, uv.y, 1.0);
+            break;
+        case 5: // NEGATIVE_Z
+            dir = vec3(-uv.x, uv.y, -1.0);
+            break;
+    }
+    return normalize(dir);
+}
+
+void main()
+{
+    // 获取当前像素的全局坐标
+    ivec3 id = ivec3(gl_GlobalInvocationID.xyz);
+    
+    // 获取输出图像的尺寸
+    ivec2 size = imageSize(outIrradianceMap);
+
+    // 边界检查：防止处理超出图像范围的线程
+    if (id.x >= size.x || id.y >= size.y) {
+        return;
+    }
+
+    // 1. 计算归一化的设备坐标 (UV range: -1 to 1)
+    // 这里的计算方式确保采样中心对齐像素中心
+    vec2 uv = (vec2(id.xy) + vec2(0.5)) / vec2(size) * 2.0 - 1.0;
+
+    // 2. 计算方向向量 N (替代原 Shader 中的 inPos)
+    // id.z 对应立方体贴图的 6 个面 (0-5)
+    vec3 N = getDirectionFromCubeFace(id.z, uv);
+
+    // --- 以下为原 Fragment Shader 的核心逻辑 ---
+
+    vec3 up = vec3(0.0, 1.0, 0.0);
+    
+    // 注意：如果 N 接近 (0,1,0) 或 (0,-1,0)，cross 会失效。
+    // 生产环境建议加一个判断，如果 abs(N.y) > 0.999，则 up 取 (1,0,0)
+    vec3 right = normalize(cross(up, N));
+    up = cross(N, right);
+
+    const float TWO_PI = PI * 2.0;
+    const float HALF_PI = PI * 0.5;
+
+    vec3 color = vec3(0.0);
+    uint sampleCount = 0u;
+
+    for (float phi = 0.0; phi < TWO_PI; phi += consts.deltaPhi) {
+        for (float theta = 0.0; theta < HALF_PI; theta += consts.deltaTheta) {
+            // 球面坐标转换到笛卡尔坐标 (切线空间)
+            vec3 tempVec = cos(phi) * right + sin(phi) * up;
+            vec3 sampleVector = cos(theta) * N + sin(theta) * tempVec;
+
+            // 采样环境贴图并加权
+            // 注意：cos(theta) * sin(theta) 是几何项权重
+            color += texture(samplerEnv, sampleVector).rgb * cos(theta) * sin(theta);
+            sampleCount++;
+        }
+    }
+
+    // 计算最终颜色
+    vec4 finalColor = vec4(PI * color / float(sampleCount), 1.0);
+
+    // --- 写入结果 ---
+    imageStore(outIrradianceMap, id, finalColor);
+}

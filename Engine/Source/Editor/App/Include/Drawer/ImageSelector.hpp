@@ -7,6 +7,7 @@
 
 #include "Core/ObserverPtr.hpp"
 
+class TextureCube;
 class Texture2D;
 
 namespace scene
@@ -37,6 +38,7 @@ namespace ui
         static bool Draw(const char* label, ObserverPtr<Texture2D>& imageItem,
                          const ImVec2& preview_size = ImVec2(64, 64));
 
-        static ImTextureID GetTextureID(scene::Texture& texture);
+        static bool Draw(const char* label, ObserverPtr<TextureCube>& imageItem,
+                         const ImVec2& preview_size = ImVec2(64, 64));
     };
 }
