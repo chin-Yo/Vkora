@@ -233,7 +233,7 @@ void ViewportPanel::HandleCameraInput()
 
         if (glm::length(translation) > 0.01f)
         {
-            translation = glm::normalize(translation) * moveSpeed;
+            translation = translation * moveSpeed + NodeTransform.GetTranslation();
             NodeTransform.SetTranslation(translation);
         }
 
@@ -247,7 +247,8 @@ void ViewportPanel::HandleCameraInput()
 
         if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
         {
-            const float rotateSpeed = 0.002f;
+            const float rotateSpeed = 0.2f;
+            /* TODO : gimbal lock
             auto euler = NodeTransform.GetRotationEuler();
 
             // 应用旋转（注意坐标系转换）
