@@ -4,8 +4,7 @@
 #include <unordered_map>
 #include <vulkan/vulkan_core.h>
 
-
-class Texture;
+class Texture2D;
 class TextureCube;
 
 namespace vkb
@@ -14,17 +13,12 @@ namespace vkb
     class VulkanDevice;
 }
 
-class Texture2D;
-
-namespace scene
-{
-    class Sampler;
-}
-
 namespace scene
 {
     struct MeshData;
 }
+
+#define ICON_IMAGES "Textures/Icon/Icon_Images.png"
 
 class AssetManager
 {
@@ -53,13 +47,16 @@ public:
     AssetManager(vkb::VulkanDevice& device);
     std::shared_ptr<scene::MeshData> GetMesh(const std::string& relativePath);
 
-    template <class TextureClass>
-    std::unique_ptr<TextureClass> GetTexture(const std::string& relativePath = "Textures/Default.png");
+    Texture2D* GetTexture(const std::string& relativePath = "Textures/Default.png");
+
+    TextureCube* GetTextureCube(const std::string& relativePath);
 
     void LodaAllTexture();
 
 
     const std::unordered_map<std::string, std::unique_ptr<Texture2D>>& GetTexture2DCache() const;
+
+    const std::unordered_map<std::string, std::unique_ptr<TextureCube>>& GetTextureCubeCache() const;
 
     const std::unordered_map<std::string, std::shared_ptr<scene::MeshData>>& GetMeshCache() const;
 
@@ -79,29 +76,3 @@ private:
 
     //std::unordered_map<SamplerKey, std::shared_ptr<vkb::Sampler>> samplerCache;
 };
-
-template <class TextureClass>
-std::unique_ptr<TextureClass> AssetManager::GetTexture(const std::string& relativePath)
-{
-    if constexpr (std::is_same_v<TextureClass, Texture2D>)
-    {
-        auto it = texture2DCache.find(relativePath);
-        if (it != texture2DCache.end())
-        {
-            return std::move(it->second);
-        }
-    }
-    else if constexpr (std::is_same_v<TextureClass, TextureCube>)
-    {
-        auto it = textureCubeCache.find(relativePath);
-        if (it != textureCubeCache.end())
-        {
-            return std::move(it->second);
-        }
-    }
-    else
-    {
-        static_assert(sizeof(TextureClass) == 0, "Unsupported texture type in AssetManager::GetTexture");
-    }
-    return nullptr;
-}

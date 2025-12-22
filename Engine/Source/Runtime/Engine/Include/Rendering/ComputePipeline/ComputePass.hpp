@@ -20,10 +20,8 @@ namespace vkb
     class ComputePipeline;
 }
 
-// 任务完成后的回调函数签名
 using TaskCallback = std::function<void()>;
-// 用于录制具体 CommandBuffer 的 lambda (绑定描述符、PushConstants等)
-using RecordingFunction = std::function<void(vkb::ResourceBindingState&)>;
+using RecordingFunction = std::function<void(vkb::ResourceBindingState&, std::vector<uint8_t>&)>;
 
 struct ComputeTaskContext
 {

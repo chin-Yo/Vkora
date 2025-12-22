@@ -104,7 +104,7 @@ namespace vkb
          */
         void set_thread_index(uint32_t index);
 
-        std::shared_ptr<Texture2D> defaultTexture;
+        Texture2D* defaultTexture;
 
     protected:
         virtual void update_uniform(vkb::CommandBuffer& command_buffer, scene::Node& node, size_t thread_index);

@@ -80,15 +80,15 @@ void ViewportPanel::HandleGuizmoInput()
     // Switch operating mode by pressing Q/W/E/R
     if (ImGui::IsWindowFocused())
     {
-        if (ImGui::IsKeyPressed(ImGuiKey_Q))
+        if (ImGui::IsKeyPressed(ImGuiKey_L))
         {
             GizmoOperation = ImGuizmo::TRANSLATE;
         }
-        if (ImGui::IsKeyPressed(ImGuiKey_E))
+        if (ImGui::IsKeyPressed(ImGuiKey_R))
         {
             GizmoOperation = ImGuizmo::ROTATE;
         }
-        if (ImGui::IsKeyPressed(ImGuiKey_R))
+        if (ImGui::IsKeyPressed(ImGuiKey_C))
         {
             GizmoOperation = ImGuizmo::SCALE;
         }
@@ -233,7 +233,7 @@ void ViewportPanel::HandleCameraInput()
 
         if (glm::length(translation) > 0.01f)
         {
-            translation = glm::normalize(translation) * moveSpeed;
+            translation = translation * moveSpeed + NodeTransform.GetTranslation();
             NodeTransform.SetTranslation(translation);
         }
 
@@ -247,7 +247,8 @@ void ViewportPanel::HandleCameraInput()
 
         if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
         {
-            const float rotateSpeed = 0.002f;
+            const float rotateSpeed = 0.2f;
+            /* TODO : gimbal lock
             auto euler = NodeTransform.GetRotationEuler();
 
             // 应用旋转（注意坐标系转换）
@@ -255,6 +256,15 @@ void ViewportPanel::HandleCameraInput()
             euler.y = glm::clamp(euler.y - deltaY * rotateSpeed, -1.5f, 1.5f); // Pitch (around Y-axis)
 
             NodeTransform.SetRotation(euler);
+            */
+            // 构造增量旋转：绕本地 X 轴（俯仰）和世界 Y 轴（偏航）
+            glm::quat deltaPitch = glm::angleAxis(glm::radians(-deltaY * rotateSpeed), glm::vec3(1, 0, 0));
+            glm::quat deltaYaw = glm::angleAxis(glm::radians(-deltaX * rotateSpeed), glm::vec3(0, 1, 0));
+
+            // 先应用 yaw（绕世界 Y），再应用 pitch（绕旋转后的本地 X）
+            // 注意顺序：右乘 = 局部旋转
+            glm::quat rotation = deltaYaw * NodeTransform.GetRotation() * deltaPitch;
+            NodeTransform.SetRotation(rotation);
         }
 
         // ✅ 每帧冻结光标位置（关键！）
@@ -285,7 +295,7 @@ bool ViewportPanel::DrawGuizmo(scene::Node* node, ImVec2 imagePos, ImVec2 imageS
         return false;
 
     auto* camera = GRuntimeGlobalContext.worldManager->GetViewportCamera();
-    if (!camera)
+    if (!camera || camera->GetOwner() == GEditorGlobalContext.selectedNode)
         return false;
     ImGuizmo::SetDrawlist();
     ImGuizmo::SetRect(imagePos.x, imagePos.y, imageSize.x, imageSize.y);

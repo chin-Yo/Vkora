@@ -246,7 +246,6 @@ void RenderSystem::ResetStatsView()
 bool RenderSystem::Resize(uint32_t width, uint32_t height)
 {
     return false;
-    
 }
 
 void RenderSystem::SetRenderContext(std::unique_ptr<vkb::RenderContext>&& rc)
@@ -301,7 +300,7 @@ std::unique_ptr<vkb::RenderPipeline> RenderSystem::CreateOneRenderpassTwoSubpass
 
     // Outputs are depth, albedo, and normal
     scene_subpass->set_output_attachments({1, 2, 3, 4});
-    scene_subpass->defaultTexture = GRuntimeGlobalContext.assetManager->GetTexture<Texture2D>();
+    scene_subpass->defaultTexture = GRuntimeGlobalContext.assetManager->GetTexture();
     // Lighting subpass
     auto lighting_vs = vkb::ShaderSource{Paths::GetShaderFullPath("deferred/lighting.vert.spv")};
     auto lighting_fs = vkb::ShaderSource{Paths::GetShaderFullPath("deferred/Pbr_lighting.frag.spv")};

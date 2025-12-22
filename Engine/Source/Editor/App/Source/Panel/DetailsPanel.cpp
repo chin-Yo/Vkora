@@ -7,6 +7,7 @@
 #include "GlobalContext.hpp"
 #include "Drawer/ImageSelector.hpp"
 #include "Drawer/Refl_Drawer.hpp"
+#include "Engine/Engine.hpp"
 #include "Engine/Asset/AssetRegistry.hpp"
 #include "Engine/Asset/Import/ModelLoader.hpp"
 #include "Engine/Asset/Manager/AssetManager.hpp"
@@ -14,12 +15,14 @@
 #include "Engine/SceneGraph/Components/Light.hpp"
 #include "Engine/SceneGraph/Components/Material.hpp"
 #include "Engine/SceneGraph/Components/Pbr_Material.hpp"
+#include "Engine/SceneGraph/Components/Skybox.hpp"
 #include "Engine/SceneGraph/Components/SubMesh.hpp"
 #include "Engine/SceneGraph/Components/Texture.hpp"
 #include "Misc/Paths.hpp"
 #include "Rendering/RenderSystem.hpp"
 #include "UIManage/EditorGlobalContext.hpp"
 #include "Logging/Logger.hpp"
+#include "Rendering/ComputeSystem.hpp"
 
 DetailsPanel::DetailsPanel()
 {
@@ -142,6 +145,15 @@ void DetailsPanel::DisplaySelectedNode(scene::Node* node)
             if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen))
             {
                 ui::PropertyDrawer::DrawObject(light);
+            }
+        }
+        else if (handle.type == rttr::type::get<scene::Skybox>())
+        {
+            auto* SkyBox = scene->GetComponentManager()->GetComponentFormNode<scene::Skybox>(node->GetID());
+            ui::ImageSelector::Draw("EnvCubeTexture", SkyBox->EnvCube);
+            if (ImGui::Button("Generate skybox"))
+            {
+                SkyBox->GenerateSkybox();
             }
         }
     }

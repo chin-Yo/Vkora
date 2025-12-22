@@ -160,14 +160,14 @@ const std::vector<std::vector<VkDeviceSize>>& Texture::get_offsets() const
     return offsets;
 }
 
-void Texture::create_vk_image(vkb::VulkanDevice& device)
+void Texture::create_vk_image(vkb::VulkanDevice& device, VkImageUsageFlags extra_usage)
 {
     assert(!vk_image && !vk_image_view && "Vulkan image already constructed");
 
     vk_image = std::make_unique<vkb::Image>(device,
                                             get_extent(),
                                             format,
-                                            VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+                                            VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | extra_usage,
                                             VMA_MEMORY_USAGE_GPU_ONLY,
                                             VK_SAMPLE_COUNT_1_BIT,
                                             vkb::to_u32(mipmaps.size()),
