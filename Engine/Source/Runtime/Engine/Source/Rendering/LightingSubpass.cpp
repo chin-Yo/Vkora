@@ -18,12 +18,17 @@
 
 #include "Rendering/LightingSubpass.hpp"
 
+#include "GlobalContext.hpp"
+#include "Engine/Asset/Manager/AssetManager.hpp"
 #include "Engine/SceneGraph/ComponentPool.hpp"
 #include "Framework/Core/CommandBuffer.hpp"
 #include "Framework/Core/VulkanDevice.hpp"
 #include "Engine/SceneGraph/Scene.hpp"
 #include "Engine/SceneGraph/Components/Camera.hpp"
 #include "Engine/SceneGraph/Components/Light.hpp"
+#include "Engine/SceneGraph/Components/Skybox.hpp"
+#include "Engine/Texture/TextureCube.hpp"
+#include "Framework/Core/Sampler.hpp"
 #include "Tools/Utils.hpp"
 
 namespace vkb
@@ -88,6 +93,29 @@ namespace vkb
 
         auto& material_view = target_views[4];
         command_buffer.bind_input(material_view, 0, 3, 0);
+
+        auto& Skybox = scene.GetComponentManager()->GetComponentsByClass<scene::Skybox>();
+        if (!Skybox.empty() && Skybox[0].EnvCube != nullptr)
+        {
+            auto SkyEnvCube = Skybox[0].EnvCube;
+            command_buffer.bind_image(SkyEnvCube->get_vk_image_view(), *SkyEnvCube->sampler.lock(), 1, 2, 0);
+            if (Skybox[0].IrradianceMap != nullptr)
+            {
+                auto& Irr = Skybox[0].IrradianceMap;
+                command_buffer.bind_image(Irr->get_vk_image_view(), *Irr->sampler.lock(), 1, 3, 0);
+            }
+            else
+            {
+                auto* cube = GRuntimeGlobalContext.assetManager->GetTextureCube(DEFAULT_IrradianceMap);
+                command_buffer.bind_image(cube->get_vk_image_view(), *cube->sampler.lock(), 1, 3, 0);
+            }
+        }
+        else
+        {
+            auto* cube = GRuntimeGlobalContext.assetManager->GetTextureCube(DEFAULT_IrradianceMap);
+            command_buffer.bind_image(cube->get_vk_image_view(), *cube->sampler.lock(), 1, 2, 0);
+            command_buffer.bind_image(cube->get_vk_image_view(), *cube->sampler.lock(), 1, 3, 0);
+        }
 
         // Set cull mode to front as full screen triangle is clock-wise
         RasterizationState rasterization_state;

@@ -117,6 +117,8 @@ protected:
 
     VkFormat format{VK_FORMAT_R8G8B8A8_UNORM};
 
+    VkImageLayout layout{VK_IMAGE_LAYOUT_UNDEFINED};
+
     uint32_t layers{1};
 
     std::vector<Mipmap> mipmaps{{}}; // default has [0]

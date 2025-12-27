@@ -392,6 +392,7 @@ void Texture::CopyDataToGPU(vkb::VulkanDevice& device)
                                  subresource_range);
 
     device.flush_command_buffer(command_buffer, queue.get_handle());
+    layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 }
 
 Texture::Texture(const std::string& name, VkImageViewType type, VkImageCreateFlags flags, std::vector<uint8_t>&& data,

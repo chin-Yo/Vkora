@@ -219,7 +219,7 @@ namespace ui
             }
 
             std::sort(groupedAssets.begin(), groupedAssets.end(),
-                      [](const std::pair<std::string, Texture2D*>& a, const std::pair<std::string, Texture2D*>& b)
+                      [](const std::pair<std::string, TextureCube*>& a, const std::pair<std::string, TextureCube*>& b)
                       {
                           return a.second->get_name() < b.second->get_name();
                       });

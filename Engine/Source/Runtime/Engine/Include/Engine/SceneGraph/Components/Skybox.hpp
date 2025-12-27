@@ -11,13 +11,13 @@ namespace scene
     class Skybox : public Component
     {
     public:
+        Skybox(Skybox&& other) noexcept;
+
+        Skybox& operator=(Skybox&& other) noexcept;
+
         Skybox(const std::string& name = {});
 
         virtual ~Skybox() = default;
-
-        //Skybox(Skybox&& other) noexcept;
-
-        //Skybox& operator=(Skybox&& other) noexcept;
 
         void GenerateSkybox();
 

@@ -11,6 +11,30 @@
 
 namespace scene
 {
+    Skybox::Skybox(Skybox&& other) noexcept: Component(other.name),
+                                             samplesPhi(other.samplesPhi),
+                                             samplesTheta(other.samplesTheta),
+                                             EnvCube(std::move(other.EnvCube)),
+                                             IrradianceMap(std::move(other.IrradianceMap)),
+                                             SpecularIBLPrefilter(std::move(other.SpecularIBLPrefilter)),
+                                             BRDFLUT(std::move(other.BRDFLUT))
+    {
+    }
+
+    Skybox& Skybox::operator=(Skybox&& other) noexcept
+    {
+        if (this == &other)
+            return *this;
+        name = other.name;
+        samplesPhi = other.samplesPhi;
+        samplesTheta = other.samplesTheta;
+        EnvCube = std::move(other.EnvCube);
+        IrradianceMap = std::move(other.IrradianceMap);
+        SpecularIBLPrefilter = std::move(other.SpecularIBLPrefilter);
+        BRDFLUT = std::move(other.BRDFLUT);
+        return *this;
+    }
+
     Skybox::Skybox(const std::string& name)
         : Component(name)
     {
@@ -24,6 +48,10 @@ namespace scene
                 "The environment cubemap does not exist, and thus the necessary textures for IBL cannot be generated.")
             return;
         }
+
+        IrradianceMap = TextureFactory::CreateTextureCubeFromMemory(name + "IrradianceMap", {}, 64, 64,
+                                                                    VK_FORMAT_R16G16B16A16_SFLOAT);
+        IrradianceMap->create_vk_image(GRuntimeGlobalContext.GetDevice(), VK_IMAGE_USAGE_STORAGE_BIT);
 
         auto Irr = vkb::ShaderSource{Paths::GetShaderFullPath("IBL/IrradianceMapCompute.comp.spv")};
 

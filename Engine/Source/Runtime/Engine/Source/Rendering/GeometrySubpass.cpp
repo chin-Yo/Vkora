@@ -17,6 +17,8 @@
 
 #include "Rendering/GeometrySubpass.hpp"
 
+#include "GlobalContext.hpp"
+#include "Engine/Asset/Manager/AssetManager.hpp"
 #include "Engine/SceneGraph/ComponentPool.hpp"
 #include "Framework/Core/CommandBuffer.hpp"
 #include "Framework/Core/VulkanDevice.hpp"
@@ -195,7 +197,7 @@ namespace vkb
         }
 
         DescriptorSetLayout& descriptor_set_layout = pipeline_layout.get_descriptor_set_layout(0);
-        
+
         if (sub_mesh.get_material()->base_color_texture)
         {
             command_buffer.bind_image(sub_mesh.get_material()->base_color_texture->get_vk_image_view(),
@@ -216,8 +218,8 @@ namespace vkb
         }
         else
         {
-            command_buffer.bind_image(defaultTexture->get_vk_image_view(),
-                                      *defaultTexture->sampler.lock(),
+            auto* def_nor = GRuntimeGlobalContext.assetManager->GetTexture(DEFAULT_NormalMap);
+            command_buffer.bind_image(def_nor->get_vk_image_view(), *def_nor->sampler.lock(),
                                       0, descriptor_set_layout.get_layout_binding("normal_texture")->binding, 0);
         }
         if (sub_mesh.get_material()->metallic_texture)

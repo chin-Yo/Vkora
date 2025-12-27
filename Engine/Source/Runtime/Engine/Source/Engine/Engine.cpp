@@ -13,7 +13,6 @@
 #include "Misc/Paths.hpp"
 #include "World/WorldManager.hpp"
 #include "Engine/SceneGraph/ComponentPool.hpp"
-#include "Rendering/ComputeSystem.hpp"
 #include "UIManage/EditorGlobalContext.hpp"
 
 const float Engine::FPSAlpha = 1.f / 100;
