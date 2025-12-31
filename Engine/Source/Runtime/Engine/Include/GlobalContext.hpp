@@ -26,6 +26,11 @@ public:
     // destroy all global systems
     void ShutdownSystems();
 
+    vkb::VulkanDevice& GetDevice()
+    {
+        return *device;
+    }
+
 public:
     vkb::VulkanDevice* device;
     WindowSystem* windowSystem;

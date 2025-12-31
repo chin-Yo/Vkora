@@ -37,7 +37,7 @@ void main(void)
 {
     o_pos = global_uniform.model * vec4(position, 1.0);
 
-    o_uv = texcoord_0;
+    o_uv = vec2(texcoord_0.x, 1.0 - texcoord_0.y);
 
     mat3 model_3x3 = mat3(global_uniform.model);
 

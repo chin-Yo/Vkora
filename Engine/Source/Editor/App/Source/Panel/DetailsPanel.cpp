@@ -205,6 +205,10 @@ void DetailsPanel::DrawComponentSelector(scene::Node* node)
             }
             ImGui::EndMenu();
         }
+        if (ImGui::MenuItem("Skybox"))
+        {
+            auto* Skybox = scene->GetComponentManager()->AddComponent<::scene::Skybox>(node);
+        }
         ImGui::EndPopup();
     }
     if (bIsRepeat)

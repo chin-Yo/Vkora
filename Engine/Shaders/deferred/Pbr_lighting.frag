@@ -1,6 +1,8 @@
 #version 450
 precision highp float;
 
+#include "PbrFun.h"
+
 layout (input_attachment_index = 0, binding = 0) uniform subpassInput i_depth;
 layout (input_attachment_index = 1, binding = 1) uniform subpassInput i_albedo;    // .rgb = albedo(sRGB), .a = AO
 layout (input_attachment_index = 2, binding = 2) uniform subpassInput i_normal;    // .xyz = normal[0,1]
@@ -8,9 +10,6 @@ layout (input_attachment_index = 3, binding = 3) uniform subpassInput i_material
 
 layout (location = 0) in vec2 in_uv;
 layout (location = 0) out vec4 o_color;
-
-
-#include "PbrFun.h"
 
 layout (set = 1, binding = 0) uniform GlobalUniform
 {
@@ -21,7 +20,6 @@ layout (set = 1, binding = 0) uniform GlobalUniform
 }
 global_uniform;
 
-
 struct Light
 {
     vec4 position;         // position.w represents type of light
@@ -30,8 +28,23 @@ struct Light
     vec2 info;             // (only used for spot lights) info.x represents light inner cone angle, info.y represents light outer cone angle
 };
 
+layout (set = 1, binding = 1) uniform LightsInfo
+{
+    Light directional_lights[48];
+    Light point_lights[48];
+    Light spot_lights[48];
+}
+lights_info;
+
+layout (set = 1, binding = 2) uniform samplerCube EnvCube;
+layout (set = 1, binding = 3) uniform samplerCube samplerIrradiance;
+
+layout (constant_id = 0) const uint DIRECTIONAL_LIGHT_COUNT = 0U;
+layout (constant_id = 1) const uint POINT_LIGHT_COUNT = 0U;
+layout (constant_id = 2) const uint SPOT_LIGHT_COUNT = 0U;
+
 vec3 apply_directional_light(Light light, vec3 pos, vec3 N, vec3 V, vec3 albedo, float metallic, float roughness)
-{	
+{
     vec3 L = normalize(-light.direction.xyz); // light direction toward surface
     return evaluateDirectPBR(L, V, N, albedo, metallic, roughness, light.color.rgb, light.color.w);
 }
@@ -87,18 +100,6 @@ vec3 apply_spot_light(Light light, vec3 pos, vec3 N, vec3 V, vec3 albedo, float 
     return evaluateDirectPBR(L, V, N, albedo, metallic, roughness, light.color.rgb, light.color.w * atten);
 }
 
-layout (set = 1, binding = 1) uniform LightsInfo
-{
-    Light directional_lights[48];
-    Light point_lights[48];
-    Light spot_lights[48];
-}
-lights_info;
-
-layout (constant_id = 0) const uint DIRECTIONAL_LIGHT_COUNT = 0U;
-layout (constant_id = 1) const uint POINT_LIGHT_COUNT = 0U;
-layout (constant_id = 2) const uint SPOT_LIGHT_COUNT = 0U;
-
 vec3 getProceduralSky(vec3 viewDir)
 {
     vec3 topColor = vec3(0.2, 0.4, 0.8);
@@ -109,18 +110,16 @@ vec3 getProceduralSky(vec3 viewDir)
 
 void main()
 {
-    // --- Reconstruct world position from depth ---
     float depth = subpassLoad(i_depth).x;
-    //if (depth >= 1.0) discard; // optional: skip sky
 
     vec4 clip = vec4(in_uv * 2.0 - 1.0, depth, 1.0);
     vec4 world_pos_h = global_uniform.inv_view_proj * clip;
     vec3 world_pos = world_pos_h.xyz / world_pos_h.w;
 
     vec3 viewDir = normalize(world_pos - global_uniform.camPos.xyz);
-    if (depth <= 0.0 + 0.000001) // 使用一点 epsilon 容差
+    if (depth <= 1e-6) // 使用一点 epsilon 容差
     {
-        o_color = vec4(getProceduralSky(viewDir), 1.0);
+        o_color = vec4(texture(EnvCube, -viewDir).rgb, 1.0);
         return;
     }
     // Load G-Buffer
@@ -159,6 +158,11 @@ void main()
         );
     }
 
-    // Output: HDR direct light in RGB, AO in alpha (for composition pass)
-    o_color = vec4(directLight, 1);
+    vec3 irradiance = texture(samplerIrradiance, normal).rgb; // normal = world-space
+    vec3 indirectDiffuse = albedo * irradiance;
+    indirectDiffuse *= ao; // modulate by AO
+
+    vec3 finalLight = directLight + indirectDiffuse;
+
+    o_color = vec4(finalLight, 1.0);
 }

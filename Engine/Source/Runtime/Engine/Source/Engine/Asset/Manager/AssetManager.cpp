@@ -32,6 +32,32 @@ AssetManager::AssetManager(vkb::VulkanDevice& device)
     cubeSampler = std::make_shared<vkb::Sampler>(device, vp::CubeMapSamplerPreset{}.CreateInfo());
 }
 
+void AssetManager::ConstructDefaultTexture()
+{
+    std::vector<uint8_t> data(24, 0);
+    auto texture_cube = TextureFactory::CreateTextureCubeFromMemory(
+        DEFAULT_IrradianceMap, std::move(data), 1, 1,
+        VK_FORMAT_R8G8B8A8_UNORM);
+    texture_cube->CopyDataToGPU(device);
+    texture_cube->sampler = cubeSampler;
+    textureCubeCache[DEFAULT_IrradianceMap] = std::move(texture_cube);
+    Texture* Tex_vilidity = GetTextureCube(DEFAULT_IrradianceMap);
+    assert(Tex_vilidity != nullptr && "DEFAULT_IrradianceMap is null");
+
+    std::vector<uint8_t> NorData{128, 128, 255, 255};
+    auto texture_normal = TextureFactory::CreateTexture2DFromMemory(DEFAULT_NormalMap, std::move(NorData),
+                                                                    1, 1, VK_FORMAT_R8G8B8A8_UNORM);
+    texture_normal->CopyDataToGPU(device);
+    texture_normal->sampler = defaultSampler;
+    texture_normal->texture_id = ImGui_ImplVulkan_AddTexture(texture_normal->sampler.lock()->GetHandle(),
+                                                             texture_normal->get_vk_image_view().GetHandle(),
+                                                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    textures_id.push_back(texture_normal->texture_id);
+    texture2DCache[DEFAULT_NormalMap] = std::move(texture_normal);
+    Tex_vilidity = GetTexture(DEFAULT_NormalMap);
+    assert(Tex_vilidity != nullptr && "DEFAULT_NormalMap is null");
+}
+
 std::shared_ptr<scene::MeshData> AssetManager::GetMesh(const std::string& relativePath)
 {
     auto it = meshCache.find(relativePath);
@@ -78,6 +104,7 @@ TextureCube* AssetManager::GetTextureCube(const std::string& relativePath)
 
 void AssetManager::LodaAllTexture()
 {
+    ConstructDefaultTexture();
     auto textures = AssetRegistry::Get().GetAllAssetsOfType(AssetType::Texture);
     for (auto& texture : textures)
     {

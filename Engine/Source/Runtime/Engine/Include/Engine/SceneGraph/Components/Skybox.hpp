@@ -11,13 +11,13 @@ namespace scene
     class Skybox : public Component
     {
     public:
-        Skybox(const std::string& name = {});
+        Skybox(Skybox&& other) noexcept;
+
+        Skybox& operator=(Skybox&& other) noexcept;
+        Skybox();
+        Skybox(const std::string& name);
 
         virtual ~Skybox() = default;
-
-        //Skybox(Skybox&& other) noexcept;
-
-        //Skybox& operator=(Skybox&& other) noexcept;
 
         void GenerateSkybox();
 
@@ -30,10 +30,15 @@ namespace scene
 
         // need spawn
         std::unique_ptr<TextureCube> IrradianceMap = nullptr;
+        bool bIsIrradianceMapReady = false;
         //std::unique_ptr<ComputePassBase> IrradianceCompute = nullptr;
         std::unique_ptr<TextureCube> SpecularIBLPrefilter = nullptr;
+        bool bIsSpecularIBLPrefilterReady = false;
         //std::unique_ptr<ComputePassBase> SpecularCompute = nullptr;
         std::unique_ptr<Texture2D> BRDFLUT = nullptr;
+        bool bIsBRDFLUTReady = false;
         //std::unique_ptr<ComputePassBase> BRDFLUTCompute = nullptr;
+    private:
+        TextureCube* CurrentEnvCube = nullptr;
     };
 }

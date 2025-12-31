@@ -14,6 +14,7 @@
 #include "World/WorldManager.hpp"
 #include "Engine/SceneGraph/ComponentPool.hpp"
 #include "UIManage/EditorUIManager.hpp"
+#include "Rendering/ComputeSystem.hpp"
 
 class ComputeSystem;
 
@@ -134,6 +135,7 @@ protected:
     std::unique_ptr<WorldManager> worldManager;
     std::unique_ptr<RenderSystem> renderSystem;
     std::unique_ptr<AssetManager> assetManager;
+
 public:
     std::unique_ptr<ComputeSystem> computeSystem;
 };

@@ -352,7 +352,7 @@ void Texture::CopyDataToGPU(vkb::VulkanDevice& device)
         buffer_copy_region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         buffer_copy_region.imageSubresource.mipLevel = vkb::to_u32(i);
         buffer_copy_region.imageSubresource.baseArrayLayer = 0;
-        buffer_copy_region.imageSubresource.layerCount = 1;
+        buffer_copy_region.imageSubresource.layerCount = layers;
         buffer_copy_region.imageExtent.width = this->get_extent().width >> i;
         buffer_copy_region.imageExtent.height = this->get_extent().height >> i;
         buffer_copy_region.imageExtent.depth = 1;
@@ -392,6 +392,31 @@ void Texture::CopyDataToGPU(vkb::VulkanDevice& device)
                                  subresource_range);
 
     device.flush_command_buffer(command_buffer, queue.get_handle());
+    layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+}
+
+void Texture::TransitionImageLayout(vkb::VulkanDevice& device, VkImageLayout NewLayout)
+{
+    const auto& queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+
+    VkCommandBuffer command_buffer = device.create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+
+    VkImageSubresourceRange subresource_range = {};
+    subresource_range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    subresource_range.baseMipLevel = 0;
+    subresource_range.levelCount = vkb::to_u32(mipmaps.size());
+    subresource_range.layerCount = layers;
+
+    // Image barrier for optimal image (target)
+    // Optimal image will be used as destination for the copy
+    vkb::image_layout_transition(command_buffer,
+                                 this->get_vk_image().GetHandle(),
+                                 layout,
+                                 NewLayout,
+                                 subresource_range);
+
+    device.flush_command_buffer(command_buffer, queue.get_handle());
+    layout = NewLayout;
 }
 
 Texture::Texture(const std::string& name, VkImageViewType type, VkImageCreateFlags flags, std::vector<uint8_t>&& data,

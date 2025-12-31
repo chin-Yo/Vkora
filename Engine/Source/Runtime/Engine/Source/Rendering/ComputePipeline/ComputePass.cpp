@@ -153,9 +153,11 @@ void ComputePassBase::Dispatch(uint32_t x, uint32_t y, uint32_t z,
             0, nullptr
         );
     }
-
-    auto index = device.get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
-    auto& queue = device.get_queue_by_flags(VK_QUEUE_COMPUTE_BIT, index);
+    vkCmdPushConstants(task.cmdBuffer, pipeline_layout.get_handle(), VK_SHADER_STAGE_COMPUTE_BIT,
+                       0, PushConstants.size(), PushConstants.data()
+    );
+    vkCmdDispatch(task.cmdBuffer, x, y, z);
+    auto& queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, 0);
     // 4. 提交
     VkSubmitInfo submitInfo = vks::initializers::submitInfo();
     submitInfo.commandBufferCount = 1;

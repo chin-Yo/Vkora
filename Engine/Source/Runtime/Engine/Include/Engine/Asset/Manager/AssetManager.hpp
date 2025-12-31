@@ -20,6 +20,9 @@ namespace scene
 
 #define ICON_IMAGES "Textures/Icon/Icon_Images.png"
 
+#define DEFAULT_IrradianceMap "Default_IrradianceMap"
+#define DEFAULT_NormalMap "Default_NormalMap"
+
 class AssetManager
 {
 private:
@@ -45,6 +48,7 @@ public:
     AssetManager() = delete;
     ~AssetManager();
     AssetManager(vkb::VulkanDevice& device);
+    void ConstructDefaultTexture();
     std::shared_ptr<scene::MeshData> GetMesh(const std::string& relativePath);
 
     Texture2D* GetTexture(const std::string& relativePath = "Textures/Default.png");
@@ -59,13 +63,12 @@ public:
     const std::unordered_map<std::string, std::unique_ptr<TextureCube>>& GetTextureCubeCache() const;
 
     const std::unordered_map<std::string, std::shared_ptr<scene::MeshData>>& GetMeshCache() const;
-
-private:
-    vkb::VulkanDevice& device;
+    
     std::shared_ptr<vkb::Sampler> defaultSampler = nullptr;
     std::shared_ptr<vkb::Sampler> cubeSampler = nullptr;
-
-
+private:
+    vkb::VulkanDevice& device;
+    
     std::vector<VkDescriptorSet> textures_id;
     // or std::weak_ptr
     std::unordered_map<std::string, std::shared_ptr<scene::MeshData>> meshCache;
