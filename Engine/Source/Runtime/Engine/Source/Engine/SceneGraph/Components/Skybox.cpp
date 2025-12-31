@@ -35,6 +35,11 @@ namespace scene
         return *this;
     }
 
+    Skybox::Skybox()
+        : Component("Skybox")
+    {
+    }
+
     Skybox::Skybox(const std::string& name)
         : Component(name)
     {
@@ -48,17 +53,30 @@ namespace scene
                 "The environment cubemap does not exist, and thus the necessary textures for IBL cannot be generated.")
             return;
         }
-
+        if (EnvCube == CurrentEnvCube)
+        {
+            LOG_WARN("Please do not generate IBL textures again.")
+            return;
+        }
+        {// Remove existing resources
+            IrradianceMap.reset();
+            bIsIrradianceMapReady = false;
+            SpecularIBLPrefilter.reset();
+            bIsSpecularIBLPrefilterReady = false;
+            BRDFLUT.reset();
+            bIsBRDFLUTReady = false;
+        }
         IrradianceMap = TextureFactory::CreateTextureCubeFromMemory(name + "IrradianceMap", {}, 64, 64,
                                                                     VK_FORMAT_R16G16B16A16_SFLOAT);
         IrradianceMap->create_vk_image(GRuntimeGlobalContext.GetDevice(), VK_IMAGE_USAGE_STORAGE_BIT);
-
+        IrradianceMap->TransitionImageLayout(GRuntimeGlobalContext.GetDevice());
+        IrradianceMap->sampler = GRuntimeGlobalContext.assetManager->cubeSampler;
         auto Irr = vkb::ShaderSource{Paths::GetShaderFullPath("IBL/IrradianceMapCompute.comp.spv")};
 
         ComputePassBase* IrradianceCompute = new ComputePassBase{
             GRuntimeGlobalContext.renderSystem->GetDevice(), std::move(Irr)
         };
-        IrradianceCompute->Dispatch(156, 156, 8,
+        IrradianceCompute->Dispatch(4, 4, 6,
                                     [this](vkb::ResourceBindingState& RBS,
                                            std::vector<uint8_t>& stored_push_constants)-> void
                                     {
@@ -79,8 +97,16 @@ namespace scene
                                         RBS.bind_image(this->IrradianceMap->get_vk_image_view(),
                                                        *this->IrradianceMap->sampler.lock(), 0, 1, 0);
                                         return;
-                                    }, nullptr);
+                                    }, [this]()
+                                    {
+                                        this->IrradianceMap->TransitionImageLayout(
+                                            GRuntimeGlobalContext.GetDevice(),
+                                            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+                                        this->bIsIrradianceMapReady = true;
+                                    });
         GEngine->computeSystem->PushPass("IrradianceCompute", IrradianceCompute);
+
+        CurrentEnvCube = EnvCube.get();
     }
 }
 

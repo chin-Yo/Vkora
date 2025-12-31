@@ -367,6 +367,9 @@ namespace vkb
         case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:
             return VK_ACCESS_TRANSFER_WRITE_BIT;
         case VK_IMAGE_LAYOUT_GENERAL:
+            return VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT |
+                VK_ACCESS_TRANSFER_READ_BIT | VK_ACCESS_TRANSFER_WRITE_BIT |
+                VK_ACCESS_HOST_READ_BIT | VK_ACCESS_HOST_WRITE_BIT;
             assert(
                 false && "Don't know how to get a meaningful VkAccessFlags for VK_IMAGE_LAYOUT_GENERAL! Don't use it!");
             return 0;
@@ -398,6 +401,11 @@ namespace vkb
         case VK_IMAGE_LAYOUT_PRESENT_SRC_KHR:
             return VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
         case VK_IMAGE_LAYOUT_GENERAL:
+            return VK_PIPELINE_STAGE_VERTEX_SHADER_BIT |
+                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT |
+                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT |
+                VK_PIPELINE_STAGE_TRANSFER_BIT |
+                VK_PIPELINE_STAGE_HOST_BIT;
             assert(
                 false &&
                 "Don't know how to get a meaningful VkPipelineStageFlags for VK_IMAGE_LAYOUT_GENERAL! Don't use it!");

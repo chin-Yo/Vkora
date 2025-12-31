@@ -119,7 +119,7 @@ void main()
     vec3 viewDir = normalize(world_pos - global_uniform.camPos.xyz);
     if (depth <= 1e-6) // 使用一点 epsilon 容差
     {
-        o_color = vec4(texture(EnvCube, viewDir).rgb, 1.0);
+        o_color = vec4(texture(EnvCube, -viewDir).rgb, 1.0);
         return;
     }
     // Load G-Buffer

@@ -44,7 +44,7 @@ void AssetManager::ConstructDefaultTexture()
     Texture* Tex_vilidity = GetTextureCube(DEFAULT_IrradianceMap);
     assert(Tex_vilidity != nullptr && "DEFAULT_IrradianceMap is null");
 
-    std::vector<uint8_t> NorData{128, 128, 255};
+    std::vector<uint8_t> NorData{128, 128, 255, 255};
     auto texture_normal = TextureFactory::CreateTexture2DFromMemory(DEFAULT_NormalMap, std::move(NorData),
                                                                     1, 1, VK_FORMAT_R8G8B8A8_UNORM);
     texture_normal->CopyDataToGPU(device);

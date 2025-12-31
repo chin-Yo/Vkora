@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Engine/SceneGraph/Node.hpp"
+#include <stdexcept>
+#include <iostream>
 
 namespace scene
 {
@@ -19,6 +21,7 @@ namespace scene
         {
             size_t newIndex = components.size();
             components.emplace_back();
+            assert(!components.empty());
             components.back().owner = owner;
 
             NodeID id = owner->GetID();

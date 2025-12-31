@@ -220,6 +220,7 @@ namespace vkb
         state.descriptor_sets.clear();
         state.descriptor_set_layouts.clear();
         state.render_passes.clear();
+        state.descriptor_pools.clear();
         clear_pipelines();
         clear_framebuffers();
     }

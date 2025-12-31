@@ -99,7 +99,7 @@ namespace vkb
         {
             auto SkyEnvCube = Skybox[0].EnvCube;
             command_buffer.bind_image(SkyEnvCube->get_vk_image_view(), *SkyEnvCube->sampler.lock(), 1, 2, 0);
-            if (Skybox[0].IrradianceMap != nullptr)
+            if (Skybox[0].IrradianceMap != nullptr && Skybox[0].bIsIrradianceMapReady == true)
             {
                 auto& Irr = Skybox[0].IrradianceMap;
                 command_buffer.bind_image(Irr->get_vk_image_view(), *Irr->sampler.lock(), 1, 3, 0);

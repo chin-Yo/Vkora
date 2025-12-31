@@ -87,6 +87,8 @@ public:
 
     virtual void CopyDataToGPU(vkb::VulkanDevice& device);
 
+    virtual void TransitionImageLayout(vkb::VulkanDevice& device, VkImageLayout NewLayout = VK_IMAGE_LAYOUT_GENERAL);
+
 protected:
     Texture(const std::string& name, VkImageViewType type, VkImageCreateFlags flags,
             std::vector<uint8_t>&& data = {}, std::vector<Mipmap>&& mipmaps = {});
