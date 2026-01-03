@@ -1,5 +1,7 @@
 #include "Logging/Logger.hpp"
 #include <iostream>
+
+#include "Logging/ImguiSink.hpp"
 std::shared_ptr<spdlog::logger> Logger::logger_ = nullptr;
 
 void Logger::Init(const std::string& name, LogLevel level,
@@ -12,7 +14,10 @@ void Logger::Init(const std::string& name, LogLevel level,
     }
 
     std::vector<spdlog::sink_ptr> sinks;
+    sinks.push_back(std::make_shared<imgui_sink>());
+#ifdef BUILD_DEBUG
     sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
+#endif
 
     if (!filepath.empty())
     {

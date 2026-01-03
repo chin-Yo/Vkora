@@ -21,7 +21,10 @@ namespace scene
 #define ICON_IMAGES "Textures/Icon/Icon_Images.png"
 
 #define DEFAULT_IrradianceMap "Default_IrradianceMap"
+#define DEFAULT_PrefilterMap "Default_PrefilterMap"
 #define DEFAULT_NormalMap "Default_NormalMap"
+#define DEFAULT_BRDFLUT "Textures/Engine/BRDFLUT.png"
+
 
 class AssetManager
 {
@@ -63,12 +66,13 @@ public:
     const std::unordered_map<std::string, std::unique_ptr<TextureCube>>& GetTextureCubeCache() const;
 
     const std::unordered_map<std::string, std::shared_ptr<scene::MeshData>>& GetMeshCache() const;
-    
+
     std::shared_ptr<vkb::Sampler> defaultSampler = nullptr;
     std::shared_ptr<vkb::Sampler> cubeSampler = nullptr;
+
 private:
     vkb::VulkanDevice& device;
-    
+
     std::vector<VkDescriptorSet> textures_id;
     // or std::weak_ptr
     std::unordered_map<std::string, std::shared_ptr<scene::MeshData>> meshCache;

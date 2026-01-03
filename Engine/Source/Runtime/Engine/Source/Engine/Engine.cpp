@@ -238,13 +238,15 @@ void Engine::StartEngine(const std::string& ConfigFilePath)
     vkb::Window::Properties window_properties;
     window_properties.title = "VkoraEngine";
     windowSystem = std::make_unique<WindowSystem>(window_properties);
-
+    windowSystem->RegisterOnWindowIconifyFunc([this](bool bIsIconify)
+        {
+            if (this != nullptr)
+                this->SetIsIconify(bIsIconify);
+        }
+    );
     InitRenderBackend({windowSystem.get()});
 
     worldManager = std::make_unique<WorldManager>();
-
-    renderSystem = std::make_unique<
-        RenderSystem>(windowSystem.get(), RenderBackend.device.get(), RenderBackend.surface);
 
     computeSystem = std::make_unique<ComputeSystem>();
     LOG_INFO("Engine started")
@@ -264,16 +266,8 @@ void Engine::ShutdownEngine()
 
 void Engine::Initialize()
 {
-    windowSystem->RegisterOnWindowIconifyFunc([this](bool bIsIconify)
-        {
-            if (this != nullptr)
-                this->SetIsIconify(bIsIconify);
-        }
-    );
-    if (!worldManager->GetActiveWorld())
-    {
-        worldManager->CreateWorld("DefaultWorld");
-    }
+    renderSystem = std::make_unique<
+        RenderSystem>(windowSystem.get(), RenderBackend.device.get(), RenderBackend.surface);
     if (!renderSystem->Prepare())
     {
         LOG_CRITICAL("Prepare failed !!!")
@@ -308,6 +302,10 @@ void Engine::Clear()
 void Engine::Tick()
 {
     assetManager->LodaAllTexture();
+    if (!worldManager->GetActiveWorld())
+    {
+        worldManager->CreateWorld("DefaultWorld");
+    }
     renderSystem->RenderPrepare();
 
     float delta_time;

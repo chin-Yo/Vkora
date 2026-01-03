@@ -27,6 +27,7 @@
 #include "Engine/SceneGraph/Components/Camera.hpp"
 #include "Engine/SceneGraph/Components/Light.hpp"
 #include "Engine/SceneGraph/Components/Skybox.hpp"
+#include "Engine/Texture/Texture2D.hpp"
 #include "Engine/Texture/TextureCube.hpp"
 #include "Framework/Core/Sampler.hpp"
 #include "Tools/Utils.hpp"
@@ -109,13 +110,40 @@ namespace vkb
                 auto* cube = GRuntimeGlobalContext.assetManager->GetTextureCube(DEFAULT_IrradianceMap);
                 command_buffer.bind_image(cube->get_vk_image_view(), *cube->sampler.lock(), 1, 3, 0);
             }
+
+            if (Skybox[0].SpecularIBLPrefilter != nullptr && Skybox[0].bIsSpecularIBLPrefilterReady == true)
+            {
+                auto& Per = Skybox[0].SpecularIBLPrefilter;
+                command_buffer.bind_image(Per->get_vk_image_view(), *Per->sampler.lock(), 1, 5, 0);
+            }
+            else
+            {
+                auto* PrefilterMap = GRuntimeGlobalContext.assetManager->GetTextureCube(DEFAULT_PrefilterMap);
+                command_buffer.bind_image(PrefilterMap->get_vk_image_view(), *PrefilterMap->sampler.lock(), 1, 5, 0);
+            }
+
+            if (Skybox[0].BRDFLUT != nullptr && Skybox[0].bIsBRDFLUTReady == true)
+            {
+                auto& BRDFLUT = Skybox[0].BRDFLUT;
+                command_buffer.bind_image(BRDFLUT->get_vk_image_view(), *BRDFLUT->sampler.lock(), 1, 4, 0);
+            }
+            else
+            {
+                auto* BRDFLUT = GRuntimeGlobalContext.assetManager->GetTexture(DEFAULT_BRDFLUT);
+                command_buffer.bind_image(BRDFLUT->get_vk_image_view(), *BRDFLUT->sampler.lock(), 1, 4, 0);
+            }
         }
         else
         {
             auto* cube = GRuntimeGlobalContext.assetManager->GetTextureCube(DEFAULT_IrradianceMap);
             command_buffer.bind_image(cube->get_vk_image_view(), *cube->sampler.lock(), 1, 2, 0);
             command_buffer.bind_image(cube->get_vk_image_view(), *cube->sampler.lock(), 1, 3, 0);
+            auto* BRDFLUT = GRuntimeGlobalContext.assetManager->GetTexture(DEFAULT_BRDFLUT);
+            command_buffer.bind_image(BRDFLUT->get_vk_image_view(), *BRDFLUT->sampler.lock(), 1, 4, 0);
+            auto* PrefilterMap = GRuntimeGlobalContext.assetManager->GetTextureCube(DEFAULT_PrefilterMap);
+            command_buffer.bind_image(PrefilterMap->get_vk_image_view(), *PrefilterMap->sampler.lock(), 1, 5, 0);
         }
+
 
         // Set cull mode to front as full screen triangle is clock-wise
         RasterizationState rasterization_state;

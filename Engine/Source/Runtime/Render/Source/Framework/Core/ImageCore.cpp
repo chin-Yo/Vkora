@@ -64,18 +64,18 @@ namespace vkb
         }
     } // namespace
 
-    Image ImageBuilder::build(VulkanDevice &device) const
+    Image ImageBuilder::build(VulkanDevice& device) const
     {
         return Image(device, *this);
     }
 
-    ImagePtr ImageBuilder::build_unique(VulkanDevice &device) const
+    ImagePtr ImageBuilder::build_unique(VulkanDevice& device) const
     {
         return std::make_unique<Image>(device, *this);
     }
 
-    Image::Image(VulkanDevice &device,
-                 const VkExtent3D &extent,
+    Image::Image(VulkanDevice& device,
+                 const VkExtent3D& extent,
                  VkFormat format,
                  VkImageUsageFlags image_usage,
                  VmaMemoryUsage memory_usage,
@@ -85,24 +85,27 @@ namespace vkb
                  VkImageTiling tiling,
                  VkImageCreateFlags flags,
                  uint32_t num_queue_families,
-                 const uint32_t *queue_families) : // Pass through to the ImageBuilder ctor
-                                                   Image(device,
-                                                         ImageBuilder(extent)
-                                                             .with_format(format)
-                                                             .with_image_type(find_image_type(extent))
-                                                             .with_usage(image_usage)
-                                                             .with_mip_levels(mip_levels)
-                                                             .with_array_layers(array_layers)
-                                                             .with_tiling(tiling)
-                                                             .with_flags(flags)
-                                                             .with_vma_usage(memory_usage)
-                                                             .with_sample_count(sample_count)
-                                                             .with_queue_families(num_queue_families, queue_families)
-                                                             .with_implicit_sharing_mode())
+                 const uint32_t* queue_families) : // Pass through to the ImageBuilder ctor
+        Image(device,
+              ImageBuilder(extent)
+              .with_format(format)
+              .with_image_type(find_image_type(extent))
+              .with_usage(image_usage)
+              .with_mip_levels(mip_levels)
+              .with_array_layers(array_layers)
+              .with_tiling(tiling)
+              .with_flags(flags)
+              .with_vma_usage(memory_usage)
+              .with_sample_count(sample_count)
+              .with_queue_families(num_queue_families, queue_families)
+              .with_implicit_sharing_mode())
     {
     }
 
-    Image::Image(VulkanDevice &device, ImageBuilder const &builder) : Allocated<VkImage>{builder.get_allocation_create_info(), VK_NULL_HANDLE, &device}, create_info(builder.get_create_info())
+    Image::Image(VulkanDevice& device, ImageBuilder const& builder) : Allocated<VkImage>{
+                                                                          builder.get_allocation_create_info(),
+                                                                          VK_NULL_HANDLE, &device
+                                                                      }, create_info(builder.get_create_info())
     {
         SetHandle(create_image(create_info));
         subresource.arrayLayer = create_info.arrayLayers;
@@ -113,7 +116,10 @@ namespace vkb
         }
     }
 
-    Image::Image(VulkanDevice &device, VkImage handle, const VkExtent3D &extent, VkFormat format, VkImageUsageFlags image_usage, VkSampleCountFlagBits sample_count) : Allocated<VkImage>{handle, &device}
+    Image::Image(VulkanDevice& device, VkImage handle, const VkExtent3D& extent, VkFormat format,
+                 VkImageUsageFlags image_usage, VkSampleCountFlagBits sample_count) : Allocated<VkImage>{
+        handle, &device
+    }
     {
         create_info.extent = extent;
         create_info.imageType = find_image_type(extent);
@@ -124,11 +130,12 @@ namespace vkb
         subresource.mipLevel = create_info.mipLevels = 1;
     }
 
-    Image::Image(Image &&other) noexcept
-        : Allocated<VkImage>{std::move(other)}, create_info{std::exchange(other.create_info, {})}, subresource{std::exchange(other.subresource, {})}, views(std::exchange(other.views, {}))
+    Image::Image(Image&& other) noexcept
+        : Allocated<VkImage>{std::move(other)}, create_info{std::exchange(other.create_info, {})},
+          subresource{std::exchange(other.subresource, {})}, views(std::exchange(other.views, {}))
     {
         // Update image views references to this image to avoid dangling pointers
-        for (auto &view : views)
+        for (auto& view : views)
         {
             view->set_image(*this);
         }
@@ -144,7 +151,7 @@ namespace vkb
         return create_info.imageType;
     }
 
-    const VkExtent3D &Image::get_extent() const
+    const VkExtent3D& Image::get_extent() const
     {
         return create_info.extent;
     }
@@ -169,7 +176,7 @@ namespace vkb
         return create_info.tiling;
     }
 
-    const VkImageSubresource &Image::get_subresource() const
+    const VkImageSubresource& Image::get_subresource() const
     {
         return subresource;
     }
@@ -179,7 +186,12 @@ namespace vkb
         return create_info.arrayLayers;
     }
 
-    std::unordered_set<ImageView *> &Image::get_views()
+    void Image::add_view(ImageView* view)
+    {
+        views.insert(view);
+    }
+
+    std::unordered_set<ImageView*>& Image::get_views()
     {
         return views;
     }

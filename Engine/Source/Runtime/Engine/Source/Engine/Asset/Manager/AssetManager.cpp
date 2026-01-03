@@ -42,7 +42,7 @@ void AssetManager::ConstructDefaultTexture()
     texture_cube->sampler = cubeSampler;
     textureCubeCache[DEFAULT_IrradianceMap] = std::move(texture_cube);
     Texture* Tex_vilidity = GetTextureCube(DEFAULT_IrradianceMap);
-    assert(Tex_vilidity != nullptr && "DEFAULT_IrradianceMap is null");
+    assert(Tex_vilidity != nullptr && "DEFAULT_IrradianceMap is null"); //---
 
     std::vector<uint8_t> NorData{128, 128, 255, 255};
     auto texture_normal = TextureFactory::CreateTexture2DFromMemory(DEFAULT_NormalMap, std::move(NorData),
@@ -55,7 +55,20 @@ void AssetManager::ConstructDefaultTexture()
     textures_id.push_back(texture_normal->texture_id);
     texture2DCache[DEFAULT_NormalMap] = std::move(texture_normal);
     Tex_vilidity = GetTexture(DEFAULT_NormalMap);
-    assert(Tex_vilidity != nullptr && "DEFAULT_NormalMap is null");
+    assert(Tex_vilidity != nullptr && "DEFAULT_NormalMap is null"); //---
+
+    auto texture_PrefilterMap = TextureFactory::CreateTextureCubeFromMemory(DEFAULT_PrefilterMap, {}, 512, 512,
+                                                                            VK_FORMAT_R16G16B16A16_SFLOAT,
+                                                                            std::vector<Texture::Mipmap>(8));
+    texture_PrefilterMap->create_vk_image(device);
+    texture_PrefilterMap->TransitionImageLayout(device, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    texture_PrefilterMap->sampler = cubeSampler;
+    textureCubeCache[DEFAULT_PrefilterMap] = std::move(texture_PrefilterMap);
+    Texture* PrefilterMap = GetTextureCube(DEFAULT_PrefilterMap);
+    assert(PrefilterMap != nullptr && "DEFAULT_PrefilterMap is null"); //---
+
+    Texture* BRDF = GetTexture(DEFAULT_BRDFLUT);
+    assert(BRDF != nullptr && "DEFAULT_BRDFLUT is null");
 }
 
 std::shared_ptr<scene::MeshData> AssetManager::GetMesh(const std::string& relativePath)
@@ -104,7 +117,6 @@ TextureCube* AssetManager::GetTextureCube(const std::string& relativePath)
 
 void AssetManager::LodaAllTexture()
 {
-    ConstructDefaultTexture();
     auto textures = AssetRegistry::Get().GetAllAssetsOfType(AssetType::Texture);
     for (auto& texture : textures)
     {
@@ -141,9 +153,10 @@ void AssetManager::LodaAllTexture()
                 LOG_ERROR("Failed to load {} {}", uri, stbi_failure_reason())
                 continue;
             }
+            VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
             auto newTexture = TextureFactory::CreateTexture2DFromMemory(texture->relativePath, raw_data,
                                                                         (uint32_t)width, height,
-                                                                        req_comp, VK_FORMAT_R8G8B8A8_UNORM);
+                                                                        req_comp, format);
             newTexture->CopyDataToGPU(device);
             stbi_image_free(raw_data);
             newTexture->sampler = defaultSampler;
@@ -189,6 +202,7 @@ void AssetManager::LodaAllTexture()
             ktxTexture_Destroy(ktxtex);
         }
     }
+    ConstructDefaultTexture();
 }
 
 const std::unordered_map<std::string, std::unique_ptr<Texture2D>>& AssetManager::GetTexture2DCache() const

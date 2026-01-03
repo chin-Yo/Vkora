@@ -186,6 +186,12 @@ const vkb::Image& Texture::get_vk_image() const
     return *vk_image;
 }
 
+vkb::Image& Texture::get_vk_image()
+{
+    assert(vk_image && "Vulkan image was not created");
+    return *vk_image;
+}
+
 const vkb::ImageView& Texture::get_vk_image_view() const
 {
     assert(vk_image_view && "Vulkan image view was not created");

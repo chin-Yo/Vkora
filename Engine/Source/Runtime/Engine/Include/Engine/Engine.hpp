@@ -43,10 +43,14 @@ class Engine
     friend class Editor;
 
 public:
+    // Modules without dependencies
     void StartEngine(const std::string& ConfigFilePath);
+    // Modules with dependent modules
+    void Initialize();
+
+
     void ShutdownEngine();
 
-    void Initialize();
     void Clear();
 
     void Tick();

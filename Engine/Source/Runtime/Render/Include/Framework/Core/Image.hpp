@@ -24,158 +24,163 @@
 
 namespace vkb
 {
-	class VulkanDevice;
+    class VulkanDevice;
 
-	class Image;
-	using ImagePtr = std::unique_ptr<Image>;
+    class Image;
+    using ImagePtr = std::unique_ptr<Image>;
 
-	struct ImageBuilder : public BuilderBase<ImageBuilder, VkImageCreateInfo>
-	{
-	private:
-		using Parent = BuilderBase<ImageBuilder, VkImageCreateInfo>;
+    struct ImageBuilder : public BuilderBase<ImageBuilder, VkImageCreateInfo>
+    {
+    private:
+        using Parent = BuilderBase<ImageBuilder, VkImageCreateInfo>;
 
-	public:
-		ImageBuilder(VkExtent3D const &extent) : Parent(VkImageCreateInfo{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, nullptr})
-		{
-			VkImageCreateInfo &create_info = get_create_info();
-			create_info.extent = extent;
-			create_info.arrayLayers = 1;
-			create_info.mipLevels = 1;
-			create_info.imageType = VK_IMAGE_TYPE_2D;
-			create_info.format = VK_FORMAT_R8G8B8A8_UNORM;
-			create_info.samples = VK_SAMPLE_COUNT_1_BIT;
-		}
+    public:
+        ImageBuilder(VkExtent3D const& extent) : Parent(VkImageCreateInfo{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, nullptr})
+        {
+            VkImageCreateInfo& create_info = get_create_info();
+            create_info.extent = extent;
+            create_info.arrayLayers = 1;
+            create_info.mipLevels = 1;
+            create_info.imageType = VK_IMAGE_TYPE_2D;
+            create_info.format = VK_FORMAT_R8G8B8A8_UNORM;
+            create_info.samples = VK_SAMPLE_COUNT_1_BIT;
+        }
 
-		ImageBuilder(uint32_t width, uint32_t height = 1, uint32_t depth = 1) : ImageBuilder(VkExtent3D{width, height, depth})
-		{
-		}
+        ImageBuilder(uint32_t width, uint32_t height = 1, uint32_t depth = 1) : ImageBuilder(VkExtent3D{
+            width, height, depth
+        })
+        {
+        }
 
-		ImageBuilder &with_format(VkFormat format)
-		{
-			get_create_info().format = format;
-			return *this;
-		}
+        ImageBuilder& with_format(VkFormat format)
+        {
+            get_create_info().format = format;
+            return *this;
+        }
 
-		ImageBuilder &with_usage(VkImageUsageFlags usage)
-		{
-			get_create_info().usage = usage;
-			return *this;
-		}
+        ImageBuilder& with_usage(VkImageUsageFlags usage)
+        {
+            get_create_info().usage = usage;
+            return *this;
+        }
 
-		ImageBuilder &with_flags(VkImageCreateFlags flags)
-		{
-			get_create_info().flags = flags;
-			return *this;
-		}
+        ImageBuilder& with_flags(VkImageCreateFlags flags)
+        {
+            get_create_info().flags = flags;
+            return *this;
+        }
 
-		ImageBuilder &with_image_type(VkImageType type)
-		{
-			get_create_info().imageType = type;
-			return *this;
-		}
+        ImageBuilder& with_image_type(VkImageType type)
+        {
+            get_create_info().imageType = type;
+            return *this;
+        }
 
-		ImageBuilder &with_array_layers(uint32_t layers)
-		{
-			get_create_info().arrayLayers = layers;
-			return *this;
-		}
+        ImageBuilder& with_array_layers(uint32_t layers)
+        {
+            get_create_info().arrayLayers = layers;
+            return *this;
+        }
 
-		ImageBuilder &with_mip_levels(uint32_t levels)
-		{
-			get_create_info().mipLevels = levels;
-			return *this;
-		}
+        ImageBuilder& with_mip_levels(uint32_t levels)
+        {
+            get_create_info().mipLevels = levels;
+            return *this;
+        }
 
-		ImageBuilder &with_sample_count(VkSampleCountFlagBits sample_count)
-		{
-			get_create_info().samples = sample_count;
-			return *this;
-		}
+        ImageBuilder& with_sample_count(VkSampleCountFlagBits sample_count)
+        {
+            get_create_info().samples = sample_count;
+            return *this;
+        }
 
-		ImageBuilder &with_tiling(VkImageTiling tiling)
-		{
-			get_create_info().tiling = tiling;
-			return *this;
-		}
+        ImageBuilder& with_tiling(VkImageTiling tiling)
+        {
+            get_create_info().tiling = tiling;
+            return *this;
+        }
 
-		template <typename ExtensionType>
-		ImageBuilder &with_extension(ExtensionType &extension)
-		{
-			extension.pNext = create_info.pNext;
+        template <typename ExtensionType>
+        ImageBuilder& with_extension(ExtensionType& extension)
+        {
+            extension.pNext = create_info.pNext;
 
-			create_info.pNext = &extension;
+            create_info.pNext = &extension;
 
-			return *this;
-		}
+            return *this;
+        }
 
-		Image build(VulkanDevice &device) const;
-		ImagePtr build_unique(VulkanDevice &device) const;
-	};
+        Image build(VulkanDevice& device) const;
+        ImagePtr build_unique(VulkanDevice& device) const;
+    };
 
-	class ImageView;
-	class Image : public Allocated<VkImage>
-	{
-	public:
-		Image(VulkanDevice &device,
-			  VkImage handle,
-			  const VkExtent3D &extent,
-			  VkFormat format,
-			  VkImageUsageFlags image_usage,
-			  VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT);
+    class ImageView;
 
-		// [[deprecated("Use the ImageBuilder ctor instead")]]
-		Image(
-			VulkanDevice &device,
-			const VkExtent3D &extent,
-			VkFormat format,
-			VkImageUsageFlags image_usage,
-			VmaMemoryUsage memory_usage = VMA_MEMORY_USAGE_AUTO,
-			VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT,
-			uint32_t mip_levels = 1,
-			uint32_t array_layers = 1,
-			VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL,
-			VkImageCreateFlags flags = 0,
-			uint32_t num_queue_families = 0,
-			const uint32_t *queue_families = nullptr);
+    class Image : public Allocated<VkImage>
+    {
+    public:
+        Image(VulkanDevice& device,
+              VkImage handle,
+              const VkExtent3D& extent,
+              VkFormat format,
+              VkImageUsageFlags image_usage,
+              VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT);
 
-		Image(VulkanDevice &device, ImageBuilder const &builder);
+        // [[deprecated("Use the ImageBuilder ctor instead")]]
+        Image(
+            VulkanDevice& device,
+            const VkExtent3D& extent,
+            VkFormat format,
+            VkImageUsageFlags image_usage,
+            VmaMemoryUsage memory_usage = VMA_MEMORY_USAGE_AUTO,
+            VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT,
+            uint32_t mip_levels = 1,
+            uint32_t array_layers = 1,
+            VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL,
+            VkImageCreateFlags flags = 0,
+            uint32_t num_queue_families = 0,
+            const uint32_t* queue_families = nullptr);
 
-		Image(const Image &) = delete;
+        Image(VulkanDevice& device, ImageBuilder const& builder);
 
-		Image(Image &&other) noexcept;
+        Image(const Image&) = delete;
 
-		~Image();
+        Image(Image&& other) noexcept;
 
-		Image &operator=(const Image &) = delete;
+        ~Image();
 
-		Image &operator=(Image &&) = delete;
+        Image& operator=(const Image&) = delete;
 
-		VkImageType get_type() const;
+        Image& operator=(Image&&) = delete;
 
-		const VkExtent3D &get_extent() const;
+        VkImageType get_type() const;
 
-		VkFormat get_format() const;
+        const VkExtent3D& get_extent() const;
 
-		VkSampleCountFlagBits get_sample_count() const;
+        VkFormat get_format() const;
 
-		VkImageUsageFlags get_usage() const;
+        VkSampleCountFlagBits get_sample_count() const;
 
-		VkImageTiling get_tiling() const;
+        VkImageUsageFlags get_usage() const;
 
-		const VkImageSubresource &get_subresource() const;
+        VkImageTiling get_tiling() const;
 
-		uint32_t get_array_layer_count() const;
+        const VkImageSubresource& get_subresource() const;
 
-		std::unordered_set<ImageView *> &get_views();
+        uint32_t get_array_layer_count() const;
 
-		VkDeviceSize get_image_required_size() const;
+        void add_view(ImageView* view);
 
-		VkImageCompressionPropertiesEXT get_applied_compression() const;
+        std::unordered_set<ImageView*>& get_views();
 
-	private:
-		/// Image views referring to this image
-		VkImageCreateInfo create_info{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
-		VkImageSubresource subresource{};
-		std::unordered_set<ImageView *> views;
-	};
+        VkDeviceSize get_image_required_size() const;
+
+        VkImageCompressionPropertiesEXT get_applied_compression() const;
+
+    private:
+        /// Image views referring to this image
+        VkImageCreateInfo create_info{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
+        VkImageSubresource subresource{};
+        std::unordered_set<ImageView*> views;
+    };
 } // namespace vkb

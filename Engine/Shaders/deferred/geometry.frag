@@ -49,18 +49,17 @@ void main(void)
 
     vec3 N = normalize(in_normal);
     vec3 T = normalize(in_tangent);
-    T = normalize(T - dot(T, N) * N); 
-    vec3 B = cross(N, T);
-    
+    //T = normalize(T - dot(T, N) * N);
+    vec3 B = normalize(cross(N, T));
     mat3 TBN = mat3(T, B, N);
 
     vec3 world_normal = normalize(TBN * tangent_normal);
 
-    o_gbuf_normal = vec4(world_normal * 0.5 + 0.5, 1.0); 
+    o_gbuf_normal = vec4(world_normal * 0.5 + 0.5, 1.0);
 
     // === Material ===
     float metallic = pbr_material_uniform.metallic_factor * texture(metallic_texture, in_uv).r;
-              
+
     float roughness = pbr_material_uniform.roughness_factor * texture(roughness_texture, in_uv).r;
 
     o_gbuf_material = vec4(metallic, roughness, 0.0, 1.0);

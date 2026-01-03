@@ -36,20 +36,23 @@ public:
     ComputePassBase(vkb::VulkanDevice& device, vkb::ShaderSource&& compute_shader);
     virtual ~ComputePassBase();
 
-    // 核心：提交一个计算任务
-    // groupCount: 线程组数量
-    // recordFn: 用户自定义的录制逻辑（绑定描述符等）
-    // callback: 任务完成后在 CPU 端执行的逻辑
+    // Submit a computing task
+    // groupCount: Number of thread groups
+    // recordFn: User-defined recording logic (including descriptor binding, etc.)
+    // callback: Logic to be executed on the CPU after the task is completed
     void Dispatch(uint32_t x, uint32_t y, uint32_t z,
                   RecordingFunction recordFn,
                   TaskCallback callback = nullptr);
 
-    // 需要在主循环中调用，检查任务是否完成
+    // Call within the main loop to check if the task is completed
     void Poll();
+    // disposable
+    void SetOnBatchComplete(TaskCallback callback);
 
 protected:
     vkb::VulkanDevice& device;
     vkb::ShaderSource computeShader;
-    // 正在进行的任务队列
     std::deque<ComputeTaskContext> pendingTasks;
+    bool BatchProcessingCompleted = false;
+    TaskCallback OnBatchComplete;
 };
