@@ -17,5 +17,8 @@ public:
 
     std::weak_ptr<vkb::Sampler> sampler;
 
+    void CreateMipmapViews();
+
 protected:
+    std::unordered_set<std::unique_ptr<vkb::ImageView>> MipmapViews;
 };

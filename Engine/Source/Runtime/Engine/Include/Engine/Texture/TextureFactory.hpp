@@ -22,7 +22,8 @@ public:
                                                                 uint32_t height, VkFormat format);
     static std::unique_ptr<TextureCube> CreateTextureCubeFromMemory(const std::string& name,
                                                                     std::vector<uint8_t>&& data, uint32_t width,
-                                                                    uint32_t height, VkFormat format);
+                                                                    uint32_t height, VkFormat format,
+                                                                    std::vector<Texture::Mipmap>&& mipmaps = {{}});
     static std::unique_ptr<TextureCube> CreateTextureCubeFromMemory(const std::string& name,
                                                                     const uint8_t* data, size_t size, uint32_t width,
                                                                     uint32_t height,

@@ -75,9 +75,11 @@ public:
 
     void generate_mipmaps();
 
+    //Create directly in the GPU memory
     void create_vk_image(vkb::VulkanDevice& device, VkImageUsageFlags extra_usage = 0);
 
     const vkb::Image& get_vk_image() const;
+    vkb::Image& get_vk_image();
 
     const vkb::ImageView& get_vk_image_view() const;
 

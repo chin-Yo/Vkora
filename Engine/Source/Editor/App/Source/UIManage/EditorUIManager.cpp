@@ -12,6 +12,7 @@
 #include "Panel/DetailsPanel.hpp"
 #include "Panel/FileBrowser.hpp"
 #include "Panel/HierarchyPanel.hpp"
+#include "Panel/LogPanel.hpp"
 #include "Panel/MenuBar.hpp"
 #include "Panel/Viewport.hpp"
 #include "Rendering/RenderSystem.hpp"
@@ -48,6 +49,7 @@ void EditorUIManager::Initialize()
     EditorPanels.push_back(std::make_shared<FileBrowser>());
     EditorPanels.push_back(std::make_shared<ViewportPanel>());
     EditorPanels.push_back(std::make_shared<DetailsPanel>());
+    EditorPanels.push_back(std::make_shared<LogPanel>());
     for (const auto& panel : EditorPanels)
     {
         panel->Init();

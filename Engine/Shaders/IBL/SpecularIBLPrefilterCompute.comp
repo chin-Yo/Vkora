@@ -13,8 +13,8 @@ layout(binding = 1, rgba16f) uniform writeonly imageCube outImage;
 // Push Constants
 // 保持了你原有的 offset，方便 C++ 端复用结构体
 layout(push_constant) uniform PushConsts {
-    layout (offset = 64) float roughness;
-    layout (offset = 68) uint numSamples;
+    float roughness;
+    uint numSamples;
 } consts;
 
 const float PI = 3.1415926536;

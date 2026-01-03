@@ -21,8 +21,8 @@ namespace scene
 
         void GenerateSkybox();
 
-        uint32_t samplesPhi = 64; // 用户可调
-        uint32_t samplesTheta = 16;
+        uint32_t samplesPhi = 180.f; // 用户可调
+        uint32_t samplesTheta = 64.f;
 
         RTTR_ENABLE(Component)
     public:

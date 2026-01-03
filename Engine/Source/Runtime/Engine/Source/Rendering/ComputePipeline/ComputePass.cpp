@@ -153,9 +153,11 @@ void ComputePassBase::Dispatch(uint32_t x, uint32_t y, uint32_t z,
             0, nullptr
         );
     }
-    vkCmdPushConstants(task.cmdBuffer, pipeline_layout.get_handle(), VK_SHADER_STAGE_COMPUTE_BIT,
-                       0, PushConstants.size(), PushConstants.data()
-    );
+    if (!PushConstants.empty())
+    {
+        vkCmdPushConstants(task.cmdBuffer, pipeline_layout.get_handle(), VK_SHADER_STAGE_COMPUTE_BIT,
+                           0, PushConstants.size(), PushConstants.data());
+    }
     vkCmdDispatch(task.cmdBuffer, x, y, z);
     auto& queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, 0);
     // 4. 提交
@@ -172,10 +174,10 @@ void ComputePassBase::Poll()
 {
     if (pendingTasks.empty()) return;
 
+    bool willBecomeEmpty = false;
     // 检查队列头部的任务是否完成
     // 注意：如果前面的任务没完成，后面的即使完成了也不会被处理（保持顺序），也可以改为遍历处理。
     auto& task = pendingTasks.front();
-
     VkResult result = vkGetFenceStatus(device.GetHandle(), task.fence);
     if (result == VK_SUCCESS)
     {
@@ -184,5 +186,22 @@ void ComputePassBase::Poll()
             task.onComplete();
         }
         pendingTasks.pop_front();
+        if (pendingTasks.empty())
+        {
+            willBecomeEmpty = true;
+        }
     }
+    if (willBecomeEmpty)
+    {
+        if (OnBatchComplete)
+        {
+            OnBatchComplete();
+            OnBatchComplete = nullptr;
+        }
+    }
+}
+
+void ComputePassBase::SetOnBatchComplete(TaskCallback callback)
+{
+    OnBatchComplete = callback;
 }

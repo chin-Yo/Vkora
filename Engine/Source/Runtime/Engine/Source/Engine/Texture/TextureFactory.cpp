@@ -44,9 +44,10 @@ std::unique_ptr<Texture2D> TextureFactory::CreateTexture2DFromMemory(const std::
 std::unique_ptr<TextureCube> TextureFactory::CreateTextureCubeFromMemory(const std::string& name,
                                                                          std::vector<uint8_t>&& data, uint32_t width,
                                                                          uint32_t height,
-                                                                         VkFormat format)
+                                                                         VkFormat format,
+                                                                         std::vector<Texture::Mipmap>&& mipmaps)
 {
-    auto tex = std::make_unique<TextureCube>(name, std::move(data));
+    auto tex = std::make_unique<TextureCube>(name, std::move(data), std::move(mipmaps));
     tex->set_format(format);
     tex->set_height(height);
     tex->set_width(width);
