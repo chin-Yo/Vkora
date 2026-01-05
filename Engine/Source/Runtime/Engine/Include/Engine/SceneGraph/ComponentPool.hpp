@@ -11,6 +11,8 @@ namespace scene
     public:
         virtual ~IComponentPool() = default;
         virtual void DestroyComponentForNode(uint32_t nodeID) = 0;
+
+        virtual Component* GetComponentByIndex(size_t index) = 0;
     };
 
     template <typename T>
@@ -38,6 +40,15 @@ namespace scene
                 return &components[ownerNodeMap[nodeID]];
             }
             return nullptr;
+        }
+
+        Component* GetComponentByIndex(size_t index) override
+        {
+            if (index >= components.size())
+            {
+                return nullptr;
+            }
+            return static_cast<Component*>(&components[index]);
         }
 
         void DestroyComponentForNode(NodeID nodeID) override
@@ -94,6 +105,16 @@ namespace scene
         {
             auto* pool = GetOrCreatePool<T>();
             return pool->GetData();
+        }
+
+        Component* GetComponentByRT(ComponentTypeID type, size_t index)
+        {
+            auto it = componentPools.find(type);
+            if (it == componentPools.end())
+            {
+                return nullptr;
+            }
+            return it->second->GetComponentByIndex(index);
         }
 
         void DestroyComponentsOfNode(Node* node)

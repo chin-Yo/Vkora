@@ -5,7 +5,6 @@
 #include "Engine/Engine.hpp"
 #include "Engine/Asset/AssetRegistry.hpp"
 #include "Engine/Asset/Manager/AssetManager.hpp"
-#include "Engine/SceneGraph/Components/Image.hpp"
 #include "Engine/SceneGraph/Components/Texture.hpp"
 #include "Engine/Texture/Texture2D.hpp"
 #include "Engine/Texture/TextureCube.hpp"

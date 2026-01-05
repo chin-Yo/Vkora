@@ -177,7 +177,7 @@ bool Files::IsEmptyDir(const std::string& path)
     return std::filesystem::is_empty(path, ec);
 }
 
-bool Files::CreateFile(const std::string& filename, std::ios_base::openmode mode)
+bool Files::CreateFileImpl(const std::string& filename, std::ios_base::openmode mode)
 {
     if (Exists(filename))
     {

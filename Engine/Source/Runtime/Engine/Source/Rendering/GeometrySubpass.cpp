@@ -25,7 +25,6 @@
 #include "Engine/SceneGraph/Node.hpp"
 #include "Engine/SceneGraph/Scene.hpp"
 #include "Engine/SceneGraph/Components/Camera.hpp"
-#include "Engine/SceneGraph/Components/Image.hpp"
 #include "Engine/SceneGraph/Components/Material.hpp"
 #include "Engine/SceneGraph/Components/Mesh.hpp"
 #include "Engine/SceneGraph/Components/Pbr_Material.hpp"

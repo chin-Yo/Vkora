@@ -40,5 +40,6 @@ namespace scene
         //std::unique_ptr<ComputePassBase> BRDFLUTCompute = nullptr;
     private:
         TextureCube* CurrentEnvCube = nullptr;
+        void GenerateIBL();
     };
 }

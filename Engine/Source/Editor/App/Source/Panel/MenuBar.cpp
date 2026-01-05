@@ -1,5 +1,11 @@
 #include "Panel/MenuBar.hpp"
 
+#include "GlobalContext.hpp"
+#include "Misc/Files.hpp"
+#include "Misc/Paths.hpp"
+#include "Serializer/Scene.hpp"
+#include "World/WorldManager.hpp"
+
 MenuBar::MenuBar()
 {
 }
@@ -73,6 +79,17 @@ void MenuBar::OnUIRender()
             }
             if (ImGui::MenuItem("Open Scene"))
             {
+            }
+            if (ImGui::MenuItem("Save Scene"))
+            {
+                if (auto* scene = GRuntimeGlobalContext.worldManager->GetActiveWorld())
+                {
+                    auto path = Paths::GetContentPath() + scene->GetName() + ".scene";
+                    Files::CreateFileImpl(path);
+                    std::ofstream sceneFile(path);
+                    sceneFile << Serializer::SerializeScene(*scene).dump(4);
+                    sceneFile.close();
+                }
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Exit"))
