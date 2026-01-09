@@ -273,3 +273,9 @@ add_library(stb_image INTERFACE)
 target_include_directories(stb_image SYSTEM INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/tinygltf/
 )
+
+# tinygltf
+add_library(tinygltf INTERFACE)
+target_include_directories(tinygltf SYSTEM INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}/tinygltf/
+)

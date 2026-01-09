@@ -25,7 +25,6 @@ namespace scene
 #define DEFAULT_NormalMap "Default_NormalMap"
 #define DEFAULT_BRDFLUT "Textures/Engine/BRDFLUT.png"
 
-
 class AssetManager
 {
 private:
@@ -60,6 +59,7 @@ public:
 
     void LodaAllTexture();
 
+    void LoadGlTF(const std::string& relativePath);
 
     const std::unordered_map<std::string, std::unique_ptr<Texture2D>>& GetTexture2DCache() const;
 

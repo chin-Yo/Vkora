@@ -40,7 +40,6 @@ void ComputePassBase::Dispatch(uint32_t x, uint32_t y, uint32_t z,
 
     vkb::ResourceBindingState RBS;
     std::vector<uint8_t> PushConstants;
-    // 让用户绑定特定的 DescriptorSet 或 PushConstants
     if (recordFn)
     {
         recordFn(RBS, PushConstants);
@@ -160,13 +159,13 @@ void ComputePassBase::Dispatch(uint32_t x, uint32_t y, uint32_t z,
     }
     vkCmdDispatch(task.cmdBuffer, x, y, z);
     auto& queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, 0);
-    // 4. 提交
+
     VkSubmitInfo submitInfo = vks::initializers::submitInfo();
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &task.cmdBuffer;
     vkEndCommandBuffer(task.cmdBuffer);
     VK_CHECK_RESULT(vkQueueSubmit(queue.get_handle(), 1, &submitInfo, task.fence));
-    // 5. 加入队列
+
     pendingTasks.push_back(task);
 }
 

@@ -3,10 +3,17 @@
 #include <ktx.h>
 #include <ktxvulkan.h>
 #include <stb_image.h>
+#include <tiny_gltf.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
+#include "GlobalContext.hpp"
 #include "backends/imgui_impl_vulkan.h"
 #include "Engine/Asset/AssetRegistry.hpp"
 #include "Engine/Asset/Import/ModelLoader.hpp"
+#include "Engine/SceneGraph/ComponentPool.hpp"
+#include "Engine/SceneGraph/Node.hpp"
+#include "Engine/SceneGraph/Components/Material.hpp"
 #include "Engine/SceneGraph/Components/SubMesh.hpp"
 #include "Engine/Texture/Texture2D.hpp"
 #include "Engine/Texture/TextureFactory.hpp"
@@ -16,6 +23,8 @@
 #include "VkPreset/VpSampler.hpp"
 #include "Framework/Core/Sampler.hpp"
 #include "Misc/FileLoader.hpp"
+#include "Misc/Files.hpp"
+#include "World/WorldManager.hpp"
 
 AssetManager::~AssetManager()
 {
@@ -203,6 +212,121 @@ void AssetManager::LodaAllTexture()
         }
     }
     ConstructDefaultTexture();
+}
+
+void AssetManager::LoadGlTF(const std::string& relativePath)
+{
+    auto Dir = Files::GetDirectory(relativePath) + "/";
+    tinygltf::Model model;
+    ModelLoader::GetInstance().LoadGltfModel(model, Paths::GetAssetFullPath(relativePath));
+    auto& glTfScene = model.scenes[model.defaultScene >= 0 ? model.defaultScene : 0];
+    auto* ActiveScene = GRuntimeGlobalContext.worldManager->GetActiveWorld();
+    std::unique_ptr<scene::Node> SceneNodeUni = std::make_unique<scene::Node>(
+        ActiveScene, !glTfScene.name.empty() ? glTfScene.name : "Scene");
+    auto* SceneProxyNode = SceneNodeUni.get();
+    ActiveScene->AddNode(std::move(SceneNodeUni));
+    // 递归函数：输入当前节点索引 + 父世界 TRS，输出所有带 mesh 节点的世界 TRS
+    std::vector<std::tuple<int, glm::vec3, glm::quat, glm::vec3>> meshInstances; // meshIdx, worldT, worldR, worldS
+
+    std::function<void(int, const glm::vec3&, const glm::quat&, const glm::vec3&)> traverse =
+        [&](int nodeIdx, const glm::vec3& parentWorldT, const glm::quat& parentWorldR, const glm::vec3& parentWorldS)
+    {
+        const auto& gltfNode = model.nodes[nodeIdx];
+
+        // ❌ 如果节点用了 matrix，跳过（你不用 matrix）
+        if (!gltfNode.matrix.empty())
+        {
+            // 可选：警告，但继续遍历子节点（用父 TRS 作为当前世界）
+            if (gltfNode.mesh >= 0)
+            {
+                meshInstances.emplace_back(gltfNode.mesh, parentWorldT, parentWorldR, parentWorldS);
+            }
+            for (int child : gltfNode.children)
+            {
+                traverse(child, parentWorldT, parentWorldR, parentWorldS);
+            }
+            return;
+        }
+
+        // 1. 获取局部 TRS（带默认值）
+        glm::vec3 localT = gltfNode.translation.empty()
+                               ? glm::vec3(0.0f)
+                               : glm::make_vec3(gltfNode.translation.data());
+
+        glm::quat localR = gltfNode.rotation.empty()
+                               ? glm::quat(1.0f, 0.0f, 0.0f, 0.0f)
+                               : glm::quat(
+                                   static_cast<float>(gltfNode.rotation[3]), // w
+                                   static_cast<float>(gltfNode.rotation[0]), // x
+                                   static_cast<float>(gltfNode.rotation[1]), // y
+                                   static_cast<float>(gltfNode.rotation[2]) // z
+                               );
+
+        glm::vec3 localS = gltfNode.scale.empty()
+                               ? glm::vec3(1.0f)
+                               : glm::make_vec3(gltfNode.scale.data());
+
+        // 2. 合成世界 TRS（关键！）
+        glm::vec3 worldT = parentWorldT + parentWorldR * (parentWorldS * localT);
+        glm::quat worldR = parentWorldR * localR;
+        glm::vec3 worldS = parentWorldS * localS;
+
+        // 3. 如果有 mesh，记录
+        if (gltfNode.mesh >= 0)
+        {
+            meshInstances.emplace_back(gltfNode.mesh, worldT, worldR, worldS);
+        }
+
+        // 4. 递归子节点
+        for (int childIdx : gltfNode.children)
+        {
+            traverse(childIdx, worldT, worldR, worldS);
+        }
+    };
+
+    for (int rootNodeIdx : glTfScene.nodes)
+    {
+        traverse(rootNodeIdx, glm::vec3(0), glm::quat(1, 0, 0, 0), glm::vec3(1));
+    }
+
+    //为每个 primitive 创建 node，并直接设置 TRS（无矩阵！）
+    for (const auto& [meshIdx, worldT, worldR, worldS] : meshInstances)
+    {
+        const auto& mesh = model.meshes[meshIdx];
+        for (size_t primIdx = 0; primIdx < mesh.primitives.size(); ++primIdx)
+        {
+            auto* node = SceneProxyNode->CreateChild(
+                "Mesh_" + std::to_string(meshIdx) + "_Prim_" + std::to_string(primIdx)
+            );
+
+            //直接设置 TRS，完全不用矩阵
+            node->GetTransform().SetTranslation(worldT);
+            node->GetTransform().SetRotation(worldR);
+            node->GetTransform().SetScale(worldS);
+
+            auto* subMeshCom = ActiveScene->GetComponentManager()->AddComponent<::scene::SubMesh>(node);
+
+            auto OptionalMeshData = ModelLoader::LoadPrimitiveAsMesh(model, mesh.primitives[primIdx]);
+            if (OptionalMeshData.has_value())
+            {
+                auto newMesh = std::make_shared<scene::MeshData>();
+                auto success = ModelLoader::MeshToBuffer(
+                    device,
+                    *newMesh, *OptionalMeshData);
+                if (success)
+                {
+                    subMeshCom->SetMeshData(newMesh);
+                }
+            }
+            if (mesh.primitives[primIdx].material >= 0)
+            {
+                int matIdx = mesh.primitives[primIdx].material;
+                MaterialTexturePaths texPaths = ModelLoader::ExtractMaterialTexturePaths(model, matIdx);
+                subMeshCom->get_mut_material()->base_color_texture = GetTexture(Dir + texPaths.baseColor);
+                subMeshCom->get_mut_material()->normal_texture = GetTexture(Dir + texPaths.normal);
+            }
+        }
+    }
 }
 
 const std::unordered_map<std::string, std::unique_ptr<Texture2D>>& AssetManager::GetTexture2DCache() const

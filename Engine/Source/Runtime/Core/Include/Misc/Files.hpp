@@ -20,7 +20,7 @@ public:
     static std::string GetFilename(const std::string& path);
     static std::string GetDirectory(const std::string& path);
     static std::string GetModifiedTime(const std::string& path);
-    
+
     static std::vector<std::string> Traverse(const std::string& path, bool is_recursive = false,
                                              EFileOrderType file_order_type = EFileOrderType::Name,
                                              bool is_reverse = false);
@@ -32,22 +32,22 @@ public:
     In the Windows system, the following characters are not allowed: /, :, *, ?, ", <, >, |
     */
     static std::string ValidateBasename(const std::string& basename);
-    
+
     static bool Exists(const std::string& path);
     static bool IsFile(const std::string& path);
     static bool IsDir(const std::string& path);
     static bool IsEmptyDir(const std::string& path);
-    
-    static bool CreateFile(const std::string& filename, std::ios_base::openmode mode = std::ios_base::out);
+
+    static bool CreateFileImpl(const std::string& filename, std::ios_base::openmode mode = std::ios_base::out);
     static bool CreateDir(const std::string& path, bool is_recursive = false);
     static bool RemoveFile(const std::string& filename);
     static bool RemoveDir(const std::string& path, bool is_recursive = false);
     static void CopyFile(const std::string& from, const std::string& to);
     static void RenameFile(const std::string& dir, const std::string& old_name, const std::string& new_name);
-    
+
     static bool WriteString(const std::string& filename, const std::string& str);
     static bool LoadString(const std::string& filename, std::string& str);
-    
+
     template <typename T, typename... Ts>
     static std::string Combine(const T& first, const Ts&... rest)
     {
@@ -72,7 +72,7 @@ public:
         std::snprintf(buf.data(), size, format.c_str(), args...);
         return std::string(buf.data(), buf.data() + size - 1);
     }
-    
+
     // Internal auxiliary structure, used for Traverse sorting optimization
     struct FileMetaInfo
     {

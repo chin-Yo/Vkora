@@ -328,8 +328,16 @@ void FileBrowser::constructFolderFiles()
                         // 打开文件逻辑
                     }
                 }
+                if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+                {
+                    if (!item.is_folder)
+                    {
+                        m_current_selected_item = item.name;
+                        ImGui::OpenPopup("AssetPopups");
+                    }
+                }
             }
-
+            constructAssetFilePopups();
             ImGui::PopID();
         }
 
@@ -347,25 +355,32 @@ void FileBrowser::constructImportPopups()
 
 void FileBrowser::constructAssetFilePopups()
 {
-    // right click option
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {2.0f, 8.0f});
-    ImGui::PushStyleColor(ImGuiCol_PopupBg, {0.2f, 0.2f, 0.2f, 1.0f});
-    ImGui::PushFont(DefaultFont);
+    // 注意：不再判断点击，而是直接尝试 BeginPopup
     if (ImGui::BeginPopup("AssetPopups"))
     {
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {2.0f, 8.0f});
+        ImGui::PushStyleColor(ImGuiCol_PopupBg, ImVec4{0.2f, 0.2f, 0.2f, 1.0f});
+        ImGui::PushFont(DefaultFont);
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {8.0f, 8.0f});
+
         createCustomSeperatorText("COMMON");
-        if (ImGui::MenuItem("  Edit"))
+        if (ImGui::MenuItem("  Info"))
         {
-            LOG_INFO("Edit");
+            LOG_INFO("Name : {}", m_current_selected_item)
+            ImGui::CloseCurrentPopup();
         }
         if (ImGui::MenuItem("  Delete"))
         {
             LOG_INFO("Delete");
+            ImGui::CloseCurrentPopup();
         }
-        if (ImGui::MenuItem("  Export"))
+        if (GetSelectedFolderRelative() == "scene")
         {
-            LOG_INFO("Export");
+            if (ImGui::MenuItem("  Open scene"))
+            {
+                LOG_INFO("Open scene")
+                ImGui::CloseCurrentPopup();
+            }
         }
         ImGui::Separator();
 
@@ -373,6 +388,7 @@ void FileBrowser::constructAssetFilePopups()
         if (ImGui::MenuItem("  Show in Explorer"))
         {
             LOG_INFO("Show in Explorer");
+            ImGui::CloseCurrentPopup();
         }
         ImGui::Separator();
 
@@ -380,17 +396,20 @@ void FileBrowser::constructAssetFilePopups()
         if (ImGui::MenuItem("  Copy URL"))
         {
             LOG_INFO("Copy URL");
+            ImGui::CloseCurrentPopup();
         }
         if (ImGui::MenuItem("  Copy File Path"))
         {
             LOG_INFO("Copy file path");
+            ImGui::CloseCurrentPopup();
         }
-        ImGui::PopStyleVar();
+
+        ImGui::PopStyleVar(); // ItemSpacing
+        ImGui::PopFont();
+        ImGui::PopStyleColor();
+        ImGui::PopStyleVar(); // WindowPadding
         ImGui::EndPopup();
     }
-    ImGui::PopFont();
-    ImGui::PopStyleColor();
-    ImGui::PopStyleVar();
 }
 
 void FileBrowser::constructFolderOpPopups(const std::string& str_id, bool is_background_not_hoverd)

@@ -289,7 +289,7 @@ void DetailsPanel::DrawTransformInspector(scene::Transform& transform)
         ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.72f, 0.27f, 0.27f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.64f, 0.24f, 0.24f, 1.0f));
         ImGui::PushItemWidth(itemWidth);
-        if (ImGui::DragFloat("##RX", &eulerDeg.x, 0.5f, -180.0f, 180.0f, "%.1f°"))
+        if (ImGui::DragFloat("##RX", &eulerDeg.x, 0.5f, -180.0f, 180.0f, "%.2f°"))
         {
             transform.SetRotation(scene::Transform::EulerDegreesToQuat(eulerDeg));
         }
@@ -305,7 +305,7 @@ void DetailsPanel::DrawTransformInspector(scene::Transform& transform)
         ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.27f, 0.72f, 0.27f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.24f, 0.64f, 0.24f, 1.0f));
         ImGui::PushItemWidth(itemWidth);
-        if (ImGui::DragFloat("##RY", &eulerDeg.y, 0.5f, -180.0f, 180.0f, "%.1f°"))
+        if (ImGui::DragFloat("##RY", &eulerDeg.y, 0.5f, -180.0f, 180.0f, "%.2f°"))
         {
             transform.SetRotation(scene::Transform::EulerDegreesToQuat(eulerDeg));
         }
@@ -321,7 +321,7 @@ void DetailsPanel::DrawTransformInspector(scene::Transform& transform)
         ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.27f, 0.45f, 0.9f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.24f, 0.4f, 0.8f, 1.0f));
         ImGui::PushItemWidth(itemWidth);
-        if (ImGui::DragFloat("##RZ", &eulerDeg.z, 0.5f, -180.0f, 180.0f, "%.1f°"))
+        if (ImGui::DragFloat("##RZ", &eulerDeg.z, 0.5f, -180.0f, 180.0f, "%.2f°"))
         {
             transform.SetRotation(scene::Transform::EulerDegreesToQuat(eulerDeg));
         }
@@ -341,7 +341,7 @@ void DetailsPanel::DrawTransformInspector(scene::Transform& transform)
         ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.72f, 0.27f, 0.27f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.64f, 0.24f, 0.24f, 1.0f));
         ImGui::PushItemWidth(itemWidth);
-        if (ImGui::DragFloat("##SX", &scale.x, 0.01f, 0.01f, 100.0f, "%.2f"))
+        if (ImGui::DragFloat("##SX", &scale.x, 0.01f, 0.01f, 100.0f, "%.7f"))
         {
             transform.SetScale(scale);
         }
@@ -357,7 +357,7 @@ void DetailsPanel::DrawTransformInspector(scene::Transform& transform)
         ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.27f, 0.72f, 0.27f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.24f, 0.64f, 0.24f, 1.0f));
         ImGui::PushItemWidth(itemWidth);
-        if (ImGui::DragFloat("##SY", &scale.y, 0.01f, 0.01f, 100.0f, "%.2f"))
+        if (ImGui::DragFloat("##SY", &scale.y, 0.01f, 0.01f, 100.0f, "%.7f"))
         {
             transform.SetScale(scale);
         }
@@ -373,7 +373,7 @@ void DetailsPanel::DrawTransformInspector(scene::Transform& transform)
         ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.27f, 0.45f, 0.9f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.24f, 0.4f, 0.8f, 1.0f));
         ImGui::PushItemWidth(itemWidth);
-        if (ImGui::DragFloat("##SZ", &scale.z, 0.01f, 0.01f, 100.0f, "%.2f"))
+        if (ImGui::DragFloat("##SZ", &scale.z, 0.01f, 0.01f, 100.0f, "%.7f"))
         {
             transform.SetScale(scale);
         }

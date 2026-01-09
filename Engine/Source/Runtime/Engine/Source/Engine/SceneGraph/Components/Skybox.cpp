@@ -69,6 +69,12 @@ namespace scene
             BRDFLUT.reset();
             bIsBRDFLUTReady = false;
         }
+        GenerateIBL();
+        CurrentEnvCube = EnvCube.get();
+    }
+
+    void Skybox::GenerateIBL()
+    {
         IrradianceMap = TextureFactory::CreateTextureCubeFromMemory(name + "IrradianceMap", {}, 64, 64,
                                                                     VK_FORMAT_R16G16B16A16_SFLOAT);
         IrradianceMap->create_vk_image(GRuntimeGlobalContext.GetDevice(), VK_IMAGE_USAGE_STORAGE_BIT);
