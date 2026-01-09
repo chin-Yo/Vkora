@@ -15,16 +15,22 @@ std::string Files::GetExtension(const std::string& path)
     return extension;
 }
 
+// Returns the filename without extension.
+// Example: "/assets/models/car.fbx" → "car"
 std::string Files::GetBasename(const std::string& path)
 {
     return std::filesystem::path(path).stem().generic_string();
 }
 
+// Returns the full filename including extension.
+// Example: "/assets/models/car.fbx" → "car.fbx"
 std::string Files::GetFilename(const std::string& path)
 {
     return std::filesystem::path(path).filename().generic_string();
 }
 
+// Returns the parent directory path.
+// Example: "/assets/models/car.fbx" → "/assets/models"
 std::string Files::GetDirectory(const std::string& path)
 {
     return std::filesystem::path(path).parent_path().generic_string();

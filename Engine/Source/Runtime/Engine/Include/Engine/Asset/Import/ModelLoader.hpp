@@ -6,6 +6,7 @@
 #include <volk.h>
 // GLM for vector/matrix math
 #include <optional>
+#include <tiny_gltf.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -116,6 +117,20 @@ public:
     Mesh MergeMeshes() const;
 };
 
+struct MaterialTexturePaths
+{
+    std::string baseColor;
+    std::string metallicRoughness; // 通常是 ORM 纹理（Occlusion, Roughness, Metallic）
+    std::string normal;
+    std::string emissive;
+    std::string occlusion; // 虽然常和 metallicRoughness 合并，但 glTF 单独定义
+    // 扩展
+    std::string transmission;
+    std::string thickness; // 来自 KHR_materials_volume
+    // 可继续扩展...
+};
+
+
 class ModelLoader
 {
 public:
@@ -131,6 +146,12 @@ public:
     std::optional<Model> LoadModel(const std::string& path);
 
     std::optional<Mesh> LoadAsSingleMesh(const std::string& path);
+
+    bool LoadGltfModel(tinygltf::Model& model, const std::string& path);
+
+    static std::optional<Mesh> LoadPrimitiveAsMesh(const tinygltf::Model& model, const tinygltf::Primitive& primitive);
+
+    static MaterialTexturePaths ExtractMaterialTexturePaths(const tinygltf::Model& model, int materialIndex);
 
     static bool MeshToBuffer(vkb::VulkanDevice& device, scene::MeshData& mesh_data, const Mesh& mesh,
                              VkBufferUsageFlags additional_buffer_usage_flags = 0);

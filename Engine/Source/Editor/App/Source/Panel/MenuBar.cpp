@@ -1,6 +1,8 @@
 #include "Panel/MenuBar.hpp"
 
 #include "GlobalContext.hpp"
+#include "Engine/Asset/AssetRegistry.hpp"
+#include "Engine/Asset/Manager/AssetManager.hpp"
 #include "Misc/Files.hpp"
 #include "Misc/Paths.hpp"
 #include "Serializer/Scene.hpp"
@@ -77,14 +79,23 @@ void MenuBar::OnUIRender()
             if (ImGui::MenuItem("New Scene"))
             {
             }
-            if (ImGui::MenuItem("Open Scene"))
+            if (ImGui::BeginMenu("Open Scene"))
             {
+                auto Scenes = AssetRegistry::Get().GetAllAssetsOfType(AssetType::Scene);
+                for (auto scene : Scenes)
+                {
+                    if (ImGui::MenuItem(scene->name.c_str()))
+                    {
+                        GRuntimeGlobalContext.assetManager->LoadGlTF(scene->relativePath);
+                    }
+                }
+                ImGui::EndMenu();
             }
             if (ImGui::MenuItem("Save Scene"))
             {
                 if (auto* scene = GRuntimeGlobalContext.worldManager->GetActiveWorld())
                 {
-                    auto path = Paths::GetContentPath() + scene->GetName() + ".scene";
+                    auto path = Paths::GetContentPath() + "/Scene/" + scene->GetName() + ".scene.meta";
                     Files::CreateFileImpl(path);
                     std::ofstream sceneFile(path);
                     sceneFile << Serializer::SerializeScene(*scene).dump(4);
