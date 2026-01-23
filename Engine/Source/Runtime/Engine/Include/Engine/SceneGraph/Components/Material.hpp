@@ -61,9 +61,7 @@ namespace scene
 
         ObserverPtr<Texture2D> normal_texture;
 
-        ObserverPtr<Texture2D> metallic_texture;
-
-        ObserverPtr<Texture2D> roughness_texture;
+        ObserverPtr<Texture2D> RM_texture;
 
         ObserverPtr<Texture2D> ao_texture;
 

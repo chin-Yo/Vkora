@@ -23,6 +23,7 @@ namespace scene
 #define DEFAULT_IrradianceMap "Default_IrradianceMap"
 #define DEFAULT_PrefilterMap "Default_PrefilterMap"
 #define DEFAULT_NormalMap "Default_NormalMap"
+#define DEFAULT_PureWhite "Default_PureWhite"
 #define DEFAULT_BRDFLUT "Textures/Engine/BRDFLUT.png"
 
 class AssetManager

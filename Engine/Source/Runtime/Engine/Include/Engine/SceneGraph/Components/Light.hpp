@@ -61,6 +61,8 @@ namespace scene
 
         // Outer angle of spotlight cone in radians, default is 0.0
         float outer_cone_angle{0.0f};
+
+        float ShadowDistance{1000.0f};
     };
 
     class Light : public Component

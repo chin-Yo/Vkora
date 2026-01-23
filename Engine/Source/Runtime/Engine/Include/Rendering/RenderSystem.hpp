@@ -69,6 +69,7 @@ public:
     VkImageUsageFlags rt_usage_flags{VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT};
     bool OffScreenResourcesReady = false;
     std::unique_ptr<vkb::RenderTarget> CreateRenderTarget(ImVec2 size);
+    std::unique_ptr<vkb::RenderTarget> CreateShadowMap(ImVec2 size);
 
     void ResetViewportRTs(ImVec2& size, vkb::Sampler* sampler, std::vector<VkDescriptorSet>& ViewportDescriptorSets);
     std::vector<std::unique_ptr<vkb::RenderTarget>> ViewportRTs;
@@ -78,6 +79,12 @@ public:
     void DrawPipeline(vkb::CommandBuffer& command_buffer,
                       vkb::RenderTarget& render_target,
                       vkb::RenderPipeline& render_pipeline);
+
+    // Shadow map
+    std::unique_ptr<vkb::RenderPipeline> CreateShadowMapRenderPass();
+    void DrawShadowPass(vkb::CommandBuffer& command_buffer, vkb::RenderTarget& render_target);
+    std::unique_ptr<vkb::RenderPipeline> ShadowPipeline;
+    std::unique_ptr<vkb::RenderTarget> ShadowRenderTarget;
 
 private: // -----------------Member
     vkb::Window* window{nullptr};

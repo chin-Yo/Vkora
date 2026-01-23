@@ -3,10 +3,8 @@ precision highp float;
 
 layout (set = 0, binding = 0) uniform sampler2D base_color_texture;
 layout (set = 0, binding = 1) uniform sampler2D normal_texture;
-layout (set = 0, binding = 2) uniform sampler2D metallic_texture;
-layout (set = 0, binding = 3) uniform sampler2D roughness_texture;
-layout (set = 0, binding = 4) uniform sampler2D ao_texture;
-
+layout (set = 0, binding = 2) uniform sampler2D RM_texture;
+layout (set = 0, binding = 3) uniform sampler2D ao_texture;
 
 layout (location = 0) in vec4 in_pos;
 layout (location = 1) in vec2 in_uv;
@@ -36,7 +34,7 @@ void main(void)
     vec3 base_color = texture(base_color_texture, in_uv).rgb;
     base_color *= pbr_material_uniform.base_color_factor.rgb;
     // Note: keep in sRGB! Lighting pass will convert to linear.
-
+    vec3 ORM = texture(RM_texture, in_uv).rgb;
     // === AO (Ambient Occlusion) ===
     float ao = 1.0;
     ao = texture(ao_texture, in_uv).r;
@@ -58,9 +56,9 @@ void main(void)
     o_gbuf_normal = vec4(world_normal * 0.5 + 0.5, 1.0);
 
     // === Material ===
-    float metallic = pbr_material_uniform.metallic_factor * texture(metallic_texture, in_uv).r;
+    float metallic = pbr_material_uniform.metallic_factor * ORM.b;
 
-    float roughness = pbr_material_uniform.roughness_factor * texture(roughness_texture, in_uv).r;
+    float roughness = pbr_material_uniform.roughness_factor * ORM.g;
 
     o_gbuf_material = vec4(metallic, roughness, 0.0, 1.0);
 }
