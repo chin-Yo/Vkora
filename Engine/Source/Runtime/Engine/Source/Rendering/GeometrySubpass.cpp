@@ -221,32 +221,18 @@ namespace vkb
             command_buffer.bind_image(def_nor->get_vk_image_view(), *def_nor->sampler.lock(),
                                       0, descriptor_set_layout.get_layout_binding("normal_texture")->binding, 0);
         }
-        if (sub_mesh.get_material()->metallic_texture)
+        if (sub_mesh.get_material()->RM_texture)
         {
             command_buffer.bind_image(
-                sub_mesh.get_material()->metallic_texture->get_vk_image_view(),
-                *sub_mesh.get_material()->metallic_texture->sampler.lock(),
-                0, descriptor_set_layout.get_layout_binding("metallic_texture")->binding, 0);
+                sub_mesh.get_material()->RM_texture->get_vk_image_view(),
+                *sub_mesh.get_material()->RM_texture->sampler.lock(),
+                0, descriptor_set_layout.get_layout_binding("RM_texture")->binding, 0);
         }
         else
         {
             command_buffer.bind_image(defaultTexture->get_vk_image_view(),
                                       *defaultTexture->sampler.lock(),
-                                      0, descriptor_set_layout.get_layout_binding("metallic_texture")->
-                                                               binding, 0);
-        }
-        if (sub_mesh.get_material()->roughness_texture)
-        {
-            command_buffer.bind_image(
-                sub_mesh.get_material()->roughness_texture->get_vk_image_view(),
-                *sub_mesh.get_material()->roughness_texture->sampler.lock(),
-                0, descriptor_set_layout.get_layout_binding("roughness_texture")->binding, 0);
-        }
-        else
-        {
-            command_buffer.bind_image(defaultTexture->get_vk_image_view(),
-                                      *defaultTexture->sampler.lock(),
-                                      0, descriptor_set_layout.get_layout_binding("roughness_texture")->
+                                      0, descriptor_set_layout.get_layout_binding("RM_texture")->
                                                                binding, 0);
         }
         if (sub_mesh.get_material()->ao_texture)
@@ -257,11 +243,11 @@ namespace vkb
         }
         else
         {
-            command_buffer.bind_image(defaultTexture->get_vk_image_view(),
-                                      *defaultTexture->sampler.lock(),
+            auto* Pure = GRuntimeGlobalContext.assetManager->GetTexture(DEFAULT_PureWhite);
+            command_buffer.bind_image(Pure->get_vk_image_view(),
+                                      *Pure->sampler.lock(),
                                       0, descriptor_set_layout.get_layout_binding("ao_texture")->binding, 0);
         }
-
         auto vertex_input_resources = pipeline_layout.get_resources(ShaderResourceType::Input,
                                                                     VK_SHADER_STAGE_VERTEX_BIT);
 

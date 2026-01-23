@@ -66,6 +66,19 @@ void AssetManager::ConstructDefaultTexture()
     Tex_vilidity = GetTexture(DEFAULT_NormalMap);
     assert(Tex_vilidity != nullptr && "DEFAULT_NormalMap is null"); //---
 
+    std::vector<uint8_t> WhiteData{50, 255, 255, 255};
+    auto PureWhite_Texture = TextureFactory::CreateTexture2DFromMemory(DEFAULT_NormalMap, std::move(WhiteData),
+                                                                       1, 1, VK_FORMAT_R8G8B8A8_UNORM);
+    PureWhite_Texture->CopyDataToGPU(device);
+    PureWhite_Texture->sampler = defaultSampler;
+    PureWhite_Texture->texture_id = ImGui_ImplVulkan_AddTexture(PureWhite_Texture->sampler.lock()->GetHandle(),
+                                                                PureWhite_Texture->get_vk_image_view().GetHandle(),
+                                                                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    textures_id.push_back(PureWhite_Texture->texture_id);
+    texture2DCache[DEFAULT_PureWhite] = std::move(PureWhite_Texture);
+    Tex_vilidity = GetTexture(DEFAULT_NormalMap);
+    assert(Tex_vilidity != nullptr && "DEFAULT_NormalMap is null"); //---
+
     auto texture_PrefilterMap = TextureFactory::CreateTextureCubeFromMemory(DEFAULT_PrefilterMap, {}, 512, 512,
                                                                             VK_FORMAT_R16G16B16A16_SFLOAT,
                                                                             std::vector<Texture::Mipmap>(8));
@@ -320,10 +333,13 @@ void AssetManager::LoadGlTF(const std::string& relativePath)
             }
             if (mesh.primitives[primIdx].material >= 0)
             {
+                auto* mat = subMeshCom->get_mut_material();
                 int matIdx = mesh.primitives[primIdx].material;
                 MaterialTexturePaths texPaths = ModelLoader::ExtractMaterialTexturePaths(model, matIdx);
-                subMeshCom->get_mut_material()->base_color_texture = GetTexture(Dir + texPaths.baseColor);
-                subMeshCom->get_mut_material()->normal_texture = GetTexture(Dir + texPaths.normal);
+                mat->base_color_texture = GetTexture(Dir + texPaths.baseColor);
+                mat->normal_texture = GetTexture(Dir + texPaths.normal);
+                mat->RM_texture = GetTexture(Dir + texPaths.metallicRoughness);
+                mat->ao_texture = GetTexture(Dir + texPaths.occlusion);
             }
         }
     }

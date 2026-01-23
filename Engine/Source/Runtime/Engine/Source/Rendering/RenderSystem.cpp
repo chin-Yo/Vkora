@@ -14,6 +14,7 @@
 #include "Misc/Paths.hpp"
 #include "Rendering/GeometrySubpass.hpp"
 #include "Rendering/LightingSubpass.hpp"
+#include "Rendering/Subpass/ShadowSubpass.hpp"
 #include "Tools/Utils.hpp"
 #include "World/WorldManager.hpp"
 #include "UIManage/EditorUIManager.hpp"
@@ -45,6 +46,8 @@ bool RenderSystem::RenderPrepare()
 {
     render_pipeline = CreateOneRenderpassTwoSubpasses(*GRuntimeGlobalContext.worldManager->GetActiveWorld()
                                                       , *GRuntimeGlobalContext.worldManager->GetViewportCamera());
+    ShadowPipeline = CreateShadowMapRenderPass();
+    ShadowRenderTarget = CreateShadowMap({1024, 1024});
     return true;
 }
 
@@ -71,6 +74,18 @@ void RenderSystem::Draw(vkb::CommandBuffer& command_buffer, vkb::RenderTarget& r
         render_target.set_layout(0, memory_barrier.new_layout);
     }
 
+    {
+        vkb::ImageMemoryBarrier memory_barrier{};
+        memory_barrier.old_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+        memory_barrier.new_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        memory_barrier.src_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        memory_barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT;
+        memory_barrier.src_stage_mask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT |
+            VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        memory_barrier.dst_stage_mask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+
+        command_buffer.image_memory_barrier(ShadowRenderTarget->get_views()[0], memory_barrier);
+    }
     // draw_renderpass is a virtual function, thus we have to call that, instead of directly calling draw_renderpass_impl!
     DrawRenderpass(command_buffer, render_target);
 
@@ -183,7 +198,7 @@ void RenderSystem::Update(float delta_time)
 
     command_buffer->begin(VkCommandBufferUsageFlagBits::VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
     // stats->begin_sampling(*command_buffer);
-
+    DrawShadowPass(*command_buffer, *ShadowRenderTarget);
     Draw(*command_buffer, render_context->get_active_frame().get_render_target());
 
     // stats->end_sampling(*command_buffer);
@@ -393,6 +408,30 @@ std::unique_ptr<vkb::RenderTarget> RenderSystem::CreateRenderTarget(ImVec2 size)
     return std::make_unique<vkb::RenderTarget>(std::move(images));
 }
 
+std::unique_ptr<vkb::RenderTarget> RenderSystem::CreateShadowMap(ImVec2 size)
+{
+    VkExtent3D extent = {static_cast<uint32_t>(size.x), static_cast<uint32_t>(size.y), 1};
+    /*vkb::Image depth_image{
+        GetDevice(),
+        extent,
+        vkb::get_suitable_depth_format(GetDevice().get_gpu().get_handle()),
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | rt_usage_flags,
+        VMA_MEMORY_USAGE_GPU_ONLY
+    };*/
+    vkb::Image depth_image{
+        GetDevice(),
+        extent,
+        vkb::get_suitable_depth_format(GetDevice().get_gpu().get_handle()),
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VMA_MEMORY_USAGE_GPU_ONLY, VK_SAMPLE_COUNT_1_BIT, 1, 3 * 6
+    };
+
+    std::vector<vkb::Image> images;
+    // Attachment 0
+    images.push_back(std::move(depth_image));
+    return std::make_unique<vkb::RenderTarget>(std::move(images));
+}
+
 void RenderSystem::ResetViewportRTs(ImVec2& size, vkb::Sampler* sampler,
                                     std::vector<VkDescriptorSet>& ViewportDescriptorSets)
 {
@@ -443,6 +482,54 @@ void RenderSystem::DrawPipeline(vkb::CommandBuffer& command_buffer, vkb::RenderT
 
     render_pipeline.draw(command_buffer, render_target);
 
+    command_buffer.end_render_pass();
+}
+
+std::unique_ptr<vkb::RenderPipeline> RenderSystem::CreateShadowMapRenderPass()
+{
+    // Shadow pass
+    auto Shadow_vs = vkb::ShaderSource{Paths::GetShaderFullPath("deferred/shadow.vert.spv")};
+    auto Shadow_gs = vkb::ShaderSource{Paths::GetShaderFullPath("deferred/shadow.geom.spv")};
+    auto Shadow_fs = vkb::ShaderSource{Paths::GetShaderFullPath("deferred/shadow.frag.spv")};
+    auto Shadow_subpass = std::make_unique<ShadowSubpass>(GetRenderContext(), std::move(Shadow_vs),
+                                                          std::move(Shadow_fs), std::move(Shadow_gs));
+
+    // Create subpasses pipeline
+    std::vector<std::unique_ptr<vkb::Subpass>> subpasses{};
+    subpasses.push_back(std::move(Shadow_subpass));
+
+    auto tmp_render_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(subpasses));
+
+    return tmp_render_pipeline;
+}
+
+void RenderSystem::DrawShadowPass(vkb::CommandBuffer& command_buffer, vkb::RenderTarget& render_target)
+{
+    auto& extent = render_target.get_extent();
+
+    VkViewport viewport{};
+    viewport.width = static_cast<float>(extent.width);
+    viewport.height = static_cast<float>(extent.height);
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    command_buffer.set_viewport(0, {viewport});
+
+    VkRect2D scissor{};
+    scissor.extent = extent;
+    command_buffer.set_scissor(0, {scissor});
+
+    vkb::ImageMemoryBarrier memory_barrier{};
+    memory_barrier.old_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+    memory_barrier.new_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    memory_barrier.src_access_mask = 0;
+    memory_barrier.dst_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+        VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    memory_barrier.src_stage_mask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    memory_barrier.dst_stage_mask = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT |
+        VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+    assert(!render_target.get_views().empty() && "shadow render_target is invalid");
+    command_buffer.image_memory_barrier(render_target.get_views()[0], memory_barrier);
+    ShadowPipeline->draw(command_buffer, render_target);
     command_buffer.end_render_pass();
 }
 
