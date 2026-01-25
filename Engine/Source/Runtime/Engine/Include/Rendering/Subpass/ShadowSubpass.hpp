@@ -21,5 +21,8 @@ protected:
     vkb::ShaderSource geometry_shader;
 
     void draw_submesh(vkb::CommandBuffer& command_buffer, scene::SubMesh& sub_mesh,
+                      const std::vector<vkb::ShaderResource>& vertex_input_resources,
                       VkFrontFace front_face = VK_FRONT_FACE_COUNTER_CLOCKWISE);
+
+    virtual void draw_submesh_command(vkb::CommandBuffer& command_buffer, scene::SubMesh& sub_mesh);
 };

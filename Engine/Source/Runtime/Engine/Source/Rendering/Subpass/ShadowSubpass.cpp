@@ -6,6 +6,7 @@
 #include "Engine/SceneGraph/Components/Light.hpp"
 #include "Engine/SceneGraph/Components/SubMesh.hpp"
 #include "Framework/Core/CommandBuffer.hpp"
+#include "Framework/Core/VulkanDevice.hpp"
 #include "World/WorldManager.hpp"
 
 const glm::vec3 faceDirs[6] = {
@@ -43,8 +44,31 @@ void ShadowSubpass::draw(vkb::CommandBuffer& command_buffer)
     auto* scene = GRuntimeGlobalContext.worldManager->GetActiveWorld();
     if (!scene)
         return;
+    auto& device = command_buffer.GetDevice();
     auto& Lights = scene->GetComponentManager()->GetComponentsByClass<scene::Light>();
     auto& render_frame = get_render_context().get_active_frame();
+    if (Lights.empty())
+        return;
+    vkb::MultisampleState multisample_state{};
+    multisample_state.rasterization_samples = get_sample_count();
+    command_buffer.set_multisample_state(multisample_state);
+
+    vkb::RasterizationState rasterization_state{};
+    command_buffer.set_rasterization_state(rasterization_state);
+
+    auto& vert_shader_module = device.get_resource_cache().request_shader_module(
+        VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader());
+    auto& frag_shader_module = device.get_resource_cache().request_shader_module(
+        VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader());
+    auto& geom_shader_module = device.get_resource_cache().request_shader_module(
+        VK_SHADER_STAGE_GEOMETRY_BIT, geometry_shader);
+
+    std::vector<vkb::ShaderModule*> shader_modules{&vert_shader_module, &frag_shader_module, &geom_shader_module};
+    auto& resource_cache = command_buffer.GetDevice().get_resource_cache();
+    auto& pipeline_layout = resource_cache.request_pipeline_layout(shader_modules);
+    command_buffer.bind_pipeline_layout(pipeline_layout);
+    auto& vertex_input_resources = pipeline_layout.get_resources(vkb::ShaderResourceType::Input,
+                                                                 VK_SHADER_STAGE_VERTEX_BIT);
 
     struct ShadowMatricesUBO
     {
@@ -60,7 +84,9 @@ void ShadowSubpass::draw(vkb::CommandBuffer& command_buffer)
         if (i >= 3)
             break;
         lightPos.lightPositions[i] = Light.GetOwner()->GetTransform().GetTranslation();
-        glm::mat4 proj = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, Light.get_properties().range);
+        float light_near = 0.1f;
+        float light_far = Light.get_properties().range;
+        glm::mat4 proj = glm::perspective(glm::radians(90.0f), 1.0f, light_far, light_near);
 
         for (int face = 0; face < 6; ++face)
         {
@@ -96,10 +122,63 @@ void ShadowSubpass::draw(vkb::CommandBuffer& command_buffer)
         command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 0, 0);
 
         // VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE;
-        draw_submesh(command_buffer, mesh, VK_FRONT_FACE_CLOCKWISE);
+        draw_submesh(command_buffer, mesh, vertex_input_resources, VK_FRONT_FACE_CLOCKWISE);
     }
 }
 
-void ShadowSubpass::draw_submesh(vkb::CommandBuffer& command_buffer, scene::SubMesh& sub_mesh, VkFrontFace front_face)
+void ShadowSubpass::draw_submesh(vkb::CommandBuffer& command_buffer, scene::SubMesh& sub_mesh,
+                                 const std::vector<vkb::ShaderResource>& vertex_input_resources, VkFrontFace front_face)
 {
+    vkb::VertexInputState vertex_input_state;
+
+    for (auto& input_resource : vertex_input_resources)
+    {
+        scene::MeshData::VertexAttribute attribute;
+
+        if (!sub_mesh.GetAttribute(input_resource.name, attribute))
+        {
+            continue;
+        }
+
+        VkVertexInputAttributeDescription vertex_attribute{};
+        vertex_attribute.binding = 0;
+        vertex_attribute.format = attribute.format;
+        vertex_attribute.location = input_resource.location;
+        vertex_attribute.offset = attribute.offset;
+
+        vertex_input_state.attributes.push_back(vertex_attribute);
+    }
+    VkVertexInputBindingDescription vertex_binding{};
+    vertex_binding.binding = 0;
+    vertex_binding.stride = sub_mesh.meshData->vertex_buffer_bindings["Vertex"].stride;
+
+    vertex_input_state.bindings.push_back(vertex_binding);
+    command_buffer.set_vertex_input_state(vertex_input_state);
+
+    std::vector<std::reference_wrapper<const vkb::Buffer>> buffers;
+    buffers.emplace_back(std::ref(*sub_mesh.meshData->vertex_buffer_bindings["Vertex"].buffer));
+
+    // Bind vertex buffers only for the attribute locations defined
+    command_buffer.bind_vertex_buffers(0, std::move(buffers), {0});
+
+    draw_submesh_command(command_buffer, sub_mesh);
+}
+
+void ShadowSubpass::draw_submesh_command(vkb::CommandBuffer& command_buffer, scene::SubMesh& sub_mesh)
+{
+    // Draw submesh indexed if indices exists
+    if (sub_mesh.meshData->index_count != 0)
+    {
+        // Bind index buffer of submesh
+        command_buffer.bind_index_buffer(*sub_mesh.meshData->index_buffer, sub_mesh.meshData->index_buffer_offset,
+                                         sub_mesh.meshData->index_type);
+
+        // Draw submesh using indexed data
+        command_buffer.draw_indexed(sub_mesh.meshData->index_count, 1, 0, 0, 0);
+    }
+    else
+    {
+        // Draw submesh using vertices only
+        command_buffer.draw(sub_mesh.meshData->vertices_count, 1, 0, 0);
+    }
 }

@@ -90,20 +90,6 @@ void MenuBar::OnUIRender()
                     }
                 }
                 ImGui::EndMenu();
-<<<<<<< HEAD
-            }
-            if (ImGui::MenuItem("Save Scene"))
-            {
-                if (auto* scene = GRuntimeGlobalContext.worldManager->GetActiveWorld())
-                {
-                    auto path = Paths::GetContentPath() + "/Scene/" + scene->GetName() + ".scene.meta";
-                    Files::CreateFileImpl(path);
-                    std::ofstream sceneFile(path);
-                    sceneFile << Serializer::SerializeScene(*scene).dump(4);
-                    sceneFile.close();
-                }
-=======
->>>>>>> be1220f (gltf场景加载)
             }
             if (ImGui::MenuItem("Save Scene"))
             {

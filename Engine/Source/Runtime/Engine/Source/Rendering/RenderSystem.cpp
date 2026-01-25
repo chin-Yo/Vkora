@@ -500,6 +500,16 @@ std::unique_ptr<vkb::RenderPipeline> RenderSystem::CreateShadowMapRenderPass()
 
     auto tmp_render_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(subpasses));
 
+    std::vector<vkb::LoadStoreInfo> load_store{1};
+    load_store[0].load_op = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    load_store[0].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+    tmp_render_pipeline->set_load_store(load_store);
+
+    std::vector<VkClearValue> clear_value{1};
+    clear_value[0].depthStencil = {0.0f, ~0U};
+    tmp_render_pipeline->set_clear_value(clear_value);
+
     return tmp_render_pipeline;
 }
 
