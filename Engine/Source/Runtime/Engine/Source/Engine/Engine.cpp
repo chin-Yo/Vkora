@@ -167,6 +167,11 @@ void Engine::InitRenderBackend(const BackendOptions& options)
         gpu.get_mutable_requested_features().samplerAnisotropy = true;
     }
 
+    if (gpu.get_features().geometryShader)
+    {
+        gpu.get_mutable_requested_features().geometryShader = true;
+    }
+
     //RequestGpuFeatures(gpu);
 
     // Creating vulkan device, specifying the swapchain extension always

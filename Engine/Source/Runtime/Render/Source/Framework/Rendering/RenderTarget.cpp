@@ -104,7 +104,10 @@ namespace vkb
                 throw VulkanException{VK_ERROR_INITIALIZATION_FAILED, "Image type is not 2D"};
             }
 
-            views.emplace_back(image, VK_IMAGE_VIEW_TYPE_2D);
+            VkImageViewType view_type = (image.get_array_layer_count() == 1)
+                                            ? VK_IMAGE_VIEW_TYPE_2D
+                                            : VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+            views.emplace_back(image, view_type);
 
             attachments.emplace_back(Attachment{image.get_format(), image.get_sample_count(), image.get_usage()});
         }
