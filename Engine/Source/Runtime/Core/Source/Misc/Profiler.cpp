@@ -1,7 +1,8 @@
-#include "Misc/Profiler.h"
+#include "Misc/Profiler.hpp"
+
 #include <algorithm>
 
-Profiler &Profiler::Get()
+Profiler& Profiler::Get()
 {
     static Profiler instance;
     return instance;
@@ -23,10 +24,10 @@ void Profiler::EndFrame()
     m_LastFrameRoot = m_CurrentFrameRoot;
 }
 
-void Profiler::PushScope(const char *name)
+void Profiler::PushScope(const char* name)
 {
     // 创建一个新的临时节点
-    TempNode *newNode = new TempNode();
+    TempNode* newNode = new TempNode();
     newNode->name = name;
     newNode->startTime = std::chrono::high_resolution_clock::now();
 
@@ -39,7 +40,7 @@ void Profiler::PopScope()
         return;
 
     // 取出栈顶
-    TempNode *topNode = m_NodeStack.back();
+    TempNode* topNode = m_NodeStack.back();
     m_NodeStack.pop_back();
 
     auto endTime = std::chrono::high_resolution_clock::now();

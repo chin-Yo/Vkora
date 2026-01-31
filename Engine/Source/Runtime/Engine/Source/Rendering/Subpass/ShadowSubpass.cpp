@@ -4,6 +4,7 @@
 #include "Engine/InputEvents.hpp"
 #include "Engine/SceneGraph/ComponentPool.hpp"
 #include "Engine/SceneGraph/Components/Light.hpp"
+#include "Engine/SceneGraph/Components/PerspectiveCamera.hpp"
 #include "Engine/SceneGraph/Components/SubMesh.hpp"
 #include "Framework/Core/CommandBuffer.hpp"
 #include "Framework/Core/VulkanDevice.hpp"
@@ -60,17 +61,32 @@ void ShadowSubpass::draw(vkb::CommandBuffer& command_buffer)
         VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader());
     auto& frag_shader_module = device.get_resource_cache().request_shader_module(
         VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader());
-    auto& geom_shader_module = device.get_resource_cache().request_shader_module(
-        VK_SHADER_STAGE_GEOMETRY_BIT, geometry_shader);
+    /*auto& geom_shader_module = device.get_resource_cache().request_shader_module(
+        VK_SHADER_STAGE_GEOMETRY_BIT, geometry_shader);*/
 
-    std::vector<vkb::ShaderModule*> shader_modules{&vert_shader_module, &frag_shader_module, &geom_shader_module};
+    std::vector<vkb::ShaderModule*> shader_modules{&vert_shader_module, &frag_shader_module};
     auto& resource_cache = command_buffer.GetDevice().get_resource_cache();
     auto& pipeline_layout = resource_cache.request_pipeline_layout(shader_modules);
     command_buffer.bind_pipeline_layout(pipeline_layout);
     auto& vertex_input_resources = pipeline_layout.get_resources(vkb::ShaderResourceType::Input,
                                                                  VK_SHADER_STAGE_VERTEX_BIT);
-
-    struct ShadowMatricesUBO
+    auto Cascades = GRuntimeGlobalContext.worldManager->GetViewportCamera()->GetCascades(
+        CASCADE_COUNT, Lights[0].get_properties().direction);
+    struct CascadesUBO
+    {
+        glm::mat4 viewProj[4] = {};
+    } ubo;
+    for (int i = 0; i < CASCADE_COUNT; i++)
+    {
+        ubo.viewProj[i] = Cascades[i].viewProjMatrix;
+    }
+    auto allocation_cascades = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                                                            sizeof(CascadesUBO),
+                                                            0);
+    allocation_cascades.update(ubo);
+    command_buffer.bind_buffer(allocation_cascades.get_buffer(), allocation_cascades.get_offset(),
+                               allocation_cascades.get_size(), 0, 1, 0);
+    /*struct ShadowMatricesUBO
     {
         glm::mat4 shadowViewProj[3][6] = {};
     } shadowMats;
@@ -110,17 +126,13 @@ void ShadowSubpass::draw(vkb::CommandBuffer& command_buffer)
                                                               0);
     allocation_shadowMats.update(shadowMats);
     command_buffer.bind_buffer(allocation_shadowMats.get_buffer(), allocation_shadowMats.get_offset(),
-                               allocation_shadowMats.get_size(), 0, 2, 0);
+                               allocation_shadowMats.get_size(), 0, 2, 0);*/
     auto& Meshes = scene->GetComponentManager()->GetComponentsByClass<scene::SubMesh>();
     for (auto& mesh : Meshes)
     {
         auto& transform = mesh.GetOwner()->GetTransform();
-        auto allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(glm::mat4),
-                                                       0);
         glm::mat4 modelMatrix = transform.GetWorldMatrix();
-        allocation.update(modelMatrix);
-        command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 0, 0);
-
+        command_buffer.push_constants(vkb::to_bytes(modelMatrix));
         // VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE;
         draw_submesh(command_buffer, mesh, vertex_input_resources, VK_FRONT_FACE_CLOCKWISE);
     }
@@ -164,7 +176,8 @@ void ShadowSubpass::draw_submesh(vkb::CommandBuffer& command_buffer, scene::SubM
     draw_submesh_command(command_buffer, sub_mesh);
 }
 
-void ShadowSubpass::draw_submesh_command(vkb::CommandBuffer& command_buffer, scene::SubMesh& sub_mesh)
+void ShadowSubpass::draw_submesh_command(vkb::CommandBuffer& command_buffer, scene::SubMesh& sub_mesh,
+                                         uint32_t instance_num)
 {
     // Draw submesh indexed if indices exists
     if (sub_mesh.meshData->index_count != 0)
@@ -174,11 +187,11 @@ void ShadowSubpass::draw_submesh_command(vkb::CommandBuffer& command_buffer, sce
                                          sub_mesh.meshData->index_type);
 
         // Draw submesh using indexed data
-        command_buffer.draw_indexed(sub_mesh.meshData->index_count, 1, 0, 0, 0);
+        command_buffer.draw_indexed(sub_mesh.meshData->index_count, instance_num, 0, 0, 0);
     }
     else
     {
         // Draw submesh using vertices only
-        command_buffer.draw(sub_mesh.meshData->vertices_count, 1, 0, 0);
+        command_buffer.draw(sub_mesh.meshData->vertices_count, instance_num, 0, 0);
     }
 }

@@ -3,8 +3,10 @@
 #include "GlobalContext.hpp"
 #include "Engine/Asset/AssetRegistry.hpp"
 #include "Engine/Asset/Manager/AssetManager.hpp"
+#include "Function/ProfileTable.hpp"
 #include "Misc/Files.hpp"
 #include "Misc/Paths.hpp"
+#include "Misc/Profiler.hpp"
 #include "Serializer/Scene.hpp"
 #include "World/WorldManager.hpp"
 
@@ -146,6 +148,7 @@ void MenuBar::OnUIRender()
             }
 
             ImGui::MenuItem("Style Editor", NULL, &bShowStyleEditor);
+            ImGui::MenuItem("Profile Panel", NULL, &bShowProfileDrawer);
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Options"))
@@ -202,5 +205,9 @@ void MenuBar::DrawMenuPanel()
         ImGui::Begin("Dear ImGui Style Editor", &bShowStyleEditor);
         ImGui::ShowStyleEditor();
         ImGui::End();
+    }
+    if (bShowProfileDrawer)
+    {
+        ProfileDrawer::ShowProfilerWindow(Profiler::Get().GetLastFrameResults());
     }
 }

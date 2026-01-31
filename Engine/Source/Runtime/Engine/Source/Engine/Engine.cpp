@@ -13,6 +13,7 @@
 #include "Misc/Paths.hpp"
 #include "World/WorldManager.hpp"
 #include "Engine/SceneGraph/ComponentPool.hpp"
+#include "Misc/Profiler.hpp"
 #include "UIManage/EditorGlobalContext.hpp"
 
 const float Engine::FPSAlpha = 1.f / 100;
@@ -26,6 +27,7 @@ void Engine::LogicalTick(float DeltaTime)
 
 bool Engine::RendererTick(float DeltaTime)
 {
+    PROFILE_FUNCTION()
     renderSystem->Update(DeltaTime);
     return true;
 }
@@ -172,6 +174,10 @@ void Engine::InitRenderBackend(const BackendOptions& options)
         gpu.get_mutable_requested_features().geometryShader = true;
     }
 
+    if (gpu.is_extension_supported(VK_EXT_SHADER_VIEWPORT_INDEX_LAYER_EXTENSION_NAME))
+    {
+        RenderBackend.AddDeviceExtension(VK_EXT_SHADER_VIEWPORT_INDEX_LAYER_EXTENSION_NAME);
+    }
     //RequestGpuFeatures(gpu);
 
     // Creating vulkan device, specifying the swapchain extension always
@@ -316,11 +322,16 @@ void Engine::Tick()
     float delta_time;
     while (true)
     {
+        Profiler::Get().BeginFrame();
         delta_time = CalculateDeltaTime();
         LimitFPS(delta_time);
 
         if (!TickOneFrame(delta_time))
+        {
+            Profiler::Get().EndFrame();
             return;
+        }
+        Profiler::Get().EndFrame();
     }
 }
 
