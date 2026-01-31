@@ -27,6 +27,12 @@
 
 namespace scene
 {
+    struct Cascade
+    {
+        float splitDepth;
+        glm::mat4 viewProjMatrix;
+    };
+
     class PerspectiveCamera : public Camera
     {
     public:
@@ -56,6 +62,9 @@ namespace scene
         float GetAspectRatio();
 
         float GetFieldOfView();
+
+        std::vector<Cascade> GetCascades(uint32_t cascade_num, const glm::vec3& lightDir,
+                                         float cascadeSplitLambda = 0.75f);
 
         virtual glm::mat4 GetProjection() override;
 

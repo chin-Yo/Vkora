@@ -15,4 +15,5 @@ protected:
     void DrawMenuPanel();
 
     bool bShowStyleEditor = false;
+    bool bShowProfileDrawer = false;
 };

@@ -12,6 +12,7 @@
 #include "Framework/Rendering/RenderFrame.hpp"
 #include "Framework/Rendering/Subpass.hpp"
 #include "Misc/Paths.hpp"
+#include "Misc/Profiler.hpp"
 #include "Rendering/GeometrySubpass.hpp"
 #include "Rendering/LightingSubpass.hpp"
 #include "Rendering/Subpass/ShadowSubpass.hpp"
@@ -198,13 +199,21 @@ void RenderSystem::Update(float delta_time)
 
     command_buffer->begin(VkCommandBufferUsageFlagBits::VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
     // stats->begin_sampling(*command_buffer);
-    DrawShadowPass(*command_buffer, *ShadowRenderTarget);
-    Draw(*command_buffer, render_context->get_active_frame().get_render_target());
+    {
+        PROFILE_SCOPE("DrawShadowPass")
+        DrawShadowPass(*command_buffer, *ShadowRenderTarget);
+    }
+    {
+        PROFILE_SCOPE("DrawDeferredPass")
+        Draw(*command_buffer, render_context->get_active_frame().get_render_target());
+    }
 
     // stats->end_sampling(*command_buffer);
     command_buffer->end();
-
-    render_context->submit(command_buffer);
+    {
+        PROFILE_SCOPE("SubmitOrWait")
+        render_context->submit(command_buffer);
+    }
 }
 
 void RenderSystem::UpdateDebugWindow()
@@ -423,7 +432,7 @@ std::unique_ptr<vkb::RenderTarget> RenderSystem::CreateShadowMap(ImVec2 size)
         extent,
         vkb::get_suitable_depth_format(GetDevice().get_gpu().get_handle()),
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-        VMA_MEMORY_USAGE_GPU_ONLY, VK_SAMPLE_COUNT_1_BIT, 1, 3 * 6
+        VMA_MEMORY_USAGE_GPU_ONLY, VK_SAMPLE_COUNT_1_BIT, 1, CASCADE_COUNT
     };
 
     std::vector<vkb::Image> images;
@@ -488,7 +497,7 @@ void RenderSystem::DrawPipeline(vkb::CommandBuffer& command_buffer, vkb::RenderT
 std::unique_ptr<vkb::RenderPipeline> RenderSystem::CreateShadowMapRenderPass()
 {
     // Shadow pass
-    auto Shadow_vs = vkb::ShaderSource{Paths::GetShaderFullPath("deferred/shadow.vert.spv")};
+    auto Shadow_vs = vkb::ShaderSource{Paths::GetShaderFullPath("deferred/CascadedShadow.vert.spv")};
     auto Shadow_gs = vkb::ShaderSource{Paths::GetShaderFullPath("deferred/shadow.geom.spv")};
     auto Shadow_fs = vkb::ShaderSource{Paths::GetShaderFullPath("deferred/shadow.frag.spv")};
     auto Shadow_subpass = std::make_unique<ShadowSubpass>(GetRenderContext(), std::move(Shadow_vs),

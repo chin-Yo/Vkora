@@ -1,7 +1,7 @@
 #pragma once
 #include "Framework/Rendering/Subpass.hpp"
 
-
+#define CASCADE_COUNT 4
 namespace scene
 {
     class SubMesh;
@@ -24,5 +24,6 @@ protected:
                       const std::vector<vkb::ShaderResource>& vertex_input_resources,
                       VkFrontFace front_face = VK_FRONT_FACE_COUNTER_CLOCKWISE);
 
-    virtual void draw_submesh_command(vkb::CommandBuffer& command_buffer, scene::SubMesh& sub_mesh);
+    virtual void draw_submesh_command(vkb::CommandBuffer& command_buffer, scene::SubMesh& sub_mesh,
+                                      uint32_t instance_num = 1);
 };

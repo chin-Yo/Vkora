@@ -211,12 +211,5 @@ void main()
     ambient = (kD * indirectDiffuse + specular) * ao;
     
     vec3 finalLight = directLight + ambient;
-    /**    
-    // Tone mapping
-    finalLight = Uncharted2Tonemap(finalLight * 4.5);
-    finalLight = finalLight * (1.0f / Uncharted2Tonemap(vec3(11.2f)));
-    // Gamma correction
-    finalLight = pow(finalLight, vec3(1.0f / 2.2));
-    */
     o_color = vec4(finalLight, 1.0);
 }
