@@ -40,6 +40,7 @@ namespace vp
         info.compareEnable = VK_TRUE;
         info.compareOp = compareOp_;
         info.maxLod = 0.0f;
+        info.maxAnisotropy = 1.0f;
         return info;
     }
 

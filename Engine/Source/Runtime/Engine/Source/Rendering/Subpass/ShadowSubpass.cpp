@@ -1,6 +1,7 @@
 #include "Rendering/Subpass/ShadowSubpass.hpp"
 
 #include "GlobalContext.hpp"
+#include "Core/Math/MathUtils.h"
 #include "Engine/InputEvents.hpp"
 #include "Engine/SceneGraph/ComponentPool.hpp"
 #include "Engine/SceneGraph/Components/Light.hpp"
@@ -30,9 +31,9 @@ const glm::vec3 faceUps[6] = {
 
 ShadowSubpass::ShadowSubpass(vkb::RenderContext& render_context, vkb::ShaderSource&& vertex_sourse,
                              vkb::ShaderSource&& fragment_sourse, vkb::ShaderSource&& geometry_sourse): Subpass{
-        render_context, std::move(vertex_sourse), std::move(fragment_sourse)
-    },
-    geometry_shader(std::move(geometry_sourse))
+                                                                                                            render_context, std::move(vertex_sourse), std::move(fragment_sourse)
+                                                                                                        },
+                                                                                                        geometry_shader(std::move(geometry_sourse))
 {
 }
 
@@ -54,7 +55,12 @@ void ShadowSubpass::draw(vkb::CommandBuffer& command_buffer)
     multisample_state.rasterization_samples = get_sample_count();
     command_buffer.set_multisample_state(multisample_state);
 
+    vkb::DepthStencilState depth_stencil_state{};
+    depth_stencil_state.depth_compare_op = VK_COMPARE_OP_LESS_OR_EQUAL;
+    command_buffer.set_depth_stencil_state(depth_stencil_state);
+    
     vkb::RasterizationState rasterization_state{};
+    rasterization_state.cull_mode = VK_CULL_MODE_NONE;
     command_buffer.set_rasterization_state(rasterization_state);
 
     auto& vert_shader_module = device.get_resource_cache().request_shader_module(
@@ -70,8 +76,8 @@ void ShadowSubpass::draw(vkb::CommandBuffer& command_buffer)
     command_buffer.bind_pipeline_layout(pipeline_layout);
     auto& vertex_input_resources = pipeline_layout.get_resources(vkb::ShaderResourceType::Input,
                                                                  VK_SHADER_STAGE_VERTEX_BIT);
-    auto Cascades = GRuntimeGlobalContext.worldManager->GetViewportCamera()->GetCascades(
-        CASCADE_COUNT, Lights[0].get_properties().direction);
+    auto& Cascades = GRuntimeGlobalContext.worldManager->GetViewportCamera()->GetCascades(
+        CASCADE_COUNT, MathUtils::EulerToDirection(Lights[0].GetOwner()->GetTransform().GetRotationEuler()));
     struct CascadesUBO
     {
         glm::mat4 viewProj[4] = {};
@@ -85,7 +91,7 @@ void ShadowSubpass::draw(vkb::CommandBuffer& command_buffer)
                                                             0);
     allocation_cascades.update(ubo);
     command_buffer.bind_buffer(allocation_cascades.get_buffer(), allocation_cascades.get_offset(),
-                               allocation_cascades.get_size(), 0, 1, 0);
+                               allocation_cascades.get_size(), 0, 0, 0);
     /*struct ShadowMatricesUBO
     {
         glm::mat4 shadowViewProj[3][6] = {};
@@ -173,7 +179,7 @@ void ShadowSubpass::draw_submesh(vkb::CommandBuffer& command_buffer, scene::SubM
     // Bind vertex buffers only for the attribute locations defined
     command_buffer.bind_vertex_buffers(0, std::move(buffers), {0});
 
-    draw_submesh_command(command_buffer, sub_mesh);
+    draw_submesh_command(command_buffer, sub_mesh, 4);
 }
 
 void ShadowSubpass::draw_submesh_command(vkb::CommandBuffer& command_buffer, scene::SubMesh& sub_mesh,

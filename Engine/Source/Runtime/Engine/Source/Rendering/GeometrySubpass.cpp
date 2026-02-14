@@ -148,7 +148,7 @@ namespace vkb
         GlobalUniform global_uniform;
 
         global_uniform.camera_view_proj = camera.GetPreRotation() * vkb::vulkan_style_projection(
-            camera.GetProjection()) * camera.GetView();
+            camera.GetProjection()) * camera.GetViewMatrix();
 
         auto& render_frame = get_render_context().get_active_frame();
 
@@ -159,7 +159,7 @@ namespace vkb
 
         global_uniform.model = transform.GetWorldMatrix();
 
-        global_uniform.camera_position = glm::vec3(glm::inverse(camera.GetView())[3]);
+        global_uniform.camera_position = glm::vec3(glm::inverse(camera.GetViewMatrix())[3]);
 
         allocation.update(global_uniform);
 

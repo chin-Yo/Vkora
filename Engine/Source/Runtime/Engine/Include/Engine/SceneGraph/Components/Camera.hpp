@@ -36,7 +36,8 @@ namespace scene
 
         virtual glm::mat4 GetProjection() = 0;
 
-        glm::mat4 GetView();
+        // The matrix for transforming a point in the world coordinate system to the camera (observer) coordinate system.
+        glm::mat4 GetViewMatrix() const;
 
         const glm::mat4 GetPreRotation();
 

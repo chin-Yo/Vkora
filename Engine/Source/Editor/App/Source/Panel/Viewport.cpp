@@ -300,7 +300,7 @@ bool ViewportPanel::DrawGuizmo(scene::Node* node, ImVec2 imagePos, ImVec2 imageS
     ImGuizmo::SetDrawlist();
     ImGuizmo::SetRect(imagePos.x, imagePos.y, imageSize.x, imageSize.y);
 
-    glm::mat4 view = camera->GetView();
+    glm::mat4 view = camera->GetViewMatrix();
     glm::mat4 projection = camera->GetProjection();
     glm::mat4 model = node->GetTransform().GetMatrix();
 

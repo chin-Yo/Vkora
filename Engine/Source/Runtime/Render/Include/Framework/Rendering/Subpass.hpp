@@ -16,8 +16,8 @@ namespace vkb
 
     struct alignas(16) Light
     {
-        glm::vec4 position;  // position.w represents type of light
-        glm::vec4 color;     // color.w represents light intensity
+        glm::vec4 position; // position.w represents type of light
+        glm::vec4 color; // color.w represents light intensity
         glm::vec4 direction; // direction.w represents range
         glm::vec2 info;
         // (only used for spot lights) info.x represents light inner cone angle, info.y represents light outer cone angle
@@ -36,7 +36,8 @@ namespace vkb
      * @param proj The projection matrix
      * @return The vulkan style projection matrix
      */
-    glm::mat4 vulkan_style_projection(const glm::mat4 &proj);
+    glm::mat4 vulkan_style_projection(const glm::mat4& proj);
+    void vulkan_style_projection(glm::mat4& proj);
 
     // inline const std::vector<std::string> light_type_definitions = {
     //     "DIRECTIONAL_LIGHT " + std::to_string(static_cast<float>(sg::LightType::Directional)),
@@ -45,21 +46,21 @@ namespace vkb
     class Subpass
     {
     public:
-        Subpass(vkb::RenderContext &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader);
+        Subpass(vkb::RenderContext& render_context, ShaderSource&& vertex_shader, ShaderSource&& fragment_shader);
 
-        Subpass(const Subpass &) = delete;
-        Subpass &operator=(const Subpass &) = delete;
+        Subpass(const Subpass&) = delete;
+        Subpass& operator=(const Subpass&) = delete;
 
-        Subpass(Subpass &&) = default;
+        Subpass(Subpass&&) = default;
         virtual ~Subpass() = default;
 
-        Subpass &operator=(Subpass &&) = delete;
+        Subpass& operator=(Subpass&&) = delete;
 
         /**
          * @brief Pure virtual function, used to record drawing commands into the specified command buffer.
          * @param command_buffer Command buffer used for recording drawing commands.
          */
-        virtual void draw(vkb::CommandBuffer &command_buffer) = 0;
+        virtual void draw(vkb::CommandBuffer& command_buffer) = 0;
 
         /**
          * @brief Pure virtual function, used to prepare the shaders and shader variants required for the sub-channels.
@@ -77,32 +78,32 @@ namespace vkb
          * @param   lighting_state The aggregation of lighting data requires an external conversion.
          */
         template <typename T>
-        void allocate_lights(vkb::LightingState &lighting_state);
+        void allocate_lights(vkb::LightingState& lighting_state);
 
         // Getters
-        const std::vector<uint32_t> &get_color_resolve_attachments() const;
-        const std::string &get_debug_name() const;
-        const uint32_t &get_depth_stencil_resolve_attachment() const;
+        const std::vector<uint32_t>& get_color_resolve_attachments() const;
+        const std::string& get_debug_name() const;
+        const uint32_t& get_depth_stencil_resolve_attachment() const;
         VkResolveModeFlagBits get_depth_stencil_resolve_mode() const;
-        vkb::DepthStencilState &get_depth_stencil_state();
-        const bool &get_disable_depth_stencil_attachment() const;
-        const ShaderSource &get_fragment_shader() const;
-        const std::vector<uint32_t> &get_input_attachments() const;
-        vkb::LightingState &get_lighting_state();
-        const std::vector<uint32_t> &get_output_attachments() const;
-        vkb::RenderContext &get_render_context();
-        const std::unordered_map<std::string, ShaderResourceMode> &get_resource_mode_map() const;
+        vkb::DepthStencilState& get_depth_stencil_state();
+        const bool& get_disable_depth_stencil_attachment() const;
+        const ShaderSource& get_fragment_shader() const;
+        const std::vector<uint32_t>& get_input_attachments() const;
+        vkb::LightingState& get_lighting_state();
+        const std::vector<uint32_t>& get_output_attachments() const;
+        vkb::RenderContext& get_render_context();
+        const std::unordered_map<std::string, ShaderResourceMode>& get_resource_mode_map() const;
         VkSampleCountFlagBits get_sample_count() const;
-        const ShaderSource &get_vertex_shader() const;
+        const ShaderSource& get_vertex_shader() const;
 
         // Setters
-        void set_color_resolve_attachments(std::vector<uint32_t> const &color_resolve);
-        void set_debug_name(const std::string &name);
+        void set_color_resolve_attachments(std::vector<uint32_t> const& color_resolve);
+        void set_debug_name(const std::string& name);
         void set_disable_depth_stencil_attachment(bool disable_depth_stencil);
         void set_depth_stencil_resolve_attachment(uint32_t depth_stencil_resolve);
         void set_depth_stencil_resolve_mode(VkResolveModeFlagBits mode);
-        void set_input_attachments(std::vector<uint32_t> const &input);
-        void set_output_attachments(std::vector<uint32_t> const &output);
+        void set_input_attachments(std::vector<uint32_t> const& input);
+        void set_output_attachments(std::vector<uint32_t> const& output);
         void set_sample_count(VkSampleCountFlagBits sample_count);
 
         /**
@@ -110,7 +111,7 @@ namespace vkb
          * This function is called by the RenderPipeline before starting the rendering channel and entering a new sub-channel.
          * @param render_target The render target that needs to be updated.
          */
-        void update_render_target_attachments(vkb::RenderTarget &render_target);
+        void update_render_target_attachments(vkb::RenderTarget& render_target);
 
     private:
         std::vector<uint32_t> color_resolve_attachments = {};
@@ -140,7 +141,7 @@ namespace vkb
         // Output the index list of the attachments, with the default being attachment 0 (which is usually the exchange chain image)
         std::vector<uint32_t> output_attachments = {0};
 
-        vkb::RenderContext &render_context;
+        vkb::RenderContext& render_context;
 
         std::unordered_map<std::string, ShaderResourceMode> resource_mode_map;
 
@@ -151,7 +152,7 @@ namespace vkb
         ShaderSource fragment_shader;
     };
 
-    inline glm::mat4 vulkan_style_projection(const glm::mat4 &proj)
+    inline glm::mat4 vulkan_style_projection(const glm::mat4& proj)
     {
         // Flip Y in clipspace. X = -1, Y = -1 is topLeft in Vulkan.
         glm::mat4 mat = proj;
@@ -160,8 +161,13 @@ namespace vkb
         return mat;
     }
 
+    inline void vulkan_style_projection(glm::mat4& proj)
+    {
+        proj[1][1] *= -1;
+    }
+    
     template <typename T>
-    void Subpass::allocate_lights(vkb::LightingState &lighting_state_in)
+    void Subpass::allocate_lights(vkb::LightingState& lighting_state_in)
     {
         lighting_state.directional_lights.clear();
         lighting_state.point_lights.clear();
@@ -178,7 +184,7 @@ namespace vkb
         std::copy(lighting_state.point_lights.begin(), lighting_state.point_lights.end(), light_info.point_lights);
         std::copy(lighting_state.spot_lights.begin(), lighting_state.spot_lights.end(), light_info.spot_lights);
 
-        auto &render_frame = render_context.get_active_frame();
+        auto& render_frame = render_context.get_active_frame();
         lighting_state.light_buffer = render_frame.allocate_buffer(
             VkBufferUsageFlagBits::VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(T));
         lighting_state.light_buffer.update(light_info);

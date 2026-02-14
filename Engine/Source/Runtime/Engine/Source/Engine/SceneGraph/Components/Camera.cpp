@@ -27,11 +27,12 @@ namespace scene
     {
     }
 
-    glm::mat4 Camera::GetView()
+    glm::mat4 Camera::GetViewMatrix() const
     {
         if (!owner)
         {
-            LOG_ERROR("Camera component {} is not attached to a node", GetName());
+            LOG_ERROR("Camera component {} is not attached to a node", GetName())
+            return glm::mat4{0.0f};
         }
 
         auto& transform = owner->GetTransform();

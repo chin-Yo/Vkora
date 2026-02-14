@@ -45,10 +45,10 @@ bool RenderSystem::Prepare()
 
 bool RenderSystem::RenderPrepare()
 {
+    ShadowRenderTarget = CreateShadowMap({4096, 4096});
     render_pipeline = CreateOneRenderpassTwoSubpasses(*GRuntimeGlobalContext.worldManager->GetActiveWorld()
                                                       , *GRuntimeGlobalContext.worldManager->GetViewportCamera());
     ShadowPipeline = CreateShadowMapRenderPass();
-    ShadowRenderTarget = CreateShadowMap({1024, 1024});
     return true;
 }
 
@@ -331,7 +331,7 @@ std::unique_ptr<vkb::RenderPipeline> RenderSystem::CreateOneRenderpassTwoSubpass
     auto lighting_subpass = std::make_unique<vkb::LightingSubpass>(GetRenderContext(), std::move(lighting_vs),
                                                                    std::move(lighting_fs), camera, scene,
                                                                    ViewportRTs);
-
+    lighting_subpass->ShadowRenderTarget = this->ShadowRenderTarget.get();
     // Inputs are depth, albedo, and normal from the geometry subpass
     lighting_subpass->set_input_attachments({1, 2, 3, 4});
 
@@ -516,7 +516,7 @@ std::unique_ptr<vkb::RenderPipeline> RenderSystem::CreateShadowMapRenderPass()
     tmp_render_pipeline->set_load_store(load_store);
 
     std::vector<VkClearValue> clear_value{1};
-    clear_value[0].depthStencil = {0.0f, ~0U};
+    clear_value[0].depthStencil = {1.0f, ~0U};
     tmp_render_pipeline->set_clear_value(clear_value);
 
     return tmp_render_pipeline;
