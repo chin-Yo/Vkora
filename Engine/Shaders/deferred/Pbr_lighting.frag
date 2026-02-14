@@ -41,6 +41,105 @@ layout (set = 1, binding = 3) uniform samplerCube samplerIrradiance;
 layout (set = 1, binding = 4) uniform sampler2D samplerBRDFLUT;
 layout (set = 1, binding = 5) uniform samplerCube prefilteredMap;
 
+layout (set = 2, binding = 0) uniform sampler2DArray shadowMap;
+
+#define SHADOW_MAP_CASCADE_COUNT 4
+
+layout (set = 2, binding = 1) uniform ShadowUniforms {
+    mat4 view; // 需要视图矩阵来计算 ViewSpace Z 以选择级联
+    mat4 cascade_view_proj[SHADOW_MAP_CASCADE_COUNT];
+    vec4 cascade_splits; // .x, .y, .z, .w (存储分段距离/深度)
+    int enable_pcf;
+    int debug_cascade;   // 1 to show cascade colors
+    float _pad1;
+    float _pad2;
+} shadow_ubo;
+
+// 偏置矩阵用于将 NDC [-1, 1] 映射到 UV [0, 1]
+const mat4 biasMat = mat4(
+0.5, 0.0, 0.0, 0.0,
+0.0, 0.5, 0.0, 0.0,
+0.0, 0.0, 1.0, 0.0,
+0.5, 0.5, 0.0, 1.0
+);
+
+// --- [NEW] 阴影计算函数 ---
+
+// 这里的返回值是 Visibility (1.0 = 亮, 0.0 = 暗)
+float textureProj(vec4 shadowCoord, vec2 offset, uint cascadeIndex, float NdotL)
+{
+    float visibility = 1.0;
+    // 根据 NdotL 自适应 Bias，防止阴影痤疮
+    float bias = max(0.005 * (1.0 - NdotL), 0.0005);
+
+    if (shadowCoord.z > -1.0 && shadowCoord.z < 1.0)
+    {
+        // 采样深度
+        float dist = texture(shadowMap, vec3(shadowCoord.xy + offset, cascadeIndex)).r;
+
+        // 比较深度 (shadowCoord.w > 0 检查是否在视锥前方)
+        // Vulkan 深度通常为 [0, 1]，shadowCoord.z 也是经过 biasMat 变换后的 [0, 1]
+        if (shadowCoord.w > 0 && dist < shadowCoord.z - bias)
+        {
+            visibility = 0.0; // 在阴影中
+        }
+    }
+    return visibility;
+}
+
+float filterPCF(vec4 sc, uint cascadeIndex, float NdotL)
+{
+    ivec2 texDim = textureSize(shadowMap, 0).xy;
+    float scale = 0.75; // 控制 PCF 采样半径
+    float dx = scale * 1.0 / float(texDim.x);
+    float dy = scale * 1.0 / float(texDim.y);
+
+    float shadowFactor = 0.0;
+    int count = 0;
+    // 3x3 PCF Kernel
+    for (int x = -1; x <= 1; x++) {
+        for (int y = -1; y <= 1; y++) {
+            shadowFactor += textureProj(sc, vec2(dx * x, dy * y), cascadeIndex, NdotL);
+            count++;
+        }
+    }
+    return shadowFactor / float(count);
+}
+
+// 计算阴影主函数，返回可见性系数 (0~1) 和级联索引(用于调试)
+float calculateShadow(vec3 worldPos, vec3 N, vec3 L, out uint cascadeIndex)
+{
+    // 1. 计算 View Space Position 用于选择级联
+    vec4 viewPos = shadow_ubo.view * vec4(worldPos, 1.0);
+
+    // 2. 选择级联层级
+    // 注意：假设 splits 存储的是 View Space Z 值 (通常为负值，如 -10, -50...)
+    // 或者 splits 存储的是正的距离 (10, 50...)，取决于 CPU 端设置。
+    // 这里参考原代码逻辑：inViewPos.z < ubo.cascadeSplits[i]
+    cascadeIndex = 0;
+    for (uint i = 0; i < SHADOW_MAP_CASCADE_COUNT - 1; ++i) {
+        if (viewPos.z < shadow_ubo.cascade_splits[i]) {
+            cascadeIndex = i + 1;
+        }
+    }
+
+    // 3. 计算 Shadow Coordinate
+    // biasMat * Proj * View * WorldPos
+    vec4 shadowCoord = (biasMat * shadow_ubo.cascade_view_proj[cascadeIndex]) * vec4(worldPos, 1.0);
+
+    // 透视除法
+    vec4 sc_normalized = shadowCoord / shadowCoord.w;
+
+    float NdotL = max(dot(N, L), 0.0);
+
+    // 4. PCF or Simple
+    if (shadow_ubo.enable_pcf == 1) {
+        return filterPCF(sc_normalized, cascadeIndex, NdotL);
+    } else {
+        return textureProj(sc_normalized, vec2(0.0), cascadeIndex, NdotL);
+    }
+}
+
 layout (constant_id = 0) const uint DIRECTIONAL_LIGHT_COUNT = 0U;
 layout (constant_id = 1) const uint POINT_LIGHT_COUNT = 0U;
 layout (constant_id = 2) const uint SPOT_LIGHT_COUNT = 0U;
@@ -70,10 +169,11 @@ vec3 Uncharted2Tonemap(vec3 x)
     return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
 }
 
-vec3 apply_directional_light(Light light, vec3 pos, vec3 N, vec3 V, vec3 albedo, float metallic, float roughness)
+vec3 apply_directional_light(Light light, vec3 pos, vec3 N, vec3 V, vec3 albedo, float metallic, float roughness, float shadowVisibility)
 {
-    vec3 L = normalize(-light.direction.xyz); // light direction toward surface
-    return evaluateDirectPBR(L, V, N, albedo, metallic, roughness, light.color.rgb, light.color.w);
+    vec3 L = normalize(-light.direction.xyz);
+    // 将阴影可见性乘到光照强度上 (light.color.w) 或者最后的结果上
+    return evaluateDirectPBR(L, V, N, albedo, metallic, roughness, light.color.rgb, light.color.w) * shadowVisibility;
 }
 
 vec3 apply_point_light(Light light, vec3 pos, vec3 N, vec3 V, vec3 albedo, float metallic, float roughness)
@@ -179,10 +279,21 @@ void main()
     // Accumulate direct lighting (HDR)
     vec3 directLight = vec3(0.0);
 
+    uint cascadeIdx = 0;
+
+    // Directional Lights (带阴影)
     for (uint i = 0U; i < DIRECTIONAL_LIGHT_COUNT; ++i)
     {
+        float shadowVisibility = 1.0;
+
+        // 通常只对第一个平行光（太阳）计算级联阴影
+        if (i == 0) {
+            vec3 L = normalize(-lights_info.directional_lights[i].direction.xyz);
+            shadowVisibility = calculateShadow(world_pos, normal, L, cascadeIdx);
+        }
+
         directLight += apply_directional_light(
-            lights_info.directional_lights[i], world_pos, normal, V, albedo, metallic, roughness
+            lights_info.directional_lights[i], world_pos, normal, V, albedo, metallic, roughness, shadowVisibility
         );
     }
     for (uint i = 0U; i < POINT_LIGHT_COUNT; ++i)
@@ -209,7 +320,7 @@ void main()
     vec3 kD = 1.0 - F;
     kD *= 1.0 - metallic;
     ambient = (kD * indirectDiffuse + specular) * ao;
-    
+
     vec3 finalLight = directLight + ambient;
     o_color = vec4(finalLight, 1.0);
 }

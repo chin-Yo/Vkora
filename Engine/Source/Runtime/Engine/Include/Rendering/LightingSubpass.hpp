@@ -31,6 +31,7 @@ namespace scene
 
 namespace vkb
 {
+    class Sampler;
     /**
      * @brief Light uniform structure for lighting shader
      * Inverse view projection matrix and inverse resolution vector are used
@@ -65,6 +66,8 @@ namespace vkb
 
         void draw(vkb::CommandBuffer& command_buffer) override;
 
+        vkb::RenderTarget* ShadowRenderTarget = nullptr;
+
     private:
         scene::Camera& camera;
 
@@ -73,5 +76,7 @@ namespace vkb
         ShaderVariant lighting_variant;
 
         std::vector<std::unique_ptr<vkb::RenderTarget>>& ViewportRTs;
+
+        std::unique_ptr<vkb::Sampler> ShadowSampler;
     };
 } // namespace vkb

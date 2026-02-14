@@ -20,6 +20,8 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "Framework/Rendering/Subpass.hpp"
+
 
 namespace scene
 {
@@ -53,7 +55,7 @@ namespace scene
 
     void PerspectiveCamera::SetFieldOfView(float new_fov)
     {
-        fov = new_fov;
+        fov = glm::radians(new_fov);
     }
 
     float PerspectiveCamera::GetFarPlane() const
@@ -87,10 +89,11 @@ namespace scene
     }
 
     // TODO: Learn
-    std::vector<Cascade> PerspectiveCamera::GetCascades(uint32_t cascade_num, const glm::vec3& lightDir,
-                                                        float cascadeSplitLambda)
+    const std::vector<Cascade>& PerspectiveCamera::GetCascades(uint32_t cascade_num, const glm::vec3& lightDir,
+                                                               float cascadeSplitLambda)
     {
-        std::vector<Cascade> cascades(cascade_num);
+        glm::vec3 lightDirNor = glm::normalize(lightDir);
+        Cascades.resize(cascade_num);
 
         // 1. 获取相机参数
         float nearClip = GetNearPlane(); // 通常为正值，如 0.1f
@@ -116,20 +119,25 @@ namespace scene
 
         // 3. 构建完整视锥体在世界空间中的 8 个角点
         glm::vec3 frustumCorners[8] = {
-            glm::vec3(-1.0f, 1.0f, 0.0f), // Near: TL
-            glm::vec3(1.0f, 1.0f, 0.0f), // Near: TR
-            glm::vec3(1.0f, -1.0f, 0.0f), // Near: BR
-            glm::vec3(-1.0f, -1.0f, 0.0f), // Near: BL
-            glm::vec3(-1.0f, 1.0f, 1.0f), // Far: TL
-            glm::vec3(1.0f, 1.0f, 1.0f), // Far: TR
-            glm::vec3(1.0f, -1.0f, 1.0f), // Far: BR
-            glm::vec3(-1.0f, -1.0f, 1.0f) // Far: BL
+            // [0]-[3]: Near Plane (注意 Z 现在是 1.0f)
+            glm::vec3(-1.0f, 1.0f, 1.0f),
+            glm::vec3(1.0f, 1.0f, 1.0f),
+            glm::vec3(1.0f, -1.0f, 1.0f),
+            glm::vec3(-1.0f, -1.0f, 1.0f),
+
+            // [4]-[7]: Far Plane (注意 Z 现在是 0.0f)
+            glm::vec3(-1.0f, 1.0f, 0.0f),
+            glm::vec3(1.0f, 1.0f, 0.0f),
+            glm::vec3(1.0f, -1.0f, 0.0f),
+            glm::vec3(-1.0f, -1.0f, 0.0f)
         };
 
         // 相机的 View-Projection 矩阵（注意：GetProjection 已使用 reversed depth）
-        glm::mat4 view = GetView();
+        /*glm::mat4 view = GetView();
         glm::mat4 proj = GetProjection();
-        glm::mat4 viewProj = proj * view;
+        glm::mat4 viewProj = proj * view;*/
+        glm::mat4 viewProj = GetPreRotation() * vkb::vulkan_style_projection(
+            GetProjection()) * GetViewMatrix();
         glm::mat4 invViewProj = glm::inverse(viewProj);
 
         // 将 NDC 角点变换到世界空间
@@ -172,29 +180,32 @@ namespace scene
             {
                 radius = std::max(radius, glm::distance(center, corner));
             }
-
             // Texel snapping：对齐到 1/16 单位，减少 shadow swimming
             radius = std::ceil(radius * 16.0f) / 16.0f;
-
             // 构建光源视角的 View 矩阵
             // 注意：lightDir 是光照方向（如太阳方向），所以光源“位置”在 center - lightDir * radius
-            glm::vec3 lightPos = center - lightDir * radius;
+            glm::vec3 lightPos = center - lightDirNor * radius;
             glm::mat4 lightView = glm::lookAt(lightPos, center, glm::vec3(0.0f, 1.0f, 0.0f));
 
             // 构建正交投影（覆盖 [-radius, radius] in x/y, [0, 2*radius] in z）
-            glm::mat4 lightProj = glm::ortho(-radius, radius, -radius, radius, 0.0f, radius * 2.0f);
-
+            glm::mat4 lightProj = glm::orthoRH_ZO(-radius, radius, -radius, radius, 0.0f, radius * 2.0f);
+            vkb::vulkan_style_projection(lightProj);
             // 存储结果
-            cascades[i].viewProjMatrix = lightProj * lightView;
+            Cascades[i].viewProjMatrix = lightProj * lightView;
 
             // splitDepth 用于主渲染中判断 cascade 索引
             // 注意：这里存储的是世界空间中沿相机视线的深度（正值）
-            cascades[i].splitDepth = nearClip + split * clipRange;
+            Cascades[i].splitDepth = (nearClip + split * clipRange) * -1.0f;
 
             lastSplit = split;
         }
 
-        return cascades;
+        return Cascades;
+    }
+
+    const std::vector<Cascade>& PerspectiveCamera::GetCascades() const
+    {
+        return Cascades;
     }
 
     float PerspectiveCamera::GetAspectRatio()

@@ -26,11 +26,16 @@
 #include "Engine/SceneGraph/Scene.hpp"
 #include "Engine/SceneGraph/Components/Camera.hpp"
 #include "Engine/SceneGraph/Components/Light.hpp"
+#include "Engine/SceneGraph/Components/PerspectiveCamera.hpp"
 #include "Engine/SceneGraph/Components/Skybox.hpp"
 #include "Engine/Texture/Texture2D.hpp"
 #include "Engine/Texture/TextureCube.hpp"
 #include "Framework/Core/Sampler.hpp"
+#include "Rendering/RenderSystem.hpp"
+#include "Rendering/Subpass/ShadowSubpass.hpp"
 #include "Tools/Utils.hpp"
+#include "VkPreset/VpSampler.hpp"
+#include "World/WorldManager.hpp"
 
 namespace vkb
 {
@@ -49,6 +54,7 @@ namespace vkb
         auto& resource_cache = get_render_context().get_device().get_resource_cache();
         resource_cache.request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), lighting_variant);
         resource_cache.request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), lighting_variant);
+        ShadowSampler = std::make_unique<vkb::Sampler>(GRuntimeGlobalContext.renderSystem->GetDevice(), vp::ShadowMapSamplerPreset{}.CreateInfo());
     }
 
     void LightingSubpass::draw(vkb::CommandBuffer& command_buffer)
@@ -144,7 +150,37 @@ namespace vkb
             command_buffer.bind_image(PrefilterMap->get_vk_image_view(), *PrefilterMap->sampler.lock(), 1, 5, 0);
         }
 
+        command_buffer.bind_image(ShadowRenderTarget->get_views()[0], *ShadowSampler.get(), 2, 0, 0);
 
+        auto& Lights = scene.GetComponentManager()->GetComponentsByClass<scene::Light>();
+        auto& render_frame = get_render_context().get_active_frame();
+        struct ShadowUniforms
+        {
+            glm::mat4 view; // 需要视图矩阵来计算 ViewSpace Z 以选择级联
+            glm::mat4 cascade_view_proj[CASCADE_COUNT];
+            glm::vec4 cascade_splits; // .x, .y, .z, .w (存储分段距离/深度)
+            int enable_pcf = 1;
+            int debug_cascade; // 1 to show cascade colors
+            float _pad1;
+            float _pad2;
+        } shadow_ubo;
+        if (!Lights.empty())
+        {
+            auto* CameraPtr = GRuntimeGlobalContext.worldManager->GetViewportCamera();
+            assert(CameraPtr && "The camera is ineffective.");
+            shadow_ubo.view = CameraPtr->GetViewMatrix();
+            for (int i = 0; i < CASCADE_COUNT; i++)
+            {
+                auto& Cascades = CameraPtr->GetCascades();
+                shadow_ubo.cascade_view_proj[i] = Cascades[i].viewProjMatrix;
+                shadow_ubo.cascade_splits[i] = Cascades[i].splitDepth;
+            }
+        }
+        auto allocation_ShadowUniforms = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(ShadowUniforms),
+                                                                      0);
+        allocation_ShadowUniforms.update(shadow_ubo);
+        command_buffer.bind_buffer(allocation_ShadowUniforms.get_buffer(), allocation_ShadowUniforms.get_offset(),
+                                   allocation_ShadowUniforms.get_size(), 2, 1, 0);
         // Set cull mode to front as full screen triangle is clock-wise
         RasterizationState rasterization_state;
         rasterization_state.cull_mode = VK_CULL_MODE_FRONT_BIT;
@@ -159,12 +195,12 @@ namespace vkb
 
         // Inverse view projection
         light_uniform.inv_view_proj = glm::inverse(
-            vkb::vulkan_style_projection(camera.GetProjection()) * camera.GetView());
+            vkb::vulkan_style_projection(camera.GetProjection()) * camera.GetViewMatrix());
 
         light_uniform.camPos.rgb = camera.GetOwner()->GetTransform().GetTranslation();
 
         // Allocate a buffer using the buffer pool from the active frame to store uniform values and bind it
-        auto& render_frame = get_render_context().get_active_frame();
+
         auto allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(LightUniform));
         allocation.update(light_uniform);
         command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 1, 0, 0);

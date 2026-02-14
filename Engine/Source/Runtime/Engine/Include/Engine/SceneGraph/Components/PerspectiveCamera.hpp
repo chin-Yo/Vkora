@@ -63,8 +63,9 @@ namespace scene
 
         float GetFieldOfView();
 
-        std::vector<Cascade> GetCascades(uint32_t cascade_num, const glm::vec3& lightDir,
-                                         float cascadeSplitLambda = 0.75f);
+        const std::vector<Cascade>& GetCascades(uint32_t cascade_num, const glm::vec3& lightDir, float cascadeSplitLambda = 0.95f);
+
+        const std::vector<Cascade>& GetCascades() const;
 
         virtual glm::mat4 GetProjection() override;
 
@@ -82,5 +83,7 @@ namespace scene
         float far_plane{100.0};
 
         float near_plane{0.1f};
+
+        mutable std::vector<Cascade> Cascades;
     };
 }
