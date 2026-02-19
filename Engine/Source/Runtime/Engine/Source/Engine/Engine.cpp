@@ -149,11 +149,11 @@ void Engine::InitRenderBackend(const BackendOptions& options)
     RenderBackend.instance = std::make_unique<vkb::Instance>("VulkanRenderer", RenderBackend.instance_extensions,
                                                              RenderBackend.instance_layers,
                                                              RenderBackend.layer_settings, RenderBackend.api_version);
-    // VULKAN_HPP_DEFAULT_DISPATCHER.init(instance->get_handle());
     RenderBackend.surface = windowSystem->CreateSurface(*RenderBackend.instance);
     if (!RenderBackend.surface)
     {
-        LOG_ERROR("Failed to create window surface.");
+        LOG_ERROR("Failed to create window surface.")
+        std::abort();
     }
 
     auto& gpu = RenderBackend.instance->get_suitable_gpu(RenderBackend.surface, headless);
@@ -178,8 +178,6 @@ void Engine::InitRenderBackend(const BackendOptions& options)
     {
         RenderBackend.AddDeviceExtension(VK_EXT_SHADER_VIEWPORT_INDEX_LAYER_EXTENSION_NAME);
     }
-    //RequestGpuFeatures(gpu);
-
     // Creating vulkan device, specifying the swapchain extension always
     // If using VK_EXT_headless_surface, we still create and use a swap-chain
     {
@@ -191,12 +189,6 @@ void Engine::InitRenderBackend(const BackendOptions& options)
             RenderBackend.AddDeviceExtension(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME, /*optional=*/true);
         }
     }
-    // TODO
-#ifdef VK_ENABLE_PORTABILITY
-    // VK_KHR_portability_subset must be enabled if present in the implementation (e.g on macOS/iOS with beta extensions enabled)
-    add_device_extension(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME, /*optional=*/true);
-#endif
-
 #ifdef DEBUG
     if (!RenderBackend.debug_utils)
     {
@@ -251,8 +243,7 @@ void Engine::StartEngine(const std::string& ConfigFilePath)
     windowSystem = std::make_unique<WindowSystem>(window_properties);
     windowSystem->RegisterOnWindowIconifyFunc([this](bool bIsIconify)
         {
-            if (this != nullptr)
-                this->SetIsIconify(bIsIconify);
+            this->SetIsIconify(bIsIconify);
         }
     );
     InitRenderBackend({windowSystem.get()});

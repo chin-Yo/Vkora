@@ -34,47 +34,15 @@ namespace scene
     Light::Light(Light&& other) noexcept
         : Component(std::move(other))
     {
-        node = other.node;
-        light_type = other.light_type;
-        properties = other.properties;
+        LightColor = other.LightColor;
+        LightIntensity = other.LightIntensity;
     }
 
     Light& Light::operator=(Light&& other) noexcept
     {
-        node = other.node;
-        light_type = other.light_type;
-        properties = other.properties;
+        LightColor = other.LightColor;
+        LightIntensity = other.LightIntensity;
         return *this;
-    }
-
-    void Light::set_node(Node& n)
-    {
-        node = &n;
-    }
-
-    Node* Light::get_node()
-    {
-        return node;
-    }
-
-    void Light::set_light_type(const LightType& type)
-    {
-        this->light_type = type;
-    }
-
-    const LightType& Light::get_light_type()
-    {
-        return light_type;
-    }
-
-    void Light::set_properties(const LightProperties& properties)
-    {
-        this->properties = properties;
-    }
-
-    const LightProperties& Light::get_properties() const
-    {
-        return properties;
     }
 }
 
@@ -89,23 +57,13 @@ RTTR_REGISTRATION
         value("Point", LightType::Point),
         value("Spot", LightType::Spot)
     );
-    registration::class_<LightProperties>("LightProperties")
+    registration::class_<Light>("Light")
         .constructor<>()
-        .property("Direction", &LightProperties::direction)
-        .property("Color", &LightProperties::color)
+        .constructor<const std::string&>()
+        .property("LightColor", &Light::LightColor)
         (
             //using the metadata, inform the UI renderer that this should be a color selector.
             metadata("widget", "color")
         )
-        .property("Intensity", &LightProperties::intensity)
-        .property("Range", &LightProperties::range)
-        .property("Inner Cone Angle", &LightProperties::inner_cone_angle)
-        .property("Outer Cone Angle", &LightProperties::outer_cone_angle);
-
-    registration::class_<Light>("Light")
-        .constructor<>()
-        .constructor<const std::string&>()
-        .property("Type", &Light::get_light_type, &Light::set_light_type)
-        // RTTR will automatically recognize that LightProperties is a registered class/structure.
-        .property("Properties", &Light::get_properties, &Light::set_properties);
+        .property("LightIntensity", &Light::LightIntensity);
 }

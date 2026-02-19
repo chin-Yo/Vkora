@@ -17,7 +17,9 @@
 #include "Engine/SceneGraph/Components/Pbr_Material.hpp"
 #include "Engine/SceneGraph/Components/Skybox.hpp"
 #include "Engine/SceneGraph/Components/SubMesh.hpp"
-#include "Engine/SceneGraph/Components/Texture.hpp"
+#include "Engine/SceneGraph/Components/Light/DirectionalLight.hpp"
+#include "Engine/SceneGraph/Components/Light/PointLight.hpp"
+#include "Engine/SceneGraph/Components/Light/SpotLight.hpp"
 #include "Misc/Paths.hpp"
 #include "Rendering/RenderSystem.hpp"
 #include "UIManage/EditorGlobalContext.hpp"
@@ -138,14 +140,6 @@ void DetailsPanel::DisplaySelectedNode(scene::Node* node)
             }
             ImGui::PopID();
         }
-        else if (handle.type == rttr::type::get<scene::Light>())
-        {
-            auto* light = scene->GetComponentManager()->GetComponentFormNode<scene::Light>(node->GetID());
-            if (ImGui::CollapsingHeader("Light", ImGuiTreeNodeFlags_DefaultOpen))
-            {
-                ui::PropertyDrawer::DrawObject(light);
-            }
-        }
         else if (handle.type == rttr::type::get<scene::Skybox>())
         {
             auto* SkyBox = scene->GetComponentManager()->GetComponentFormNode<scene::Skybox>(node->GetID());
@@ -153,6 +147,14 @@ void DetailsPanel::DisplaySelectedNode(scene::Node* node)
             if (ImGui::Button("Generate skybox"))
             {
                 SkyBox->GenerateSkybox();
+            }
+        }
+        else
+        {
+            auto* Com = scene->GetComponentManager()->GetComponentByRT(handle.type, handle.index);
+            if (ImGui::CollapsingHeader(Com->GetName().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+            {
+                ui::PropertyDrawer::DrawObject(rttr::instance(*Com), handle.type);
             }
         }
     }
@@ -189,18 +191,15 @@ void DetailsPanel::DrawComponentSelector(scene::Node* node)
         {
             if (ImGui::MenuItem("Point Light"))
             {
-                auto* light = scene->GetComponentManager()->AddComponent<::scene::Light>(node);
-                light->set_light_type(::scene::LightType::Point);
+                auto* light = scene->GetComponentManager()->AddComponent<PointLight>(node);
             }
             if (ImGui::MenuItem("Directional Light"))
             {
-                auto* light = scene->GetComponentManager()->AddComponent<::scene::Light>(node);
-                light->set_light_type(::scene::LightType::Directional);
+                auto* light = scene->GetComponentManager()->AddComponent<DirectionalLight>(node);
             }
             if (ImGui::MenuItem("Spot Light"))
             {
-                auto* light = scene->GetComponentManager()->AddComponent<::scene::Light>(node);
-                light->set_light_type(::scene::LightType::Spot);
+                auto* light = scene->GetComponentManager()->AddComponent<SpotLight>(node);
             }
             ImGui::EndMenu();
         }

@@ -44,6 +44,7 @@ namespace scene
         void SetPreRotation(const glm::mat4& pre_rotation);
 
     private:
+        // offset
         glm::mat4 preRotation{1.0f};
     };
 }

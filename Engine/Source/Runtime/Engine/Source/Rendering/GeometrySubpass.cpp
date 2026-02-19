@@ -29,7 +29,6 @@
 #include "Engine/SceneGraph/Components/Mesh.hpp"
 #include "Engine/SceneGraph/Components/Pbr_Material.hpp"
 #include "Engine/SceneGraph/Components/SubMesh.hpp"
-#include "Engine/SceneGraph/Components/Texture.hpp"
 
 namespace vkb
 {

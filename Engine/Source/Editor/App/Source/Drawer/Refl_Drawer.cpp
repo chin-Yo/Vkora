@@ -5,10 +5,15 @@
 
 bool ui::PropertyDrawer::DrawObject(rttr::instance obj)
 {
+    rttr::type type = obj.get_type();
+    return DrawObject(obj, type);
+}
+
+bool ui::PropertyDrawer::DrawObject(rttr::instance obj, rttr::type& type)
+{
     if (!obj.is_valid()) return false;
 
     bool modified = false;
-    rttr::type type = obj.get_type();
     for (auto& prop : type.get_properties())
     {
         if (DrawProperty(obj, prop))
@@ -34,7 +39,7 @@ bool ui::PropertyDrawer::DrawProperty(rttr::instance obj, rttr::property prop)
 
     ImGui::PushID(instance_id);
     ImGui::PushID(prop.get_name().to_string().c_str());
-    
+
     bool modified = false;
     std::string label = prop.get_name().to_string();
     rttr::type prop_type = prop.get_type();
@@ -80,6 +85,17 @@ bool ui::PropertyDrawer::DrawProperty(rttr::instance obj, rttr::property prop)
             modified = true;
         }
     }
+    else if (prop_type == rttr::type::get<std::string>())
+    {
+        std::string current = value.to_string();
+        char buffer[256] = {};
+        strncpy_s(buffer, current.c_str(), _TRUNCATE);
+
+        if (ImGui::InputText(label.c_str(), buffer, sizeof(buffer)))
+        {
+            prop.set_value(obj, std::string(buffer));
+        }
+    }
     else if (prop_type.is_class() && prop_type.get_properties().size() > 0)
     {
         modified = DrawStructProperty(obj, prop);
@@ -88,7 +104,7 @@ bool ui::PropertyDrawer::DrawProperty(rttr::instance obj, rttr::property prop)
     {
         ImGui::Text("%s: (Unsupported Type: %s)", label.c_str(), prop_type.get_name().to_string().c_str());
     }
-    
+
     ImGui::PopID(); // 对应属性名
     ImGui::PopID(); // 对应 instance_id
     if (is_readonly)

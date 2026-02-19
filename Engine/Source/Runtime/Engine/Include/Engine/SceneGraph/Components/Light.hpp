@@ -42,29 +42,6 @@ namespace scene
         Max
     };
 
-    struct LightProperties
-    {
-        // Direction of the light source, default points to negative Z-axis
-        glm::vec3 direction{0.0f, 0.0f, -1.0f};
-
-        // Color of the light source, default is white (1,1,1)
-        glm::vec3 color{1.0f, 1.0f, 1.0f};
-
-        // Brightness intensity of the light, default is 1.0
-        float intensity{1.0f};
-
-        // Maximum distance the light can reach, used for point and spot lights, default is 0.0
-        float range{0.0f};
-
-        // Inner angle of spotlight cone in radians, default is 0.0
-        float inner_cone_angle{0.0f};
-
-        // Outer angle of spotlight cone in radians, default is 0.0
-        float outer_cone_angle{0.0f};
-
-        float ShadowDistance{1000.0f};
-    };
-
     class Light : public Component
     {
         RTTR_REGISTRATION_FRIEND
@@ -78,23 +55,10 @@ namespace scene
 
         virtual ~Light() = default;
 
-        void set_node(Node& node);
+        // Color of the light source, default is white (1,1,1)
+        glm::vec3 LightColor{1.0f, 1.0f, 1.0f};
 
-        Node* get_node();
-
-        void set_light_type(const LightType& type);
-
-        const LightType& get_light_type();
-
-        void set_properties(const LightProperties& properties);
-
-        const LightProperties& get_properties() const;
-
-    private:
-        Node* node{nullptr};
-
-        LightType light_type;
-
-        LightProperties properties;
+        // Brightness intensity of the light, default is 1.0
+        float LightIntensity{1.0f};
     };
 }

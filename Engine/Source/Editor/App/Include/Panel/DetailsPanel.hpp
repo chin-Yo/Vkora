@@ -1,8 +1,8 @@
 #pragma once
 #include <optional>
 
-#include "EditorInterface/Panel.hpp"
 #include "rttr/type.h"
+#include "UIManage/Panel.hpp"
 
 
 namespace scene

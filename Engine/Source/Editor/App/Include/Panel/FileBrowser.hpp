@@ -1,11 +1,11 @@
 #pragma once
 #include <imgui.h>
 
-#include "EditorInterface/Panel.hpp"
 #include <filesystem>
 #include <glm/vec4.hpp>
 
 #include "Function/FolderTree.hpp"
+#include "UIManage/Panel.hpp"
 
 struct FileIconData
 {

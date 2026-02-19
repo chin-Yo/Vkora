@@ -28,6 +28,9 @@
 #include "Engine/SceneGraph/Components/Light.hpp"
 #include "Engine/SceneGraph/Components/PerspectiveCamera.hpp"
 #include "Engine/SceneGraph/Components/Skybox.hpp"
+#include "Engine/SceneGraph/Components/Light/DirectionalLight.hpp"
+#include "Engine/SceneGraph/Components/Light/PointLight.hpp"
+#include "Engine/SceneGraph/Components/Light/SpotLight.hpp"
 #include "Engine/Texture/Texture2D.hpp"
 #include "Engine/Texture/TextureCube.hpp"
 #include "Framework/Core/Sampler.hpp"
@@ -54,15 +57,77 @@ namespace vkb
         auto& resource_cache = get_render_context().get_device().get_resource_cache();
         resource_cache.request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), lighting_variant);
         resource_cache.request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), lighting_variant);
-        ShadowSampler = std::make_unique<vkb::Sampler>(GRuntimeGlobalContext.renderSystem->GetDevice(), vp::ShadowMapSamplerPreset{}.CreateInfo());
+        ShadowSampler = std::make_unique<vkb::Sampler>(GRuntimeGlobalContext.renderSystem->GetDevice(),
+                                                       vp::ShadowMapSamplerPreset{}.CreateInfo());
     }
 
     void LightingSubpass::draw(vkb::CommandBuffer& command_buffer)
     {
         vkb::LightingState lighting_state;
-        vkb::allocate_lightState(scene.GetComponentManager()->GetComponentsByClass<scene::Light>(),
-                                 MAX_DEFERRED_LIGHT_COUNT, lighting_state);
+        auto& DirectionalLights = scene.GetComponentManager()->GetComponentsByClass<DirectionalLight>();
+        for (auto& directional_light : DirectionalLights)
+        {
+            auto& transform = directional_light.GetOwner()->GetTransform();
 
+            vkb::Light light{
+                {transform.GetTranslation(), static_cast<float>(scene::LightType::Directional)},
+                {directional_light.LightColor, directional_light.LightIntensity},
+                {directional_light.GetDirection(), 0.0f/*Directional light has no range.*/},
+                {0.0f, 0.0f}
+            };
+            if (lighting_state.directional_lights.size() < MAX_DEFERRED_LIGHT_COUNT)
+            {
+                lighting_state.directional_lights.push_back(light);
+            }
+            else
+            {
+                LOGE("Subpass::allocate_lights: exceeding max_lights_per_type of {} for directional lights",
+                     MAX_DEFERRED_LIGHT_COUNT)
+            }
+        }
+
+        auto& PointLights = scene.GetComponentManager()->GetComponentsByClass<PointLight>();
+        for (auto& point_light : PointLights)
+        {
+            auto& transform = point_light.GetOwner()->GetTransform();
+
+            vkb::Light light{
+                {transform.GetTranslation(), static_cast<float>(scene::LightType::Point)},
+                {point_light.LightColor, point_light.LightIntensity},
+                {glm::vec3(0.0f), point_light.range},
+                {0.0f, 0.0f}
+            };
+            if (lighting_state.point_lights.size() < MAX_DEFERRED_LIGHT_COUNT)
+            {
+                lighting_state.point_lights.push_back(light);
+            }
+            else
+            {
+                LOGE("Subpass::allocate_lights: exceeding max_lights_per_type of {} for point lights",
+                     MAX_DEFERRED_LIGHT_COUNT)
+            }
+        }
+        auto& SpotLights = scene.GetComponentManager()->GetComponentsByClass<SpotLight>();
+        for (auto& spot_light : SpotLights)
+        {
+            auto& transform = spot_light.GetOwner()->GetTransform();
+
+            vkb::Light light{
+                {transform.GetTranslation(), static_cast<float>(scene::LightType::Spot)},
+                {spot_light.LightColor, spot_light.LightIntensity},
+                {spot_light.GetDirection(), spot_light.range},
+                {spot_light.inner_cone_angle, spot_light.outer_cone_angle}
+            };
+            if (lighting_state.spot_lights.size() < MAX_DEFERRED_LIGHT_COUNT)
+            {
+                lighting_state.spot_lights.push_back(light);
+            }
+            else
+            {
+                LOGE("Subpass::allocate_lights: exceeding max_lights_per_type of {} for spot lights",
+                     MAX_DEFERRED_LIGHT_COUNT)
+            }
+        }
         allocate_lights<DeferredLights>(lighting_state);
         command_buffer.bind_lighting(get_lighting_state(), 1, 1);
 
@@ -152,7 +217,6 @@ namespace vkb
 
         command_buffer.bind_image(ShadowRenderTarget->get_views()[0], *ShadowSampler.get(), 2, 0, 0);
 
-        auto& Lights = scene.GetComponentManager()->GetComponentsByClass<scene::Light>();
         auto& render_frame = get_render_context().get_active_frame();
         struct ShadowUniforms
         {
@@ -164,7 +228,7 @@ namespace vkb
             float _pad1;
             float _pad2;
         } shadow_ubo;
-        if (!Lights.empty())
+        if (!DirectionalLights.empty())
         {
             auto* CameraPtr = GRuntimeGlobalContext.worldManager->GetViewportCamera();
             assert(CameraPtr && "The camera is ineffective.");
@@ -176,7 +240,8 @@ namespace vkb
                 shadow_ubo.cascade_splits[i] = Cascades[i].splitDepth;
             }
         }
-        auto allocation_ShadowUniforms = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(ShadowUniforms),
+        auto allocation_ShadowUniforms = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                                                                      sizeof(ShadowUniforms),
                                                                       0);
         allocation_ShadowUniforms.update(shadow_ubo);
         command_buffer.bind_buffer(allocation_ShadowUniforms.get_buffer(), allocation_ShadowUniforms.get_offset(),
