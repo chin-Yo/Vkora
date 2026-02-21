@@ -1,7 +1,7 @@
 #pragma once
 #include <imgui.h>
 
-#include "EditorInterface/Panel.hpp"
+#include "UIManage/Panel.hpp"
 
 
 namespace scene

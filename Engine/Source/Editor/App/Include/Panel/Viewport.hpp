@@ -5,7 +5,8 @@
 #include <volk.h>
 #include <eventpp/callbacklist.h>
 
-#include "EditorInterface/Panel.hpp"
+#include "UIManage/Panel.hpp"
+
 
 namespace scene
 {
@@ -27,7 +28,7 @@ public:
     void HandleGuizmoInput();
     void DrawGuizmoToolbar();
     void HandleCameraInput();
-    
+
 private:
     bool DrawGuizmo(scene::Node* node, ImVec2 imagePos, ImVec2 imageSize);
 

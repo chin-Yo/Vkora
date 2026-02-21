@@ -1,28 +1,12 @@
-#version 320 es
-/* Copyright (c) 2019, Arm Limited and Contributors
- *
- * SPDX-License-Identifier: Apache-2.0
- *
- * Licensed under the Apache License, Version 2.0 the "License";
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+#version 450
 
-layout(location = 0) in vec3 position;
-layout(location = 1) in vec2 texcoord_0;
-layout(location = 2) in vec3 normal;
-layout(location = 3) in vec3 color;
-layout(location = 4) in vec3 tangent;
+layout (location = 0) in vec3 position;
+layout (location = 1) in vec2 texcoord_0;
+layout (location = 2) in vec3 normal;
+layout (location = 3) in vec3 color;
+layout (location = 4) in vec3 tangent;
 
-layout(set = 1, binding = 0) uniform GlobalUniform {
+layout (set = 1, binding = 0) uniform GlobalUniform {
     mat4 model;
     mat4 view_proj;
     vec3 camera_position;
@@ -35,15 +19,22 @@ layout (location = 3) out vec3 o_tangent;
 
 void main(void)
 {
+    // Transform vertex position to world space using the model matrix
     o_pos = global_uniform.model * vec4(position, 1.0);
 
+    // Flip the Y-coordinate of UV to match texture coordinate convention
     o_uv = vec2(texcoord_0.x, 1.0 - texcoord_0.y);
 
+    // Extract the upper-left 3x3 portion of the model matrix for normal/tangent transformation
     mat3 model_3x3 = mat3(global_uniform.model);
 
+    // Transform normal vector to world space using the 3x3 model matrix
     o_normal = model_3x3 * normal;
 
+    // Transform tangent vector to world space using the 3x3 model matrix
     o_tangent = model_3x3 * tangent.xyz;
 
+    // Transform world-space position to clip space using the view-projection matrix
     gl_Position = global_uniform.view_proj * o_pos;
 }
+

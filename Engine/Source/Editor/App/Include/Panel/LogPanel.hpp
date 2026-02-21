@@ -1,7 +1,8 @@
 #pragma once
 #include <imgui.h>
 
-#include "EditorInterface/Panel.hpp"
+#include "UIManage/Panel.hpp"
+
 
 class LogPanel : public Panel
 {

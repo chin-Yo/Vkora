@@ -95,18 +95,18 @@ namespace scene
         glm::vec3 lightDirNor = glm::normalize(lightDir);
         Cascades.resize(cascade_num);
 
-        // 1. 获取相机参数
-        float nearClip = GetNearPlane(); // 通常为正值，如 0.1f
-        float farClip = GetFarPlane(); // 如 100.0f
+        float nearClip = GetNearPlane();
+        float farClip = GetFarPlane();
         float clipRange = farClip - nearClip;
 
-        // 注意：由于使用 reversed depth，但 split 计算仍基于几何距离，所以 minZ = near, maxZ = far
+        // Since reversed depth is used,
+        // but split calculation is still based on geometric distance, minZ = near, maxZ = far
         float minZ = nearClip;
         float maxZ = farClip;
         float range = maxZ - minZ;
         float ratio = maxZ / minZ;
 
-        // 2. 计算 cascade 分割深度（归一化到 [0,1]）
+        // Calculate cascade split depths (normalized to [0,1])
         std::vector<float> cascadeSplits(cascade_num);
         for (uint32_t i = 0; i < cascade_num; ++i)
         {
@@ -114,33 +114,30 @@ namespace scene
             float logSplit = minZ * std::pow(ratio, p);
             float uniformSplit = minZ + range * p;
             float d = cascadeSplitLambda * (logSplit - uniformSplit) + uniformSplit;
-            cascadeSplits[i] = (d - nearClip) / clipRange; // 归一化到 [0,1]
+            cascadeSplits[i] = (d - nearClip) / clipRange; // Normalized to [0,1]
         }
 
-        // 3. 构建完整视锥体在世界空间中的 8 个角点
+        // Construct the 8 corners of the full frustum in world space
         glm::vec3 frustumCorners[8] = {
-            // [0]-[3]: Near Plane (注意 Z 现在是 1.0f)
+            // [0]-[3]: Near Plane (Note: Z is now 1.0f)
             glm::vec3(-1.0f, 1.0f, 1.0f),
             glm::vec3(1.0f, 1.0f, 1.0f),
             glm::vec3(1.0f, -1.0f, 1.0f),
             glm::vec3(-1.0f, -1.0f, 1.0f),
 
-            // [4]-[7]: Far Plane (注意 Z 现在是 0.0f)
+            // [4]-[7]: Far Plane (Note: Z is now 0.0f)
             glm::vec3(-1.0f, 1.0f, 0.0f),
             glm::vec3(1.0f, 1.0f, 0.0f),
             glm::vec3(1.0f, -1.0f, 0.0f),
             glm::vec3(-1.0f, -1.0f, 0.0f)
         };
 
-        // 相机的 View-Projection 矩阵（注意：GetProjection 已使用 reversed depth）
-        /*glm::mat4 view = GetView();
-        glm::mat4 proj = GetProjection();
-        glm::mat4 viewProj = proj * view;*/
+        // Camera's View-Projection matrix (Note: GetProjection already uses reversed depth)
         glm::mat4 viewProj = GetPreRotation() * vkb::vulkan_style_projection(
             GetProjection()) * GetViewMatrix();
         glm::mat4 invViewProj = glm::inverse(viewProj);
 
-        // 将 NDC 角点变换到世界空间
+        // Transform NDC corners to world space
         for (uint32_t i = 0; i < 8; ++i)
         {
             glm::vec4 ndc = glm::vec4(frustumCorners[i], 1.0f);
@@ -148,25 +145,25 @@ namespace scene
             frustumCorners[i] = glm::vec3(world / world.w);
         }
 
-        // 4. 为每个 cascade 构建光源 View-Projection 矩阵
+        // Build the light View-Projection matrix for each cascade
         float lastSplit = 0.0f;
         for (uint32_t i = 0; i < cascade_num; ++i)
         {
             float split = cascadeSplits[i];
 
-            // 截取当前 cascade 的子视锥体（8 个点）
+            // Extract the sub-frustum for the current cascade (8 points)
             glm::vec3 cascadeCorners[8];
             for (uint32_t j = 0; j < 4; ++j)
             {
-                // 近平面点：从原 near 沿射线插值得到 lastSplit 深度
+                // Near plane point: Interpolate from the original near along the ray to get the lastSplit depth
                 glm::vec3 rayNear = frustumCorners[j + 4] - frustumCorners[j];
                 cascadeCorners[j] = frustumCorners[j] + rayNear * lastSplit;
 
-                // 远平面点：插值得到 split 深度
+                // Far plane point: Interpolate to get the split depth
                 cascadeCorners[j + 4] = frustumCorners[j] + rayNear * split;
             }
 
-            // 计算包围球中心
+            // Calculate the bounding sphere center
             glm::vec3 center(0.0f);
             for (const auto& corner : cascadeCorners)
             {
@@ -174,27 +171,27 @@ namespace scene
             }
             center /= 8.0f;
 
-            // 计算包围球半径
+            // Calculate the bounding sphere radius
             float radius = 0.0f;
             for (const auto& corner : cascadeCorners)
             {
                 radius = std::max(radius, glm::distance(center, corner));
             }
-            // Texel snapping：对齐到 1/16 单位，减少 shadow swimming
+            // Texel snapping: Align to 1/16 units to reduce shadow swimming
             radius = std::ceil(radius * 16.0f) / 16.0f;
-            // 构建光源视角的 View 矩阵
-            // 注意：lightDir 是光照方向（如太阳方向），所以光源“位置”在 center - lightDir * radius
+            // Build the light view matrix
+            // Note: lightDir is the light direction (e.g., sun direction), so the light "position" is at center - lightDir * radius
             glm::vec3 lightPos = center - lightDirNor * radius;
             glm::mat4 lightView = glm::lookAt(lightPos, center, glm::vec3(0.0f, 1.0f, 0.0f));
 
-            // 构建正交投影（覆盖 [-radius, radius] in x/y, [0, 2*radius] in z）
+            // Build the orthographic projection (covering [-radius, radius] in x/y, [0, 2*radius] in z)
             glm::mat4 lightProj = glm::orthoRH_ZO(-radius, radius, -radius, radius, 0.0f, radius * 2.0f);
             vkb::vulkan_style_projection(lightProj);
-            // 存储结果
+            // Store the result
             Cascades[i].viewProjMatrix = lightProj * lightView;
 
-            // splitDepth 用于主渲染中判断 cascade 索引
-            // 注意：这里存储的是世界空间中沿相机视线的深度（正值）
+            // splitDepth is used in the main rendering to determine the cascade index
+            // Note: This stores the depth along the camera's view direction in world space (positive value)
             Cascades[i].splitDepth = (nearClip + split * clipRange) * -1.0f;
 
             lastSplit = split;

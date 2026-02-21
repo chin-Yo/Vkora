@@ -9,6 +9,7 @@ namespace ui
     {
     public:
         static bool DrawObject(rttr::instance obj);
+        static bool DrawObject(rttr::instance obj, rttr::type& type);
 
     private:
         static bool DrawProperty(rttr::instance obj, rttr::property prop);

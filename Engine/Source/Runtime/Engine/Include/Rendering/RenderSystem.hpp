@@ -3,11 +3,11 @@
 #include <imgui.h>
 #include <volk.h>
 
-#include "EditorInterface/EditorUIManager.hpp"
 #include "Framework/Core/Instance.hpp"
 #include "Framework/Core/VulkanDevice.hpp"
 #include "Framework/Rendering/RenderContext.hpp"
 #include "Framework/Rendering/RenderPipeline.hpp"
+#include "UIManage/EditorUIManager.hpp"
 
 
 class AssetManager;

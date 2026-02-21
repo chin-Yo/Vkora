@@ -7,6 +7,7 @@
 #include "Engine/SceneGraph/Components/Light.hpp"
 #include "Engine/SceneGraph/Components/PerspectiveCamera.hpp"
 #include "Engine/SceneGraph/Components/SubMesh.hpp"
+#include "Engine/SceneGraph/Components/Light/DirectionalLight.hpp"
 #include "Framework/Core/CommandBuffer.hpp"
 #include "Framework/Core/VulkanDevice.hpp"
 #include "World/WorldManager.hpp"
@@ -31,9 +32,9 @@ const glm::vec3 faceUps[6] = {
 
 ShadowSubpass::ShadowSubpass(vkb::RenderContext& render_context, vkb::ShaderSource&& vertex_sourse,
                              vkb::ShaderSource&& fragment_sourse, vkb::ShaderSource&& geometry_sourse): Subpass{
-                                                                                                            render_context, std::move(vertex_sourse), std::move(fragment_sourse)
-                                                                                                        },
-                                                                                                        geometry_shader(std::move(geometry_sourse))
+        render_context, std::move(vertex_sourse), std::move(fragment_sourse)
+    },
+    geometry_shader(std::move(geometry_sourse))
 {
 }
 
@@ -47,7 +48,7 @@ void ShadowSubpass::draw(vkb::CommandBuffer& command_buffer)
     if (!scene)
         return;
     auto& device = command_buffer.GetDevice();
-    auto& Lights = scene->GetComponentManager()->GetComponentsByClass<scene::Light>();
+    auto& Lights = scene->GetComponentManager()->GetComponentsByClass<DirectionalLight>();
     auto& render_frame = get_render_context().get_active_frame();
     if (Lights.empty())
         return;
@@ -58,7 +59,7 @@ void ShadowSubpass::draw(vkb::CommandBuffer& command_buffer)
     vkb::DepthStencilState depth_stencil_state{};
     depth_stencil_state.depth_compare_op = VK_COMPARE_OP_LESS_OR_EQUAL;
     command_buffer.set_depth_stencil_state(depth_stencil_state);
-    
+
     vkb::RasterizationState rasterization_state{};
     rasterization_state.cull_mode = VK_CULL_MODE_NONE;
     command_buffer.set_rasterization_state(rasterization_state);
@@ -77,7 +78,7 @@ void ShadowSubpass::draw(vkb::CommandBuffer& command_buffer)
     auto& vertex_input_resources = pipeline_layout.get_resources(vkb::ShaderResourceType::Input,
                                                                  VK_SHADER_STAGE_VERTEX_BIT);
     auto& Cascades = GRuntimeGlobalContext.worldManager->GetViewportCamera()->GetCascades(
-        CASCADE_COUNT, MathUtils::EulerToDirection(Lights[0].GetOwner()->GetTransform().GetRotationEuler()));
+        CASCADE_COUNT, Lights[0].GetDirection());
     struct CascadesUBO
     {
         glm::mat4 viewProj[4] = {};
@@ -92,47 +93,6 @@ void ShadowSubpass::draw(vkb::CommandBuffer& command_buffer)
     allocation_cascades.update(ubo);
     command_buffer.bind_buffer(allocation_cascades.get_buffer(), allocation_cascades.get_offset(),
                                allocation_cascades.get_size(), 0, 0, 0);
-    /*struct ShadowMatricesUBO
-    {
-        glm::mat4 shadowViewProj[3][6] = {};
-    } shadowMats;
-    struct LightPosUBO
-    {
-        glm::vec3 lightPositions[3] = {};
-    } lightPos;
-    int i = 0;
-    for (auto& Light : Lights)
-    {
-        if (i >= 3)
-            break;
-        lightPos.lightPositions[i] = Light.GetOwner()->GetTransform().GetTranslation();
-        float light_near = 0.1f;
-        float light_far = Light.get_properties().range;
-        glm::mat4 proj = glm::perspective(glm::radians(90.0f), 1.0f, light_far, light_near);
-
-        for (int face = 0; face < 6; ++face)
-        {
-            glm::mat4 view = glm::lookAt(
-                lightPos.lightPositions[i],
-                lightPos.lightPositions[i] + faceDirs[face],
-                faceUps[face]
-            );
-            shadowMats.shadowViewProj[i][face] = proj * view;
-        }
-        i++;
-    }
-    auto allocation_lightPos = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                                                            sizeof(LightPosUBO),
-                                                            0);
-    allocation_lightPos.update(lightPos);
-    command_buffer.bind_buffer(allocation_lightPos.get_buffer(), allocation_lightPos.get_offset(),
-                               allocation_lightPos.get_size(), 0, 1, 0);
-    auto allocation_shadowMats = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                                                              sizeof(ShadowMatricesUBO),
-                                                              0);
-    allocation_shadowMats.update(shadowMats);
-    command_buffer.bind_buffer(allocation_shadowMats.get_buffer(), allocation_shadowMats.get_offset(),
-                               allocation_shadowMats.get_size(), 0, 2, 0);*/
     auto& Meshes = scene->GetComponentManager()->GetComponentsByClass<scene::SubMesh>();
     for (auto& mesh : Meshes)
     {
