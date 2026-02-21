@@ -1,5 +1,4 @@
-#version 320 es
-precision highp float;
+#version 450
 
 layout (set = 0, binding = 0) uniform sampler2D base_color_texture;
 layout (set = 0, binding = 1) uniform sampler2D normal_texture;
@@ -11,7 +10,7 @@ layout (location = 1) in vec2 in_uv;
 layout (location = 2) in vec3 in_normal;
 layout (location = 3) in vec3 in_tangent;
 
-// G-Buffer 输出（3 attachments）
+// G-Buffer（3 attachments）
 layout (location = 0) out vec4 o_gbuf_albedo;     // .rgb = baseColor (sRGB), .a = AO
 layout (location = 1) out vec4 o_gbuf_normal;     // .xyz = normal [0,1],
 layout (location = 2) out vec4 o_gbuf_material;   // .r = metallic, .g = roughness .b = emissive (optional)

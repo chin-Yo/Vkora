@@ -1,5 +1,4 @@
 #version 450
-precision highp float;
 
 #include "PbrFun.h"
 
@@ -16,7 +15,7 @@ layout (set = 1, binding = 0) uniform GlobalUniform
     mat4 inv_view_proj;
     vec2 inv_resolution;
     vec2 padding_0;
-    vec4 camPos; // .w ignored
+    vec4 camPos;// .w ignored
 }
 global_uniform;
 
@@ -46,11 +45,11 @@ layout (set = 2, binding = 0) uniform sampler2DArray shadowMap;
 #define SHADOW_MAP_CASCADE_COUNT 4
 
 layout (set = 2, binding = 1) uniform ShadowUniforms {
-    mat4 view; // 需要视图矩阵来计算 ViewSpace Z 以选择级联
+    mat4 view;              // 需要视图矩阵来计算 ViewSpace Z 以选择级联
     mat4 cascade_view_proj[SHADOW_MAP_CASCADE_COUNT];
-    vec4 cascade_splits; // .x, .y, .z, .w (存储分段距离/深度)
+    vec4 cascade_splits;    // .x, .y, .z, .w (存储分段距离/深度)
     int enable_pcf;
-    int debug_cascade;   // 1 to show cascade colors
+    int debug_cascade;      // 1 to show cascade colors
     float _pad1;
     float _pad2;
 } shadow_ubo;
@@ -123,8 +122,12 @@ float calculateShadow(vec3 worldPos, vec3 N, vec3 L, out uint cascadeIndex)
         }
     }
 
-    // 3. 计算 Shadow Coordinate
-    // biasMat * Proj * View * WorldPos
+    // Shadow Coordinate
+    // biasMat(NDC → UV) * Proj * View * WorldPos
+    /*  [0.5  0.0  0.0  0.5]   [x]   [0.5x + 0.5]
+        [0.0  0.5  0.0  0.5] × [y] = [0.5y + 0.5]
+        [0.0  0.0  1.0  0.0]   [z]   [z         ]
+        [0.0  0.0  0.0  1.0]   [1]   [1         ]*/
     vec4 shadowCoord = (biasMat * shadow_ubo.cascade_view_proj[cascadeIndex]) * vec4(worldPos, 1.0);
 
     // 透视除法

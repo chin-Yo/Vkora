@@ -1,0 +1,94 @@
+#version 450
+#extension GL_EXT_shader_explicit_arithmetic_types: enable
+#extension GL_EXT_shader_image_int64: enable
+#extension GL_ARB_separate_shader_objects: enable
+
+layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+#define PI 3.14159265
+#define STEP_COUNT 1000
+
+layout (set = 0, binding = 1, std140) uniform AtmosphereParams {
+    vec3 ScatterRayleigh;
+    float HDensityRayleigh;
+
+    float ScatterMie;
+    float AsymmetryMie;
+    float AbsorbMie;
+    float HDensityMie;
+
+    vec3 AbsorbOzone;
+    float OzoneCenterHeight;
+
+    float OzoneThickness;
+    float PlanetRadius;
+    float AtmosphereRadius;
+};
+
+layout (set = 0, binding = 0, rgba32f) uniform image2D Transmittance;
+
+bool hasIntersectionWithCircle(vec2 o, vec2 d, float R) {
+    float A = dot(d, d);
+    float B = 2.0 * dot(o, d);
+    float C = dot(o, o) - R * R;
+    float delta = B * B - 4.0 * A * C;
+    return (delta >= 0.0) && ((C <= 0.0) || (B <= 0.0));
+}
+
+bool findClosestIntersectionWithCircle(vec2 o, vec2 d, float R, out float t) {
+    float A = dot(d, d);
+    float B = 2.0 * dot(o, d);
+    float C = dot(o, o) - R * R;
+    float delta = B * B - 4.0 * A * C;
+
+    if (delta < 0.0) return false;
+
+    t = (-B + ((C <= 0.0) ? sqrt(delta) : -sqrt(delta))) / (2.0 * A);
+    return (C <= 0.0) || (B <= 0.0);
+}
+
+vec3 getSigmaT(float h) {
+    vec3 rayleigh = ScatterRayleigh * exp(-h / HDensityRayleigh);
+    float mie = (ScatterMie + AbsorbMie) * exp(-h / HDensityMie);
+    vec3 ozone = AbsorbOzone * max(
+        0.0,
+        1.0 - 0.5 * abs(h - OzoneCenterHeight) / OzoneThickness
+    );
+    return rayleigh + mie + ozone;
+}
+
+void main() {
+    ivec2 size = imageSize(Transmittance);
+    ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+
+    if (coord.x >= size.x || coord.y >= size.y)
+    return;
+
+    float theta = asin(mix(-1.0, 1.0, (float(coord.y) + 0.5) / float(size.y)));
+    float h = mix(
+        0.0,
+        AtmosphereRadius - PlanetRadius,
+        (float(coord.x) + 0.5) / float(size.x)
+    );
+
+    vec2 o = vec2(0.0, PlanetRadius + h);
+    vec2 d = vec2(cos(theta), sin(theta));
+
+    float t = 0.0;
+    if (!findClosestIntersectionWithCircle(o, d, PlanetRadius, t)) {
+        findClosestIntersectionWithCircle(o, d, AtmosphereRadius, t);
+    }
+
+    vec2 end = o + t * d;
+
+    vec3 sum = vec3(0.0);
+    for (int i = 0; i < STEP_COUNT; ++i) {
+        vec2 pi = mix(o, end, (float(i) + 0.5) / float(STEP_COUNT));
+        float hi = length(pi) - PlanetRadius;
+        sum += getSigmaT(hi);
+    }
+
+    vec3 result = exp(-sum * (t / float(STEP_COUNT)));
+
+    imageStore(Transmittance, coord, vec4(result, 1.0));
+}
